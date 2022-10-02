@@ -1,0 +1,25 @@
+﻿List of towers to have:
+- Single target tower
+- Small AOE tower
+- Big AOE tower
+- Slow but strong single target tower
+- Slowing tower
+- Debuff tower
+- Own towers buff tower
+- Blocking towers
+- Mana generators
+- Some character-specific towers that are available only in 1 copy (if it's 
+even the word to use actually though)
+
+Tower mechanics:
+- Tower upgrade
+- Different tower upgrade branches
+- Items to grant towers with (for example some gems)
+- Buffs to give to towers over time by killing stuffg
+- Start items to give to towers
+
+
+Some other mechanics:
+- Introduce new towers and show best practices
+- Choose towers for a level
+- Have a choice between stats buffs for a hero

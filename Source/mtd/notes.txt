@@ -1,0 +1,113 @@
+1) Create towers base class
+- AIController
+- Static mesh
+- Fire VFX, SFX
+- Ptr to projectile class
+- Target priority list
+- Target ignore list
+- Find target method
+- Damage, speed (to pass into projectile)
+
+2) Create projectile base class
+- Static mesh
+- Speed, damage
+- Direction
+- Target, if not set follow its initial direction
+- Regular VFX, SFX
+- Destroy VFX, SFX
+
+3) Create a tower class inherited from its base class
+- Change base values (numerical and assets)
+4) Create a projectile class inherited from its base class
+- Change base values (assets)
+5) Try to make the tower to fire at some target, and check DPS
+
+6) Create enemy base class
+- Health
+- Speed
+- Skeletal mesh
+- AIController
+- Damage
+- Type
+- Death, attack SFX
+- Walk, attack, death animations
+- Make it a bit white on damage
+
+7) Create an enemy class inherited from its base class
+- Change base values (numerical and assets)
+
+
+
+- Improve enemy class:
+    - Change from Character to Pawn
+    - Make an own simple PawnMovementComponent 
+    - Read about nav meshes
+    - Read about mass AI
+    
+Find out how to make an entity go through points without dropping speed in 
+between the transactions. (one possible way is to make my own movement 
+component be able of using LevelPathManager so it will be sure whenever a point 
+has been achieved and it will reset the speed after it starts going on the next 
+point)
+ 
+    
+Every enemy (or even entity) has different behaviors, so an entity has to take a
+ config that will have perception configs (ie about different components) and
+ other settigs such as target list, ignore list etc
+ 
+ 
+ 
+Create a spawner system that will spawn enemies in different zones and give some
+ path to follow (i.e. give the name in order to use it in LevelPathSystem)
+ 
+ 
+ 
+Get rid of AI sight component and stimuli component.
+
+Enemies will have more efficient ways to detect our allies instead. They'll have
+a sphere vision that will check only for overlap with our allies, and they also 
+will have an attack range area that will be used to check whether the target is
+reacheable for attacking or not.
+
+So we have a vision area and an attack area.
+
+Whenever enemy sees (check with SingleTrace using ally collision channel is 
+required) something it'll try to reach the target. If the target disappears
+from the area, the enemy will still reference it for sometime and go to it; it's
+required in order to make enemies a little bit smarter, for example a goblin 
+with a very small agro area that has been fighting with our player loses him 
+from his sight, and just goes to the crystal won't make much sense; instead it 
+should try to follow him because for example the player could just go behind the
+goblin.
+
+Whenever enemy fails to reach the target in question it will just forget about
+him for some small amount of time, for example half a second, in order to avoid
+situations when there's, for example, a barricade that is circled by dozens of 
+enemies that leave no space for others to attack, like so the enemy instead of 
+walking into its alike will just keep going to the crystal, increasing their
+level of intelligence.
+
+!!! I have to put UAISense_Damage into enemies, StimuliSource to damage dealers
+Whenever enemy does not have any target, i.e. it just follows the main path up 
+to the crystal, but gets damaged when it's not enough close to the crystal (see 
+the last words in next paragraph), then the damage source should become the
+target.
+
+Whenever enemy has a tower target, but gets hit by a player, it'll check if it's
+close enough to the tower it's attacked by, and if not, it'll target the player
+instead. This is required in order to avoid players be able to just agro the 
+enemy in front of a tower (or even a crystal) because attacking a tower is more
+convenient over the player. Like that we'll once again increase their 
+intelligence because they'll be presented more aggressive in a way that they're
+more interested in destroying something important, especially if we're talking
+about the crystal -- the reason why players need to build towers in the first
+place.
+
+The AI described above isn't the only one, some enemies will have different 
+approaches to attack. For example some bombers will have a pretty simple AI:
+whenever the nav distance is long enough, the bomber will start running instead 
+of walking, ignoring any external distactions.
+
+
+Homing projectiles target even a dead enemy (the one that's disappearing) and
+get stuck in its body until destroy event.
