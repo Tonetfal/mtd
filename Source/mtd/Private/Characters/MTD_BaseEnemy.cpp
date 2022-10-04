@@ -76,7 +76,6 @@ void AMTD_BaseEnemy::BeginPlay()
 	}
 
 	InitDelegates();
-
 }
 
 void AMTD_BaseEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)

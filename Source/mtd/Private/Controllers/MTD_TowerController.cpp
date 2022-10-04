@@ -13,42 +13,36 @@ AMTD_TowerController::AMTD_TowerController()
 	
 	SightConfig = 
     	CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));		
-    	
-	SightConfig->SightRadius = SightRadius;
-	SightConfig->LoseSightRadius = LoseSightRadius;
-	SightConfig->PeripheralVisionAngleDegrees =
-		PeripheralVisionHalfAngleDegrees;
-	SightConfig->DetectionByAffiliation = DetectionByAffiliation;
-	SightConfig->AutoSuccessRangeFromLastSeenLocation =
-		AutoSuccessRangeFromLastSeenLocation;
-	SightConfig->PointOfViewBackwardOffset = PointOfViewBackwardOffset;
-	SightConfig->NearClippingRadius = NearClippingRadius;
-	SightConfig->SetMaxAge(MaxAge);
-	
+
 	PerceptionComponent =
 		CreateDefaultSubobject<UAIPerceptionComponent>(
 			TEXT("Perception Component"));
-
+	
 	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
 }
 
 void AMTD_TowerController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AMTD_TowerController::OnPossess(APawn *InPawn)
+{
+	Super::OnPossess(InPawn);
 
 	check(SightConfig);
 	check(PerceptionComponent);
-	
-	PerceptionComponent->SetDominantSense(
-		*SightConfig->GetSenseImplementation());
+
+	InitConfig();
 	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->RequestStimuliListenerUpdate();
 }
 
 AActor *AMTD_TowerController::GetFireTarget()
 {
 	if (!IsFireTargetStillVisible())
 	{
-		MTDS_WARN("Fire target is not seen anymore, searching for a new one");
 		FireTarget = SearchForFireTarget();
 	}
 	return FireTarget;
@@ -58,9 +52,9 @@ void AMTD_TowerController::SetVisionRange(float Range)
 {
 	SightConfig->SightRadius = Range;
 	SightConfig->LoseSightRadius = Range;
-	SightConfig->AutoSuccessRangeFromLastSeenLocation = Range;
 	
 	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->RequestStimuliListenerUpdate();
 }
 
 void AMTD_TowerController::SetPeripheralVisionHalfAngleDegrees(float Degrees)
@@ -68,6 +62,7 @@ void AMTD_TowerController::SetPeripheralVisionHalfAngleDegrees(float Degrees)
 	SightConfig->PeripheralVisionAngleDegrees = Degrees;
 	
 	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->RequestStimuliListenerUpdate();
 }
 
 bool AMTD_TowerController::IsFireTargetStillVisible() const
@@ -75,15 +70,7 @@ bool AMTD_TowerController::IsFireTargetStillVisible() const
 	if (!IsValid(FireTarget) || !IsValid(GetPawn()))
 		return false;
 
-	const auto *FirePawn = Cast<APawn>(FireTarget);
-	if (!FirePawn)
-		return false;
-
-	const AController *TargetController = FirePawn->GetController();
-	if (!IsValid(TargetController))
-		return false;
-
-	const auto SightTarget = Cast<IAISightTargetInterface>(TargetController);
+	const auto SightTarget = Cast<IAISightTargetInterface>(FireTarget);
 	if (!SightTarget)
 		return false;
 
@@ -97,6 +84,8 @@ bool AMTD_TowerController::IsFireTargetStillVisible() const
 		NumberOfLoSChecksPerformed,
 		SightStrength, 
 		GetPawn(), nullptr, nullptr);
+
+	MTDS_VVERBOSE("%s is not seen anymore", *FireTarget->GetName());
 		
 	return bCanBeSeen;
 }
@@ -107,22 +96,7 @@ AActor *AMTD_TowerController::SearchForFireTarget()
 	PerceptionComponent->GetCurrentlyPerceivedActors(
 		UAISense_Sight::StaticClass(), PerceivedActors);
 
-	PerceptionComponent->RequestStimuliListenerUpdate();
-
-	MTDS_WARN("Get currently perceived actors num %d", PerceivedActors.Num());
-
-	const AActor *ClosestActor = FindClosestActor(PerceivedActors);
-	if (!ClosestActor)
-		return nullptr;
-
-	const AController *ActorController = Cast<AController>(ClosestActor);
-	if (!IsValid(ActorController))
-	{
-		MTD_WARN("%s is not a controller", *ClosestActor->GetName());
-		return nullptr;
-	}
-	
-	return ActorController->GetPawn();
+	return FindClosestActor(PerceivedActors);
 }
 
 AActor *AMTD_TowerController::FindClosestActor(
@@ -134,7 +108,7 @@ AActor *AMTD_TowerController::FindClosestActor(
 	const AActor *OurPawn = GetPawn();
 	if (!IsValid(OurPawn))
 	{
-		MTD_WARN("%s is dangling", *GetName());
+		MTDS_WARN("We are dangling");
 		return nullptr;
 	}
 	
@@ -159,4 +133,21 @@ AActor *AMTD_TowerController::FindClosestActor(
 	}
 	
 	return ClosestActor;
+}
+
+void AMTD_TowerController::InitConfig()
+{
+	check(SightConfig);
+	
+	SightConfig->Implementation = UAISense_Sight::StaticClass();
+	SightConfig->SightRadius = SightRadius;
+	SightConfig->LoseSightRadius = LoseSightRadius;
+	SightConfig->PeripheralVisionAngleDegrees =
+		PeripheralVisionHalfAngleDegrees;
+	SightConfig->DetectionByAffiliation = DetectionByAffiliation;
+	SightConfig->AutoSuccessRangeFromLastSeenLocation =
+		AutoSuccessRangeFromLastSeenLocation;
+	SightConfig->PointOfViewBackwardOffset = PointOfViewBackwardOffset;
+	SightConfig->NearClippingRadius = NearClippingRadius;
+	SightConfig->SetMaxAge(MaxAge);
 }

@@ -79,7 +79,8 @@ void AMTD_Projectile::OnBeginOverlap(
 			return;
 		}
 
-		TArray<AActor*> IgnoreActors; // add all allies, ie player and towers, if we are an ally proj
+		const TArray<AActor*> IgnoreActors; // None
+		ECollisionChannel ChannelToIgnore = ECollisionChannel::ECC_GameTraceChannel1; // Ally proj - ignore allies, enemy proj - ignore enemies
 		UGameplayStatics::ApplyRadialDamage(
 			World,
 			Parameters.Damage,
@@ -90,7 +91,6 @@ void AMTD_Projectile::OnBeginOverlap(
 			this,
 			nullptr, // tower reference
 			false);
-		
 	}
 	else
 	{

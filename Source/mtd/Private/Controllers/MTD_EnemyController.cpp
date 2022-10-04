@@ -18,7 +18,7 @@ AMTD_EnemyController::AMTD_EnemyController()
 		CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(
 			TEXT("Perception Stimuli Source Component"));
 	
-	PathFollowing =
+	MtdPathFollowingComp =
 		CreateDefaultSubobject<UMTD_PathFollowingComponent>(
 			TEXT("MTD Path Following Component"));
 	
@@ -42,11 +42,8 @@ void AMTD_EnemyController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check(StimuliSource);
 	check(Team);
 	
-	StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
-
 	if (!IsValid(GetPawn()))
 	{
 		MTD_WARN("Controlled pawn is invalid");
@@ -91,6 +88,7 @@ void AMTD_EnemyController::OnPossess(APawn *InPawn)
 	}
 
 	// We have to be seen
+	check(StimuliSource);
 	StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
 	
 	// We have to be unregistered from sense system after our owner dies
@@ -105,7 +103,6 @@ void AMTD_EnemyController::OnPossess(APawn *InPawn)
 	}
 
 	InitAI(BehaviorTree);
-
 }
 
 void AMTD_EnemyController::InitAI(UBehaviorTree *BehaviorTree)
@@ -141,9 +138,6 @@ bool AMTD_EnemyController::CanBeSeenFrom(
 	const bool *bWasVisible,
 	int32 *UserData) const
 {
-	MTDS_WARN("CanBeSeenFrom obs loc %s ign act %s",
-		*ObserverLocation.ToString(), IgnoreActor ? *IgnoreActor->GetName() :
-		 TEXT("none"));
 	if (!GetWorld() || !IsValid(GetPawn()))
 		return false;
 
@@ -157,14 +151,8 @@ bool AMTD_EnemyController::CanBeSeenFrom(
 
 	NumberOfLoSChecksPerformed++;
 
-	const UPrimitiveComponent *Comp = HitResult.GetComponent();
-	const bool bCanBeSeen = IsValid(Comp) &&
-		Comp->GetCollisionObjectType() == EnemyCollisionChannel;
-
-	if (IsValid(HitResult.GetActor()))
-	{
-		MTDS_WARN("%s", *HitResult.GetActor()->GetName());
-	}
+	const AActor *Actor = HitResult.GetActor();
+	const bool bCanBeSeen = IsValid(Actor) && Actor == GetPawn();
 	
 	if (bCanBeSeen)
 	{
@@ -177,7 +165,6 @@ bool AMTD_EnemyController::CanBeSeenFrom(
 		OutSightStrength = 0.f;
 	}
 
-	MTDS_WARN("Return %d", bCanBeSeen);
 	return bCanBeSeen;
 }
 

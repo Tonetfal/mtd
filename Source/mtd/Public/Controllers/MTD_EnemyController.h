@@ -60,5 +60,5 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD Components",
 		meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UMTD_PathFollowingComponent> PathFollowing = nullptr;
+	TObjectPtr<UMTD_PathFollowingComponent> MtdPathFollowingComp = nullptr;
 };

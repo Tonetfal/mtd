@@ -20,6 +20,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn *InPawn) override;
 
 public:
 	virtual AActor *GetFireTarget();
@@ -33,6 +34,7 @@ protected:
 	virtual bool IsFireTargetStillVisible() const;
 	virtual AActor *SearchForFireTarget();
 	virtual AActor *FindClosestActor(const TArray<AActor*> &Actors) const;
+	virtual void InitConfig();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD Components",
@@ -61,7 +63,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD Sight Sense Config",
 		meta=(AllowPrivateAccess="true"))
-	float AutoSuccessRangeFromLastSeenLocation = SightRadius;
+	float AutoSuccessRangeFromLastSeenLocation = FAISystem::InvalidRange;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD Sight Sense Config",
 		meta=(AllowPrivateAccess="true"))
