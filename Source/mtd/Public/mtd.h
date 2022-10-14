@@ -1,8 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-#include "Core/MTD_Log.h"
+#include "MTD_Log.h"
 
 const FName AllyCollisionProfileName = TEXT("Ally");
 const FName EnemyCollisionProfileName = TEXT("Enemy");

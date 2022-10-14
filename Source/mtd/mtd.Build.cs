@@ -14,7 +14,12 @@ public class mtd : ModuleRules
 			"InputCore",
 			"NavigationSystem",
 			"AIModule",
-			"GameplayTasks"
+			"GameplayTasks",
+			"GameplayAbilities", 
+			"GameplayTags",
+			"ModularGameplay",
+			// "ModularGameplayActors",
+			"NetCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

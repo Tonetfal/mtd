@@ -1,51 +1,20 @@
 #include "UI/MTD_PlayerHudWidget.h"
 
-#include "Components/MTD_HealthComponent.h"
-#include "Controllers/MTD_PlayerController.h"
-#include "Utilities/MTD_Utilities.h"
-
 #include "AIController.h"
+#include "Character/MTD_HealthComponent.h"
+#include "Player/MTD_PlayerController.h"
+#include "Utility/MTD_Utility.h"
 
 bool UMTD_PlayerHudWidget::Initialize()
 {
-	if (IsValid(GetOwningPlayerPawn()))
-	{
-		UMTD_HealthComponent *Health =
-			FMTD_Utilities::GetActorComponent<UMTD_HealthComponent>(
-				GetOwningPlayerPawn());
-		if (IsValid(Health))
-		{
-			Health->OnHealthChangedDelegate.AddUObject(
-				this, &UMTD_PlayerHudWidget::OnHealthChanged);
-		}
-		else
-		{
-			MTD_WARN("%s has an invalid health component",
-				*GetOwningPlayerPawn()->GetName());
-		}
-	}
-	else
-	{
-		MTD_WARN("Player is invalid");
-	}
-	
 	return Super::Initialize();
-}
-
-float UMTD_PlayerHudWidget::GetHealthRatio() const
-{
-	const UMTD_HealthComponent *Health =
-		FMTD_Utilities::GetActorComponent<UMTD_HealthComponent>(
-			GetOwningPlayerPawn());
-	return IsValid(Health) ? Health->GetHealthRatio() : 0.f;
 }
 
 bool UMTD_PlayerHudWidget::IsPlayerAlive() const
 {
-	const UMTD_HealthComponent *Health =
-		FMTD_Utilities::GetActorComponent<UMTD_HealthComponent>(
-			GetOwningPlayerPawn());
-	return IsValid(Health) && !Health->IsDead();
+	const auto Health =
+		UMTD_HealthComponent::FindHealthComponent(GetOwningPlayer());
+	return IsValid(Health) && !Health->IsDeadOrDying();
 }
 
 bool UMTD_PlayerHudWidget::IsPlayerSpectating() const
@@ -58,7 +27,7 @@ FMTD_TraceData UMTD_PlayerHudWidget::GetTraceData() const
 {
 	FMTD_TraceData TraceData;
 	TraceData.AttitudeTowardsHittingObject = ETeamAttitude::Neutral;
-	TraceData.HitDistanceRatio = 0.f;
+	TraceData.HitDistanceRatio = 1.f;
 
 	const UWorld *World = GetWorld();
 	if (!IsValid(World))
@@ -98,12 +67,12 @@ FMTD_TraceData UMTD_PlayerHudWidget::GetTraceData() const
 		FMath::Min(HitResult.Distance / MaxScaleDownLength, 1.f);
 
 	const FGenericTeamId OtherTeam =
-		FMTD_Utilities::GetMtdGenericTeamId(HitResult.GetActor());
+		FMTD_Utility::GetMtdGenericTeamId(HitResult.GetActor());
 	if (OtherTeam.GetId() == FGenericTeamId::NoTeam)
 		return TraceData;
 
 	const auto OurTeam =
-		FMTD_Utilities::GetActorComponent<UMTD_TeamComponent>(Pc);
+		FMTD_Utility::GetActorComponent<UMTD_TeamComponent>(Pc);
 	if (!IsValid(OurTeam))
 		return TraceData;
 
@@ -111,12 +80,4 @@ FMTD_TraceData UMTD_PlayerHudWidget::GetTraceData() const
 		FGenericTeamId::GetAttitude(OurTeam->GetGenericTeamId(), OtherTeam);
 
 	return TraceData;
-}
-
-void UMTD_PlayerHudWidget::OnHealthChanged(int32 NewHealth, int32 HealthDelta)
-{
-	if (HealthDelta < 0)
-	{
-		OnTakeDamage();
-	}
 }

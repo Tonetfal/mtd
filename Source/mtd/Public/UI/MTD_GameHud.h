@@ -1,7 +1,8 @@
 #pragma once
 
-#include "mtd.h"
 #include "GameFramework/HUD.h"
+#include "mtd.h"
+
 #include "MTD_GameHud.generated.h"
 
 UCLASS()
