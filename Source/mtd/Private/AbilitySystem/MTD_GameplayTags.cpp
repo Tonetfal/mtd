@@ -24,20 +24,19 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 	AddTag(Ability_ActivateFail_Networking, "Ability.ActivateFail.Networking", "Ability failed to activate because it did not pass the network checks.");
 	AddTag(Ability_ActivateFail_ActivationGroup, "Ability.ActivateFail.ActivationGroup", "Ability failed to activate because of its activation group.");
 
-	AddTag(GameplayAbility_Behavior_SurvivesDeath, "GameplayAbility.Behavior.SurvivesDeath", "An ability with this type tag should not be canceled due to death.");
+	AddTag(Gameplay_Ability_Behavior_SurvivesDeath, "Gameplay.Ability.Behavior.SurvivesDeath", "An ability with this type tag should not be canceled due to death.");
 	
-	AddTag(GameplayAbility_AttackMelee, "GameplayAbility.AttackMelee", "Melee attack ability.");
+	AddTag(Gameplay_Ability_AttackMelee, "Gameplay.Ability.AttackMelee", "Melee attack ability.");
 
 	AddTag(InputTag_Attack, "InputTag.Attack", "Attack input.");
 	AddTag(InputTag_Move, "InputTag.Move", "Move input.");
 	AddTag(InputTag_Look_Mouse, "InputTag.Look.Mouse", "Look (mouse) input.");
 	AddTag(InputTag_Look_Stick, "InputTag.Look.Stick", "Look (stick) input.");
-	AddTag(InputTag_Crouch, "InputTag.Crouch", "Crouch input.");
 	AddTag(InputTag_AutoRun, "InputTag.AutoRun", "Auto-run input.");
 
-	AddTag(GameplayEvent_Death, "GameplayEvent.Death", "Event that fires on death. This event only fires on the server.");
-	AddTag(GameplayEvent_Reset, "GameplayEvent.Reset", "Event that fires once a player reset is executed.");
-	AddTag(GameplayEvent_RequestReset, "GameplayEvent.RequestReset", "Event to request a player's pawn to be instantly replaced with a new one at a valid spawn location.");
+	AddTag(Gameplay_Event_Death, "Gameplay.Event.Death", "Event that fires on death. This event only fires on the server.");
+	AddTag(Gameplay_Event_Reset, "Gameplay.Event.Reset", "Event that fires once a player reset is executed.");
+	AddTag(Gameplay_Event_RequestReset, "Gameplay.Event.RequestReset", "Event to request a player's pawn to be instantly replaced with a new one at a valid spawn location.");
 
 	AddTag(SetByCaller_Damage, "SetByCaller.Damage", "SetByCaller tag used by damage gameplay effects.");
 	AddTag(SetByCaller_Heal, "SetByCaller.Heal", "SetByCaller tag used by healing gameplay effects.");
@@ -45,8 +44,6 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 	AddTag(Cheat_GodMode, "Cheat.GodMode", "GodMode cheat is active on the owner.");
 	AddTag(Cheat_UnlimitedHealth, "Cheat.UnlimitedHealth", "UnlimitedHealth cheat is active on the owner.");
 
-	AddTag(Status_Crouching, "Status.Crouching", "Target is crouching.");
-	AddTag(Status_AutoRunning, "Status.AutoRunning", "Target is auto-running.");
 	AddTag(Status_Death, "Status.Death", "Target has the death status.");
 	AddTag(Status_Death_Dying, "Status.Death.Dying", "Target has begun the death process.");
 	AddTag(Status_Death_Dead, "Status.Death.Dead", "Target has finished the death process.");

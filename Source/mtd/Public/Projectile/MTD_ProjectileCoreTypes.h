@@ -38,4 +38,7 @@ struct MTD_API FMTD_ProjectileParameters
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	FName CollisionProfileName = "NoCollision";
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float SecondsToSelfDestroy = 120.f;
 };

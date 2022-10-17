@@ -11,7 +11,7 @@ UMTD_GameplayAbility_Attack::UMTD_GameplayAbility_Attack()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 
-	AbilityTags.AddTag(FMTD_GameplayTags::Get().GameplayAbility_AttackMelee);
+	AbilityTags.AddTag(FMTD_GameplayTags::Get().Gameplay_Ability_AttackMelee);
 }
 
 bool UMTD_GameplayAbility_Attack::CanActivateAbility(
@@ -72,7 +72,7 @@ void UMTD_GameplayAbility_Attack::ActivateAbility(
 		// Cancel previous attack
 		FGameplayTagContainer AbilityTypesToCancel;
 		AbilityTypesToCancel.AddTag(
-			FMTD_GameplayTags::Get().GameplayAbility_AttackMelee);
+			FMTD_GameplayTags::Get().Gameplay_Ability_AttackMelee);
 		MtdAsc->CancelAbilities(&AbilityTypesToCancel, nullptr, this);
 	}
 	else

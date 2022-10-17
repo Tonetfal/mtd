@@ -80,7 +80,7 @@ void UMTD_AbilitySet::GiveToAbilitySystem(
 		return;
 	}
 
-	// Grant the gameplay abilities.
+	// Grant the gameplay abilities
 	for (int32 AbilityIndex = 0; AbilityIndex < GrantedGameplayAbilities.Num(); ++AbilityIndex)
 	{
 		const FMTD_AbilitySet_GameplayAbility& AbilityToGrant = GrantedGameplayAbilities[AbilityIndex];

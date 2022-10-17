@@ -5,6 +5,7 @@
 
 #include "MTD_PawnExtensionComponent.generated.h"
 
+class UMTD_PawnData;
 class UMTD_AbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastDelegate);
@@ -24,6 +25,12 @@ public:
 		return IsValid(Actor) ? Actor->FindComponentByClass<
 			UMTD_PawnExtensionComponent>() : nullptr;
 	}
+	
+	template <class T>
+	const T *GetPawnData() const
+		{ return Cast<T>(PawnData); }
+
+	void SetPawnData(const UMTD_PawnData *InPawnData);
 
 	UFUNCTION(BlueprintPure, Category = "MTD|Pawn")
 	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const
@@ -62,7 +69,11 @@ protected:
 	FSimpleMulticastDelegate OnAbilitySystemUninitialized;
 
 private:
+	UPROPERTY()
 	TObjectPtr<UMTD_AbilitySystemComponent> AbilitySystemComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "MTD|Pawn")
+	TObjectPtr<const UMTD_PawnData> PawnData = nullptr;
 
 	bool bPawnReadyToInitialize = false;
 };

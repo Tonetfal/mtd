@@ -5,7 +5,7 @@
 
 #include "MTD_GameplayAbility.generated.h"
 
-UCLASS()
+UCLASS(Abstract, HideCategories=Input, meta=(ShortTooltip="The base gameplay ability class used by this project."))
 class MTD_API UMTD_GameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()

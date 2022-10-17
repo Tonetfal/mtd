@@ -1,6 +1,7 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "Character/MTD_PawnData.h"
 
 UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 {
@@ -8,6 +9,27 @@ UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	SetIsReplicatedByDefault(true);
+}
+
+void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
+{
+	check(InPawnData);
+
+	APawn *Pawn = GetPawnChecked<APawn>();
+
+	if (Pawn->GetLocalRole() != ROLE_Authority)
+		return;
+
+	if (PawnData)
+	{
+		MTDS_ERROR("Trying to set PawnData [%s] that already has valid "
+			"PawnData [%s].", *GetNameSafe(InPawnData), *GetNameSafe(PawnData));
+		return;
+	}
+
+	PawnData = InPawnData;
+
+	CheckPawnReadyToInitialize();
 }
 
 void UMTD_PawnExtensionComponent::InitializeAbilitySystem(
@@ -31,7 +53,7 @@ void UMTD_PawnExtensionComponent::InitializeAbilitySystem(
 	APawn *Pawn = GetPawnChecked<APawn>();
 	const AActor *ExistingAvatar = InAsc->GetAvatarActor();
 
-	MTDS_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s]",
+	MTD_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s]",
 		*GetNameSafe(InAsc), *GetNameSafe(Pawn),
 		*GetNameSafe(InOwnerActor), *GetNameSafe(ExistingAvatar));
 
@@ -59,6 +81,7 @@ void UMTD_PawnExtensionComponent::UninitializeAbilitySystem()
 	if (AbilitySystemComponent->GetAvatarActor() == GetOwner())
 	{
 		AbilitySystemComponent->CancelAbilities(nullptr, nullptr);
+		// TODO:
 		// AbilitySystemComponent->ClearAbilityInput();
 		AbilitySystemComponent->RemoveAllGameplayCues();
 

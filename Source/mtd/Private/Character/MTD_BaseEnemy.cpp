@@ -13,7 +13,7 @@
 //	
 //	MTDS_VVERBOSE("%s has dealt %f damage", *InInstigator->GetName(), Damage);
 //	
-//	// Check if player is close enough navmesh wise, ignore if too far
+//	// TODO: Check if player is close enough navmesh wise, ignore if too far
 //	// ...
 //
 //	const bool bIsDamagerIgnored = IgnoredActor == InInstigator;

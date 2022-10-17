@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GameplayEffect.h"
 #include "GameFramework/Actor.h"
 #include "mtd.h"
 #include "Projectile/MTD_ProjectileCoreTypes.h"
@@ -9,7 +10,6 @@
 // Forward declaration
 class UMTD_ProjectileMovementComponent;
 class UMTD_TeamComponent;
-
 class UCapsuleComponent;
 
 UCLASS()
@@ -30,7 +30,7 @@ public:
 
 protected:
 	UFUNCTION()
-	virtual void OnBeginOverlap(
+	void OnBeginOverlap(
 		UPrimitiveComponent *HitComponent,
 		AActor *OtherActor,
 		UPrimitiveComponent *OtherComp,
@@ -38,7 +38,9 @@ protected:
 		bool bFromSweep,
 		const FHitResult &SweepResult);
 
-	virtual void OnDestroy();
+	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Projectile")
+	void OnSelfDestroy();
+	virtual void OnSelfDestroy_Implementation();
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
@@ -57,6 +59,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Projectile|Runtime",
 		meta=(AllowPrivateAccess="true"))
 	FMTD_ProjectileParameters Parameters;
+
+	UPROPERTY(BlueprintReadWrite, Category="MTD|Projectile",
+		meta=(AllowPrivateAccess="true"))
+	TArray<FGameplayEffectSpecHandle> GameplayEffectSpecHandles;
 
 	FTimerHandle SelfDestroyTimerHandle;
 };

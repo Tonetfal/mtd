@@ -29,20 +29,19 @@ public:
 	FGameplayTag Ability_ActivateFail_Networking;
 	FGameplayTag Ability_ActivateFail_ActivationGroup;
 
-	FGameplayTag GameplayAbility_Behavior_SurvivesDeath;
+	FGameplayTag Gameplay_Ability_Behavior_SurvivesDeath;
 	
-	FGameplayTag GameplayAbility_AttackMelee;
+	FGameplayTag Gameplay_Ability_AttackMelee;
 
 	FGameplayTag InputTag_Attack;
 	FGameplayTag InputTag_Move;
 	FGameplayTag InputTag_Look_Mouse;
 	FGameplayTag InputTag_Look_Stick;
-	FGameplayTag InputTag_Crouch;
 	FGameplayTag InputTag_AutoRun;
 
-	FGameplayTag GameplayEvent_Death;
-	FGameplayTag GameplayEvent_Reset;
-	FGameplayTag GameplayEvent_RequestReset;
+	FGameplayTag Gameplay_Event_Death;
+	FGameplayTag Gameplay_Event_Reset;
+	FGameplayTag Gameplay_Event_RequestReset;
 
 	FGameplayTag SetByCaller_Damage;
 	FGameplayTag SetByCaller_Heal;
@@ -50,8 +49,6 @@ public:
 	FGameplayTag Cheat_GodMode;
 	FGameplayTag Cheat_UnlimitedHealth;
 
-	FGameplayTag Status_Crouching;
-	FGameplayTag Status_AutoRunning;
 	FGameplayTag Status_Death;
 	FGameplayTag Status_Death_Dying;
 	FGameplayTag Status_Death_Dead;

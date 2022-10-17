@@ -1,101 +1,17 @@
 #include "Character/MTD_HeroComponent.h"
 
+#include "AbilitySystem/MTD_AbilitySet.h"
+#include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
+#include "Character/MTD_PawnData.h"
 #include "Character/MTD_PawnExtensionComponent.h"
+#include "GameFramework/Character.h"
+#include "Input/MTD_InputComponent.h"
 #include "Player/MTD_PlayerController.h"
 #include "Player/MTD_PlayerState.h"
 
 UMTD_HeroComponent::UMTD_HeroComponent()
 {
-}
-
-void UMTD_HeroComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void UMTD_HeroComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	const auto Pawn = GetPawn<APawn>();
-	if (IsValid(Pawn))
-	{
-		auto ExtComp =
-			UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-		if (IsValid(ExtComp))
-		{
-			ExtComp->UninitializeAbilitySystem();
-		}
-	}
-	
-	Super::EndPlay(EndPlayReason);
-}
-
-void UMTD_HeroComponent::OnPawnReadyToInitialize()
-{
-	// Don't initialize twice
-	if (!ensure(!bPawnHasInitialized))
-		return;
-
-	const APawn *Pawn = GetPawn<APawn>();
-	if (!IsValid(Pawn))
-		return;
-	
-	AMTD_PlayerState *MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
-	check(MtdPs);
-	
-	UMTD_PawnExtensionComponent *PawnExtComp =
-		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-	if (IsValid(PawnExtComp))
-	{
-		PawnExtComp->InitializeAbilitySystem(
-			MtdPs->GetMtdAbilitySystemComponent(), MtdPs);
-	}
-
-	auto *MtdPc = Pawn->GetController<AMTD_PlayerController>();
-	if (IsValid(MtdPc))
-	{
-		if (!Pawn->InputComponent)
-		{
-			// InitializePlayerInput(Pawn->InputComponent);
-		}
-	}
-
-	// if (Owner->IsLocallyControlled() && PawnData)
-	// {
-	//	auto CameraComponent = UMTD_CameraComponent::FindCameraComponent(Owner);
-	// 	if (IsValid(CameraComponent))
-	// 	{
-	// 		CameraComponent->DetermineCameraModeDelegate.BindUObject(
-	// 			this, &ThisClass::DetermineCameraMode);
-	// 	}
-	// }
-
-	bPawnHasInitialized = true;
-}
-
-bool UMTD_HeroComponent::IsPawnComponentReadyToInitialize() const
-{
-	const APawn *Pawn = GetPawn<APawn>();
-
-	// A pawn is required
-	if (!IsValid(Pawn))
-		return false;
-	
-	// If we're authority or autonomous, we need to wait for a controller with
-	// registered ownership of the player state
-	if (Pawn->GetLocalRole() != ROLE_SimulatedProxy)
-	{
-		const AController* Controller = GetController<AController>();
-
-		const bool bHasControllerPairedWithPS =
-			(Controller) &&
-			(Controller->PlayerState) &&
-			(Controller->PlayerState->GetOwner() == Controller);
-
-		if (!bHasControllerPairedWithPS)
-			return false;
-	}
-
-	return true;
 }
 
 void UMTD_HeroComponent::OnRegister()
@@ -123,3 +39,222 @@ void UMTD_HeroComponent::OnRegister()
 		FSimpleMulticastDelegate::FDelegate::CreateUObject(
 			this, &ThisClass::OnPawnReadyToInitialize));
 }
+
+void UMTD_HeroComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UMTD_HeroComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	const auto Pawn = GetPawn<APawn>();
+	if (IsValid(Pawn))
+	{
+		auto ExtComp =
+			UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+		if (IsValid(ExtComp))
+		{
+			ExtComp->UninitializeAbilitySystem();
+		}
+	}
+	
+	Super::EndPlay(EndPlayReason);
+}
+
+bool UMTD_HeroComponent::IsPawnComponentReadyToInitialize() const
+{
+	const APawn *Pawn = GetPawn<APawn>();
+
+	// A pawn is required
+	if (!IsValid(Pawn))
+		return false;
+	
+	// If we're authority or autonomous, we need to wait for a controller with
+	// registered ownership of the player state
+	if (Pawn->GetLocalRole() != ROLE_SimulatedProxy)
+	{
+		const AController* Controller = GetController<AController>();
+
+		const bool bHasControllerPairedWithPS =
+			(Controller) &&
+			(Controller->PlayerState) &&
+			(Controller->PlayerState->GetOwner() == Controller);
+
+		if (!bHasControllerPairedWithPS)
+			return false;
+	}
+
+	const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
+	const bool bIsBot = Pawn->IsBotControlled();
+
+	if (bIsLocallyControlled && !bIsBot)
+	{
+		// The input component is required when locally controlled
+		if (!Pawn->InputComponent)
+			return false;
+	}
+
+	return true;
+}
+
+void UMTD_HeroComponent::OnPawnReadyToInitialize()
+{
+	// Don't initialize twice
+	if (!ensure(!bPawnHasInitialized))
+		return;
+
+	const auto Pawn = GetPawn<APawn>();
+	if (!IsValid(Pawn))
+		return;
+	
+	auto MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
+	check(MtdPs);
+
+	UMTD_AbilitySystemComponent *MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
+
+	PawnData = nullptr;
+	auto PawnExtComp =
+		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+	if (IsValid(PawnExtComp))
+	{
+		PawnData = PawnExtComp->GetPawnData<UMTD_PawnData>();
+		
+		PawnExtComp->InitializeAbilitySystem(MtdAsc, MtdPs);
+	}
+
+	if (IsValid(PawnData))
+	{
+		for (const UMTD_AbilitySet *AbilitySet : PawnData->AbilitySets)
+		{
+			AbilitySet->GiveToAbilitySystem(MtdAsc, nullptr, GetOwner());
+		}
+	}
+	else
+	{
+		MTDS_WARN("Pawn Data asset is invalid!");
+	}
+
+	auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
+	if (IsValid(MtdPc) && IsValid(Pawn->InputComponent))
+	{
+		InitializePlayerInput(Pawn->InputComponent);
+	}
+
+	// if (Owner->IsLocallyControlled() && PawnData)
+	// {
+	//	auto CameraComponent = UMTD_CameraComponent::FindCameraComponent(Owner);
+	// 	if (IsValid(CameraComponent))
+	// 	{
+	// 		CameraComponent->DetermineCameraModeDelegate.BindUObject(
+	// 			this, &ThisClass::DetermineCameraMode);
+	// 	}
+	// }
+
+	bPawnHasInitialized = true;
+}
+
+void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
+{
+	check(InputComponent);
+
+	auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
+	check(MtdInputComponent);
+
+	auto Pawn = GetPawn<APawn>();
+	check(Pawn);
+
+	auto ExtPawnComp =
+		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+	check(ExtPawnComp);
+
+	// PawnData = ExtPawnComp->GetPawnData<UMTD_PawnData>();
+	check(PawnData);
+
+	const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
+	UMTD_InputConfig *InputConfig = PawnData->InputConfig;
+
+	MtdInputComponent->BindAbilityActions(
+		InputConfig,
+		this,
+		&ThisClass::Input_AbilityInputTagPressed,
+		&ThisClass::Input_AbilityInputTagReleased);
+
+	auto BindNativeAction =
+		[&, this] (FGameplayTag GameplayTag, auto Delegate)
+	{
+		MtdInputComponent->BindNativeAction(
+			InputConfig,
+			GameplayTag,
+			ETriggerEvent::Triggered,
+			this,
+			Delegate);
+	};
+	
+	BindNativeAction(GameplayTags.InputTag_Move, &ThisClass::Input_Move);
+	BindNativeAction(GameplayTags.InputTag_Look_Mouse, &ThisClass::Input_LookMouse);
+}
+
+void UMTD_HeroComponent::Input_AbilityInputTagPressed(FGameplayTag InputTag)
+{
+	auto Pawn = GetPawn<APawn>();
+	if (!IsValid(Pawn))
+		return;
+
+	auto ExtPawnComp =
+		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+	if (!IsValid(ExtPawnComp))
+		return;
+
+	UMTD_AbilitySystemComponent *MtdAsc =
+		ExtPawnComp->GetMtdAbilitySystemComponent();
+	if (!IsValid(MtdAsc))
+		return;
+
+	FGameplayTagContainer Tags;
+	Tags.AddTag(InputTag);
+	MtdAsc->TryActivateAbilitiesByTag(Tags);
+}
+
+void UMTD_HeroComponent::Input_AbilityInputTagReleased(FGameplayTag InputTag)
+{
+}
+
+void UMTD_HeroComponent::Input_Move(const FInputActionValue &InputActionValue)
+{
+	auto Character = GetPawn<ACharacter>();
+	check(Character);
+
+	const FVector2D Dir = InputActionValue.Get<FVector2D>();
+	
+	if (Dir.X != 0.f)
+	{
+		Character->AddMovementInput(Character->GetActorRightVector(), Dir.X);
+	}
+
+	if (Dir.Y != 0.f)
+	{
+		Character->AddMovementInput(Character->GetActorForwardVector(), Dir.Y);
+	}
+}
+
+void UMTD_HeroComponent::Input_LookMouse(
+	const FInputActionValue &InputActionValue)
+{
+	auto Character = GetPawn<ACharacter>();
+	check(Character);
+
+	const FVector2D Dir = InputActionValue.Get<FVector2D>();
+	
+	// TODO: Store XY turn ratio
+	
+	if (Dir.X != 0.f)
+	{
+		Character->AddControllerYawInput(Dir.X);
+	}
+	
+	if (Dir.Y != 0.f)
+	{
+		Character->AddControllerPitchInput(Dir.Y);
+	}
+}
+

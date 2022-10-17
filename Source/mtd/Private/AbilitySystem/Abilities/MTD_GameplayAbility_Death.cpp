@@ -22,7 +22,7 @@ void UMTD_GameplayAbility_Death::OnDoneAddingNativeTags()
 
 	// Make ability fire automatically on GameplayEvent_Death
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag = FMTD_GameplayTags::Get().GameplayEvent_Death;
+	TriggerData.TriggerTag = FMTD_GameplayTags::Get().Gameplay_Event_Death;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 }
@@ -40,7 +40,7 @@ void UMTD_GameplayAbility_Death::ActivateAbility(
 
 	FGameplayTagContainer AbilityTypesToIgnore;
 	AbilityTypesToIgnore.AddTag(
-		FMTD_GameplayTags::Get().GameplayAbility_Behavior_SurvivesDeath);
+		FMTD_GameplayTags::Get().Gameplay_Ability_Behavior_SurvivesDeath);
 
 	MtdAsc->CancelAbilities(nullptr, &AbilityTypesToIgnore, this);
 

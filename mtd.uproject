@@ -13,7 +13,8 @@
 				"AIModule",
 				"CoreUObject",
 				"UMG",
-				"GameplayAbilities"
+				"GameplayAbilities",
+				"EnhancedInput"
 			]
 		}
 	],
@@ -35,6 +36,10 @@
 		},
 		{
 			"Name": "GameFeatures",
+			"Enabled": true
+		},
+		{
+			"Name": "EnhancedInput",
 			"Enabled": true
 		}
 	]

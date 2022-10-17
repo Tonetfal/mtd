@@ -6,7 +6,8 @@
 
 AMTD_Projectile::AMTD_Projectile()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 	
 	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(
 		TEXT("Collision Capsule Component"));
@@ -15,13 +16,6 @@ AMTD_Projectile::AMTD_Projectile()
 	CollisionCapsule->SetCollisionProfileName("NoCollision");
 	CollisionCapsule->SetSimulatePhysics(false);
 	CollisionCapsule->SetEnableGravity(false);
-	
-	Mesh =
-		CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh Component"));
-	Mesh->SetupAttachment(GetRootComponent());
-	Mesh->SetCollisionProfileName(FName("NoCollision"));
-	Mesh->SetSimulatePhysics(false);
-	Mesh->SetEnableGravity(false);
 
 	ProjectileMovement =
 		CreateDefaultSubobject<UMTD_ProjectileMovementComponent>
@@ -38,12 +32,6 @@ void AMTD_Projectile::BeginPlay()
 
 	CollisionCapsule->OnComponentBeginOverlap.AddDynamic(
 		this, &AMTD_Projectile::OnBeginOverlap);
-
-	GetWorldTimerManager().SetTimer(
-		SelfDestroyTimerHandle,
-		this,
-		&AMTD_Projectile::OnDestroy,
-		30.f);
 }
 
 void AMTD_Projectile::SetupParameters(
@@ -59,6 +47,12 @@ void AMTD_Projectile::SetupParameters(
 	ProjectileMovement->SetHomingTarget(Parameters.HomingTarget);
 	ProjectileMovement->SetDirection(Parameters.Direction);
 	CollisionCapsule->SetCollisionProfileName(Parameters.CollisionProfileName);
+	
+	GetWorldTimerManager().SetTimer(
+		SelfDestroyTimerHandle,
+		this,
+		&AMTD_Projectile::OnSelfDestroy,
+		Parameters.SecondsToSelfDestroy);
 }
 
 void AMTD_Projectile::OnBeginOverlap(
@@ -69,49 +63,15 @@ void AMTD_Projectile::OnBeginOverlap(
 	bool bFromSweep,
 	const FHitResult &SweepResult)
 {
-	// if (Parameters.bIsRadial)
-	// {
-	// 	const UWorld *World = GetWorld();
-	// 	if (!IsValid(World))
-	// 	{
-	// 		MTD_WARN("World is invalid");
-	// 		return;
-	// 	}
-	//
-	// 	const TArray<AActor*> IgnoreActors; // None
-	// 	ECollisionChannel ChannelToIgnore = ECollisionChannel::ECC_GameTraceChannel1; // Ally proj - ignore allies, enemy proj - ignore enemies
-	// 	UGameplayStatics::ApplyRadialDamage(
-	// 		World,
-	// 		Parameters.Damage,
-	// 		SweepResult.Location, // or GetActorLocation()
-	// 		Parameters.RadialDamageRadius,
-	// 		Parameters.DamageTypeClass,
-	// 		IgnoreActors,
-	// 		this,
-	// 		nullptr, // tower reference
-	// 		false);
-	// }
-	// else
-	// {
-	// 	UGameplayStatics::ApplyDamage(
-	// 		OtherActor,
-	// 		Parameters.Damage,
-	// 		nullptr, // tower reference
-	// 		GetOwner(), 
-	// 		Parameters.DamageTypeClass);
-	// }
-	OnDestroy();
+	Destroy();
 }
 
-void AMTD_Projectile::OnDestroy()
+void AMTD_Projectile::OnSelfDestroy_Implementation()
 {
 	if (SelfDestroyTimerHandle.IsValid())
 	{
 		GetWorldTimerManager().ClearTimer(SelfDestroyTimerHandle);
 	}
-
-	// Play VFX
-	// ...
 
 	Destroy();
 }
