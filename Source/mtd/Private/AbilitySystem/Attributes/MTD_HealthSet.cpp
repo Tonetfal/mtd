@@ -26,7 +26,8 @@ void UMTD_HealthSet::PostGameplayEffectExecute(
 
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		if (GetHealth() <= 0.f && !bOutOfHealth)
+		const float HealthValue = GetHealth();
+		if ((HealthValue <= 0.f) && (!bOutOfHealth))
 		{
 			if (OnOutOfHealthDelegate.IsBound())
 			{
@@ -40,7 +41,7 @@ void UMTD_HealthSet::PostGameplayEffectExecute(
 			}
 		}
 
-		bOutOfHealth = GetHealth() <= 0.f;
+		bOutOfHealth = (HealthValue <= 0.f);
 	}
 }
 

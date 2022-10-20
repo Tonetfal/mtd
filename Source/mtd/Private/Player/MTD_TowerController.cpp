@@ -20,6 +20,8 @@ AMTD_TowerController::AMTD_TowerController()
 	
 	PerceptionComponent->ConfigureSense(*SightConfig);
 	PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
+
+	bWantsPlayerState = true;
 }
 
 void AMTD_TowerController::BeginPlay()

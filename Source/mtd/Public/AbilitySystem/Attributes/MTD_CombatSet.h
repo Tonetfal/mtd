@@ -11,9 +11,9 @@ class MTD_API UMTD_CombatSet : public UMTD_AttributeSet
 	GENERATED_BODY()
 
 public:
-	ATTRIBUTE_ACCESSORS(UMTD_CombatSet, Combat);
+	ATTRIBUTE_ACCESSORS(UMTD_CombatSet, BaseDamage);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData Combat;
+	FGameplayAttributeData BaseDamage;
 };

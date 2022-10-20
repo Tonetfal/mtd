@@ -13,7 +13,7 @@ class MTD_API UMTD_DamageExecution :
 	
 public:
 	UMTD_DamageExecution();
-
+	
 	virtual void Execute_Implementation(
 		const FGameplayEffectCustomExecutionParameters &ExecutionParams,
 		FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const override;

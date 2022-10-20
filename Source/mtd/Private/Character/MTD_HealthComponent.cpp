@@ -35,8 +35,8 @@ void UMTD_HealthComponent::InitializeWithAbilitySystem(
 	HealthSet = AbilitySystemComponent->GetSet<UMTD_HealthSet>();
 	if (!HealthSet)
 	{
-		MTD_ERROR("Cannot initialize health component for owner [%s] with NULL "
-			"health set on the ability system", *Owner->GetName());
+		MTDS_ERROR("Cannot initialize health component with NULL "
+			"combat set on the ability system");
 		return;
 	}
 
@@ -123,7 +123,7 @@ void UMTD_HealthComponent::SelfDestruct(bool bFeelOutOfWorld)
 	if (DeathState == EMTD_DeathState::NotDead &&
 		IsValid(AbilitySystemComponent))
 	{
-		// ...
+		// TODO: Implement me
 	}
 }
 
@@ -207,20 +207,9 @@ void UMTD_HealthComponent::OnOutOfHealth(
 	// FScopedPredictionWindow NewScopedWindow(AbilitySystemComponent, true);
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 
- // // Send a standardized verb message that other systems can observe
- // 	FLyraVerbMessage Message;
- // 	Message.Verb = TAG_Lyra_Elimination_Message;
- // 	Message.Instigator = DamageInstigator;
- // 	Message.InstigatorTags = *DamageEffectSpec.CapturedSourceTags.GetAggregatedTags();
- // 	Message.Target = ULyraVerbMessageHelpers::GetPlayerStateFromObject(AbilitySystemComponent->GetAvatarActor());
- // 	Message.TargetTags = *DamageEffectSpec.CapturedTargetTags.GetAggregatedTags();
- // 	//@TODO: Fill out context tags, and any non-ability-system source/instigator tags
- // 	//@TODO: Determine if it's an opposing team kill, self-own, team kill, etc...
- //
- // 	UGameplayMessageSubsystem& MessageSystem = UGameplayMessageSubsystem::Get(GetWorld());
- // 	MessageSystem.BroadcastMessage(Message.Verb, Message);
- //
-	// //@TODO: assist messages (could compute from damage dealt elsewhere)?
+	// TODO: Send an event about death. This can be used to keep track of some
+	// game statistics
+	// ...
 
 #endif // #if WITH_SERVER_CODE
 }

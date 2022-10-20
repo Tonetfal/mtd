@@ -21,7 +21,7 @@ bool UMTD_GameplayAbility_Attack::CanActivateAbility(
 	const FGameplayTagContainer *TargetTags,
 	FGameplayTagContainer *OptionalRelevantTags) const
 {
-	if (AttackMontage.IsEmpty())
+	if (AttackAnimMontages.IsEmpty())
 	{
 		MTDS_WARN("No attack montage to play!");
 		return false;
@@ -38,69 +38,22 @@ void UMTD_GameplayAbility_Attack::ActivateAbility(
 	const FGameplayEventData *TriggerEventData)
 {
 	check(ActorInfo);
+
+	CommitExecute(Handle, ActorInfo, ActivationInfo);
 	
 	const auto MtdAsc = CastChecked<UMTD_AbilitySystemComponent>(
 		ActorInfo->AbilitySystemComponent.Get());
+
+	int32 AttackMontageIndex;
+	HandleAttackGameplayEffect(MtdAsc, AttackMontageIndex);
 	
-	FGameplayEffectQuery GeQuery;
-	GeQuery.EffectDefinition = UMTD_GameplayEffect_Attack::StaticClass();
-	TArray<FActiveGameplayEffectHandle> ActiveGeHandles = 
-		MtdAsc->GetActiveEffects(GeQuery);
+	PlayAttackAnimation(
+		CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor.Get()),
+		AttackMontageIndex);
 
-	if (ActiveGeHandles.Num() > 1)
-	{
-		MTDS_WARN("Ability system [%s] has more than one "
-			"UMTD_GameplayEffect_Attack. Only the first will be considered",
-			*GetNameSafe(MtdAsc));
-	}
-
-	int32 AttackMontageIndex = 0;
-	if (!ActiveGeHandles.IsEmpty())
-	{
-		const FActiveGameplayEffectHandle AttackHandle = ActiveGeHandles[0];
-		const FActiveGameplayEffect *AttackGe =
-			MtdAsc->GetActiveGameplayEffect(AttackHandle);
-		
-		// Select a valid attack montage index
-		const int32 Level = static_cast<int32>(AttackGe->Spec.GetLevel());
-		AttackMontageIndex = Level % AttackMontage.Num();
-
-		// Increase GE level and reset its duration
-		MtdAsc->IncreaseGameplayEffectLevelHandle(AttackHandle, 1.f);
-		MtdAsc->SetGameplayEffectDurationHandle(AttackHandle, Duration);
-		
-		// Cancel previous attack
-		FGameplayTagContainer AbilityTypesToCancel;
-		AbilityTypesToCancel.AddTag(
-			FMTD_GameplayTags::Get().Gameplay_Ability_AttackMelee);
-		MtdAsc->CancelAbilities(&AbilityTypesToCancel, nullptr, this);
-	}
-	else
-	{
-		// Create and apply on self gameplay effect
-		const FGameplayEffectSpecHandle SpecHandle = MtdAsc->MakeOutgoingSpec(
-			UMTD_GameplayEffect_Attack::StaticClass(),
-			1.f,
-			MtdAsc->MakeEffectContext());
-
-		const FActiveGameplayEffectHandle EffectHandle =
-			MtdAsc->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
-		MtdAsc->SetGameplayEffectDurationHandle(EffectHandle, Duration);
-	}
-	
-	// Activate attack animation
-	auto Actor =
-		CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor.Get());
-	UAnimInstance *AnimInstance = Actor->GetMesh()->GetAnimInstance();
-	AnimInstance->Montage_Play(AttackMontage[AttackMontageIndex]);
-
-	// Call end ability on montage ended
-	// FOnMontageEnded OnMontageEnded;
-	// OnMontageEnded.BindUObject(this, &ThisClass::OnAttackMontageEnded);
-	// AnimInstance->Montage_SetEndDelegate(OnMontageEnded);
-	K2_CancelAbility();
-
-	// Note: Wait Gameplay Event and Apply GE To Target is in BP
+	FTimerHandle EndAbilityTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(EndAbilityTimerHandle, this,
+		&ThisClass::K2_EndAbility, CooldownDuration.Value);
 	
 	SetCanBeCanceled(true);
 	
@@ -116,15 +69,91 @@ void UMTD_GameplayAbility_Attack::EndAbility(
 {
 	check(ActorInfo);
 	
-	const auto MtdAsc = CastChecked<UMTD_AbilitySystemComponent>(
-		ActorInfo->AbilitySystemComponent.Get());
-
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility,
 		bWasCancelled);
 }
 
-void UMTD_GameplayAbility_Attack::OnAttackMontageEnded(
-	UAnimMontage*AnimMontage,bool bInterrupted)
+void UMTD_GameplayAbility_Attack::HandleAttackGameplayEffect(
+	UMTD_AbilitySystemComponent *MtdAsc, int32 &OutAttackMontageIndex) const
 {
-	K2_EndAbility();
+	// Check if we have an active attack GE
+	const FActiveGameplayEffectHandle AttackHandle = 
+		GetFirstActiveAttackGameplayEffect(MtdAsc);
+
+	OutAttackMontageIndex = 0;
+	if (!AttackHandle.IsValid())
+	{
+		CreateAndApplyAttackGameplayEffectOnSelf(MtdAsc);
+	}
+	else
+	{
+		// Increase GE level by one and reset its duration
+		MtdAsc->IncreaseGameplayEffectLevelHandle(AttackHandle, 1.f);
+		MtdAsc->SetGameplayEffectDurationHandle(AttackHandle, AttackGeDuration);
+		
+		CancelPreviousAttack(MtdAsc);
+		
+		OutAttackMontageIndex =
+			GetAttackMontageIndexToPlay(AttackHandle, MtdAsc);
+	}
+}
+
+FActiveGameplayEffectHandle
+	UMTD_GameplayAbility_Attack::GetFirstActiveAttackGameplayEffect(
+		const UMTD_AbilitySystemComponent *MtdAsc) const
+{
+	FGameplayEffectQuery GeQuery;
+	GeQuery.EffectDefinition = UMTD_GameplayEffect_Attack::StaticClass();
+	TArray<FActiveGameplayEffectHandle> ActiveGeHandles = 
+		MtdAsc->GetActiveEffects(GeQuery);
+
+	if (ActiveGeHandles.Num() > 1)
+	{
+		MTDS_WARN("Ability system [%s] has more than one "
+			"UMTD_GameplayEffect_Attack. Only the first will be considered",
+			*MtdAsc->GetName());
+	}
+
+	return !ActiveGeHandles.IsEmpty() ?
+		ActiveGeHandles[0] : FActiveGameplayEffectHandle();
+}
+
+int32 UMTD_GameplayAbility_Attack::GetAttackMontageIndexToPlay(
+	FActiveGameplayEffectHandle AttackGeHandle,
+	const UMTD_AbilitySystemComponent *MtdAsc) const
+{
+	const FActiveGameplayEffect *AttackGe =
+		MtdAsc->GetActiveGameplayEffect(AttackGeHandle);
+	
+	const int32 Level = static_cast<int32>(AttackGe->Spec.GetLevel());
+	return Level % AttackAnimMontages.Num();
+}
+
+void UMTD_GameplayAbility_Attack::CancelPreviousAttack(
+	UMTD_AbilitySystemComponent *MtdAsc) const
+{
+	FGameplayTagContainer AbilityTypesToCancel;
+	AbilityTypesToCancel.AddTag(
+		FMTD_GameplayTags::Get().Gameplay_Ability_AttackMelee);
+	MtdAsc->CancelAbilities(&AbilityTypesToCancel, nullptr, nullptr);
+}
+
+void UMTD_GameplayAbility_Attack::CreateAndApplyAttackGameplayEffectOnSelf(
+	UMTD_AbilitySystemComponent *MtdAsc) const
+{
+	const FGameplayEffectSpecHandle SpecHandle = MtdAsc->MakeOutgoingSpec(
+		UMTD_GameplayEffect_Attack::StaticClass(),
+		1.f,
+		MtdAsc->MakeEffectContext());
+
+	const FActiveGameplayEffectHandle EffectHandle =
+		MtdAsc->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	MtdAsc->SetGameplayEffectDurationHandle(EffectHandle, AttackGeDuration);
+}
+
+void UMTD_GameplayAbility_Attack::PlayAttackAnimation(
+	const ACharacter *PlayOn, int32 AnimMontageIndex)
+{
+	UAnimInstance *AnimInstance = PlayOn->GetMesh()->GetAnimInstance();
+	AnimInstance->Montage_Play(AttackAnimMontages[AnimMontageIndex]);
 }

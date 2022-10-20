@@ -139,14 +139,14 @@ void AMTD_BaseCharacter::Uninit()
 	SetActorHiddenInGame(true);
 }
 
-void AMTD_BaseCharacter::OnDeathStarted(AActor *OwningActor)
+void AMTD_BaseCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
 {
 	DisableControllerInput();
 	DisableMovement();
 	DisableCollision();
 }
 
-void AMTD_BaseCharacter::OnDeathFinished(AActor *OwningActor)
+void AMTD_BaseCharacter::OnDeathFinished_Implementation(AActor *OwningActor)
 {
 	GetWorld()->GetTimerManager().SetTimerForNextTick(
 		this, &ThisClass::DestroyDueToDeath);
@@ -165,9 +165,8 @@ void AMTD_BaseCharacter::DisableMovement()
 {
 	UCharacterMovementComponent *MoveComp = GetCharacterMovement();
 	check(MoveComp);
-
+	
 	MoveComp->StopMovementImmediately();
-	MoveComp->DisableMovement();
 }
 
 void AMTD_BaseCharacter::DisableCollision()

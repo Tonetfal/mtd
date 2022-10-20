@@ -25,11 +25,24 @@ public:
 		const bool *bWasVisible,
 		int32 *UserData) const override;
 
+	virtual FPathFollowingRequestResult MoveTo(
+		const FAIMoveRequest &MoveRequest, FNavPathSharedPtr *OutPath) override;
+
 	virtual FGenericTeamId GetGenericTeamId() const override
 		{ return Team->GetGenericTeamId(); }
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	void OnMoveFinished(
+		FAIRequestID RequestID, const FPathFollowingResult &Result);
 	
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD Components",
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
 		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UMTD_TeamComponent> Team = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+	bool bIsMoving = false;
 };

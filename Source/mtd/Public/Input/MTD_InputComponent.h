@@ -24,7 +24,8 @@ public:
 		UserClass *Object,
 		FuncType Func);
 
-	template<class UserClass, typename PressedFuncType, typename ReleasedFuncType>
+	template<
+		class UserClass, typename PressedFuncType, typename ReleasedFuncType>
 	void BindAbilityActions(
 		const UMTD_InputConfig *InputConfig,
 		UserClass *Object,
@@ -59,8 +60,7 @@ void UMTD_InputComponent::BindAbilityActions(
 {
 	check(InputConfig);
 
-	for (const FMTD_InputAction &Action :
-		InputConfig->AbilityInputActions)
+	for (const FMTD_InputAction &Action : InputConfig->AbilityInputActions)
 	{
 		if (PressedFunc)
 		{
@@ -70,7 +70,7 @@ void UMTD_InputComponent::BindAbilityActions(
 		
 		if (ReleasedFunc)
 		{
-			BindAction(Action.InputAction, ETriggerEvent::Triggered, Object,
+			BindAction(Action.InputAction, ETriggerEvent::Completed, Object,
 				ReleasedFunc, Action.InputTag);
 		}
 	}

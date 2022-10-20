@@ -37,7 +37,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="MTD Path Following Component")
 	virtual void OnMoveToFinished(bool bSuccess);
 	
-	UFUNCTION(BlueprintCallable, Category="MTD Path Following Component")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD Path Following Component")
 	virtual float GetAcceptanceRadius()
 		{ return bFailedToGetFollowPoint ?
 			FailedFollowPointAcceptanceRadius : FollowPointAcceptanceRadius; }

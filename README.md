@@ -1,3 +1,5 @@
 # mtd
 
-Developed with Unreal Engine 5
+WIP Action RPG TD game.
+
+[Miro documentation](https://miro.com/app/board/uXjVPPDEcfc=/)

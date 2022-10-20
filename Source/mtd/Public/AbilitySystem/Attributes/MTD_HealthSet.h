@@ -29,7 +29,7 @@ protected:
 		float NewValue) override;
 
 	void ClampAttribute(
-    	const FGameplayAttribute &Attribute, float &NewValue) const;
+		const FGameplayAttribute &Attribute, float &NewValue) const;
 	
 public:
 	mutable FAttributeEventSignature OnOutOfHealthDelegate;

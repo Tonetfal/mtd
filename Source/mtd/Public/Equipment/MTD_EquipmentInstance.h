@@ -1,10 +1,14 @@
 #pragma once
 
 #include "mtd.h"
+#include "MTD_EquipmentCoreTypes.h"
 #include "GameFramework/Pawn.h"
 
 #include "MTD_EquipmentInstance.generated.h"
 
+class UAbilitySystemComponent;
+class UMTD_AbilitySystemComponent;
+class UMTD_CombatSet;
 struct FMTD_EquipmentActorToSpawn;
 
 UCLASS(BlueprintType, Blueprintable)
@@ -38,11 +42,17 @@ public:
 	UFUNCTION(BlueprintPure, Category="Equipment")
 	AActor *GetSpawnedActor() const
 		{ return SpawnedActor; }
+		
+	UFUNCTION(BlueprintPure, Category="Equipment")
+	UAbilitySystemComponent *GetAbilitySystemComponent() const;
+
+	UFUNCTION(BlueprintPure, Category="Equipment")
+	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
 
 	virtual void SpawnEquipmentActor(
 		const FMTD_EquipmentActorToSpawn &ActorToSpawn);
 	virtual void DestroyEquipmentActor();
-
+	
 	virtual void OnEquipped();
 	virtual void OnUnequipped();
 
@@ -55,10 +65,21 @@ protected:
 		meta=(DisplayName="OnUnequipped"))
 	void K2_OnUnequipped();
 
+	virtual void ModStats(float Multiplier);
+	bool IsPlayer() const;
+
+private:
+	void GrantStats();
+	void TakeBackStats();
+
 private:
 	UPROPERTY()
 	TObjectPtr<UObject> Instigator;
 
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TObjectPtr<AActor> SpawnedActor;
+
+	UPROPERTY(EditAnywhere, Category="MTD|Stats",
+		meta=(AllowPrivateAccess="true"))
+	FMTD_EquipmentPlayerStats PlayerStats;
 };

@@ -6,23 +6,26 @@
 void FMTD_AbilitySet_GrantedHandles::AddAbilitySpecHandle(
 	const FGameplayAbilitySpecHandle &Handle)
 {
-	if (Handle.IsValid())
-	{
-		AbilitySpecHandles.Add(Handle);
-	}
+	if (!Handle.IsValid())
+		return;
+	
+	AbilitySpecHandles.Add(Handle);
 }
 
 void FMTD_AbilitySet_GrantedHandles::AddGameplayEffectHandle(
 	const FActiveGameplayEffectHandle &Handle)
 {
-	if (Handle.IsValid())
-	{
-		GameplayEffectHandles.Add(Handle);
-	}
+	if (!Handle.IsValid())
+		return;
+	
+	GameplayEffectHandles.Add(Handle);
 }
 
 void FMTD_AbilitySet_GrantedHandles::AddAttributeSet(UAttributeSet *Set)
 {
+	if (!Set || !Set->IsValidLowLevel())
+		return;
+	
 	GrantedAttributeSets.Add(Set);
 }
 
@@ -31,11 +34,9 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(
 {
 	check(MtdAsc);
 
+	// Must be authoritative to give or take ability sets
 	if (!MtdAsc->IsOwnerActorAuthoritative())
-	{
-		// Must be authoritative to give or take ability sets
 		return;
-	}
 
 	for (const FGameplayAbilitySpecHandle &Handle : AbilitySpecHandles)
 	{
@@ -53,7 +54,7 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(
 		}
 	}
 
-	for (UAttributeSet* Set : GrantedAttributeSets)
+	for (UAttributeSet *Set : GrantedAttributeSets)
 	{
 		MtdAsc->GetSpawnedAttributes_Mutable().Remove(Set);
 	}
@@ -63,10 +64,6 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(
 	GrantedAttributeSets.Reset();
 }
 
-UMTD_AbilitySet::UMTD_AbilitySet()
-{
-}
-
 void UMTD_AbilitySet::GiveToAbilitySystem(
 	UMTD_AbilitySystemComponent *MtdAsc,
 	FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
@@ -74,74 +71,110 @@ void UMTD_AbilitySet::GiveToAbilitySystem(
 {
 	check(MtdAsc);
 
+	// Must be authoritative to give or take ability sets
 	if (!MtdAsc->IsOwnerActorAuthoritative())
-	{
-		// Must be authoritative to give or take ability sets
 		return;
-	}
 
-	// Grant the gameplay abilities
-	for (int32 AbilityIndex = 0; AbilityIndex < GrantedGameplayAbilities.Num(); ++AbilityIndex)
+	GrantAbilities(MtdAsc, OutGrantedHandles, SourceObject);
+	GrantEffects(MtdAsc, OutGrantedHandles, SourceObject);
+	GrantAttributes(MtdAsc, OutGrantedHandles, SourceObject);
+}
+
+void UMTD_AbilitySet::GrantAbilities(
+	UMTD_AbilitySystemComponent *MtdAsc,
+	FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
+	UObject *SourceObject) const
+{
+	int32 AbilityIndex = 0;
+	
+	for (const FMTD_AbilitySet_GameplayAbility &AbilityToGrant :
+		GrantedGameplayAbilities)
 	{
-		const FMTD_AbilitySet_GameplayAbility& AbilityToGrant = GrantedGameplayAbilities[AbilityIndex];
-
 		if (!IsValid(AbilityToGrant.Ability))
 		{
 			MTDS_ERROR("Gameplay ability [%d] is invalid", AbilityIndex);
+			AbilityIndex++;
 			continue;
 		}
 
-		UMTD_GameplayAbility* AbilityCDO = AbilityToGrant.Ability->GetDefaultObject<UMTD_GameplayAbility>();
+		const auto Ability =
+			AbilityToGrant.Ability->GetDefaultObject<UMTD_GameplayAbility>();
 
-		FGameplayAbilitySpec AbilitySpec(AbilityCDO, AbilityToGrant.AbilityLevel);
+		FGameplayAbilitySpec AbilitySpec(Ability, AbilityToGrant.AbilityLevel);
 		AbilitySpec.SourceObject = SourceObject;
 		AbilitySpec.DynamicAbilityTags.AddTag(AbilityToGrant.InputTag);
 
-		const FGameplayAbilitySpecHandle AbilitySpecHandle = MtdAsc->GiveAbility(AbilitySpec);
+		const FGameplayAbilitySpecHandle AbilitySpecHandle =
+			MtdAsc->GiveAbility(AbilitySpec);
 
 		if (OutGrantedHandles)
 		{
 			OutGrantedHandles->AddAbilitySpecHandle(AbilitySpecHandle);
 		}
+
+		AbilityIndex++;
 	}
+}
 
-	// Grant the gameplay effects.
-	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
+void UMTD_AbilitySet::GrantEffects(
+	UMTD_AbilitySystemComponent *MtdAsc,
+	FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
+	UObject *SourceObject) const
+{
+	int32 EffectIndex = 0;
+	
+	for (const FMTD_AbilitySet_GameplayEffect &EffectToGrant :
+		GrantedGameplayEffects)
 	{
-		const FMTD_AbilitySet_GameplayEffect& EffectToGrant = GrantedGameplayEffects[EffectIndex];
-
 		if (!IsValid(EffectToGrant.GameplayEffect))
 		{
 			MTDS_ERROR("Gameplay effect [%d] is invalid", EffectIndex);
+			EffectIndex++;
 			continue;
 		}
 
-		const UGameplayEffect* GameplayEffect = EffectToGrant.GameplayEffect->GetDefaultObject<UGameplayEffect>();
-		const FActiveGameplayEffectHandle GameplayEffectHandle = MtdAsc->ApplyGameplayEffectToSelf(GameplayEffect, EffectToGrant.EffectLevel, MtdAsc->MakeEffectContext());
+		const auto GameplayEffect =
+			EffectToGrant.GameplayEffect->GetDefaultObject<UGameplayEffect>();
+		const FActiveGameplayEffectHandle GameplayEffectHandle =
+			MtdAsc->ApplyGameplayEffectToSelf(
+				GameplayEffect,
+				EffectToGrant.EffectLevel,
+				MtdAsc->MakeEffectContext());
 
 		if (OutGrantedHandles)
 		{
 			OutGrantedHandles->AddGameplayEffectHandle(GameplayEffectHandle);
 		}
+
+		EffectIndex++;
 	}
+}
 
-	// Grant the attribute sets.
-	for (int32 SetIndex = 0; SetIndex < GrantedAttributes.Num(); ++SetIndex)
+void UMTD_AbilitySet::GrantAttributes(
+	UMTD_AbilitySystemComponent *MtdAsc,
+	FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
+	UObject *SourceObject) const
+{
+	int32 SetIndex = 0;
+	
+	for (const FMTD_AbilitySet_AttributeSet &SetToGrant : GrantedAttributes)
 	{
-		const FMTD_AbilitySet_AttributeSet& SetToGrant = GrantedAttributes[SetIndex];
-
 		if (!IsValid(SetToGrant.AttributeSet))
 		{
 			MTDS_ERROR("Gameplay attributes [%d] are invalid", SetIndex);
+			SetIndex++;
 			continue;
 		}
 
-		UAttributeSet* NewSet = NewObject<UAttributeSet>(MtdAsc->GetOwner(), SetToGrant.AttributeSet);
+		const auto NewSet = NewObject<UAttributeSet>(
+			MtdAsc->GetOwner(), SetToGrant.AttributeSet);
 		MtdAsc->AddAttributeSetSubobject(NewSet);
 
 		if (OutGrantedHandles)
 		{
 			OutGrantedHandles->AddAttributeSet(NewSet);
 		}
+		
+		SetIndex++;
 	}
 }

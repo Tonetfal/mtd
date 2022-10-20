@@ -1,8 +1,9 @@
 #pragma once
 
+#include "AbilitySystem/MTD_AbilitySet.h"
 #include "GameFramework/Actor.h"
 #include "mtd.h"
-#include "AbilitySystem/MTD_AbilitySet.h"
+
 #include "MTD_EquipmentDefinition.generated.h"
 
 class UMTD_EquipmentInstance;

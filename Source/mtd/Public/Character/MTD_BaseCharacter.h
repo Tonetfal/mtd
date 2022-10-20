@@ -43,11 +43,13 @@ protected:
 	virtual void DestroyDueToDeath();
 	virtual void Uninit();
 	
-	UFUNCTION()
-	virtual void OnDeathStarted(AActor *OwningActor);
+	UFUNCTION(BlueprintNativeEvent, Category="Character")
+	void OnDeathStarted(AActor *OwningActor);
+	virtual void OnDeathStarted_Implementation(AActor *OwningActor);
 	
-	UFUNCTION()
-	virtual void OnDeathFinished(AActor *OwningActor);
+	UFUNCTION(BlueprintNativeEvent, Category="Character")
+	void OnDeathFinished(AActor *OwningActor);
+	virtual void OnDeathFinished_Implementation(AActor *OwningActor);
 
 	virtual void DisableControllerInput();
 	virtual void DisableMovement();

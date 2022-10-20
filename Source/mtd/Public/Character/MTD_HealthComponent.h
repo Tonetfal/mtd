@@ -5,11 +5,11 @@
 
 #include "MTD_HealthComponent.generated.h"
 
+class UMTD_AbilitySystemComponent;
+class UMTD_HealthSet;
+class UMTD_HealthComponent;
 struct FGameplayEffectSpec;
 struct FOnAttributeChangeData;
-class UMTD_HealthSet;
-class UMTD_AbilitySystemComponent;
-class UMTD_HealthComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	FDeathEventSignature,
@@ -37,9 +37,10 @@ class MTD_API UMTD_HealthComponent : public UActorComponent
 public:	
 	UMTD_HealthComponent();
 
+	UFUNCTION(BlueprintCallable, Category="MTD|Health")
 	static UMTD_HealthComponent *FindHealthComponent(const AActor *Actor)
 	{
-		return Actor ?
+		return IsValid(Actor) ?
 			Actor->FindComponentByClass<UMTD_HealthComponent>() : nullptr;
 	}
 

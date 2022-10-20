@@ -1,7 +1,8 @@
 #include "Player/MTD_PlayerState.h"
 
-#include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/MTD_CombatSet.h"
+#include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "Player/MTD_PlayerController.h"
 
 AMTD_PlayerState::AMTD_PlayerState()
@@ -11,15 +12,15 @@ AMTD_PlayerState::AMTD_PlayerState()
 			TEXT("MTD Ability System Component"));
 
 	CreateDefaultSubobject<UMTD_HealthSet>(TEXT("HealthSet"));
-	// CreateDefaultSubobject<UMTD_CombatSet>(TEXT("CombarSet"));
+	CreateDefaultSubobject<UMTD_CombatSet>(TEXT("CombatSet"));
 }
 
-AMTD_PlayerController* AMTD_PlayerState::GetLyraPlayerController() const
+AMTD_PlayerController *AMTD_PlayerState::GetLyraPlayerController() const
 {
 	return Cast<AMTD_PlayerController>(GetOwner());
 }
 
-UAbilitySystemComponent* AMTD_PlayerState::GetAbilitySystemComponent() const
+UAbilitySystemComponent *AMTD_PlayerState::GetAbilitySystemComponent() const
 {
 	return GetMtdAbilitySystemComponent();
 }
@@ -31,7 +32,7 @@ void AMTD_PlayerState::GrantAbility(
 		IsValid(AbilitySystemComponent) &&
 		IsValid(AbilityClass))
 	{
-		auto *Ability = AbilityClass->GetDefaultObject<UGameplayAbility>();
+		auto Ability = AbilityClass->GetDefaultObject<UGameplayAbility>();
 
 		if (IsValid(Ability))
 		{

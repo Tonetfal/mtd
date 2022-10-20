@@ -9,6 +9,8 @@ AMTD_EnemyController::AMTD_EnemyController()
 	
 	Team =
 		CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
+
+	bWantsPlayerState = true;
 }
 
 bool AMTD_EnemyController::CanBeSeenFrom(
@@ -48,4 +50,29 @@ bool AMTD_EnemyController::CanBeSeenFrom(
 	}
 
 	return bCanBeSeen;
+}
+
+FPathFollowingRequestResult AMTD_EnemyController::MoveTo(
+	const FAIMoveRequest &MoveRequest, FNavPathSharedPtr *OutPath)
+{
+	bIsMoving = true;
+	return Super::MoveTo(MoveRequest,OutPath);
+}
+
+void AMTD_EnemyController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UPathFollowingComponent *PathFollowing = GetPathFollowingComponent();
+	if (IsValid(PathFollowing))
+	{
+		PathFollowing->OnRequestFinished.AddUObject(
+			this, &ThisClass::OnMoveFinished);
+	}
+}
+
+void AMTD_EnemyController::OnMoveFinished(
+	FAIRequestID RequestID, const FPathFollowingResult &Result)
+{
+	bIsMoving = false;
 }

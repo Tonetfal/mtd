@@ -5,6 +5,7 @@
 
 #include "MTD_HeroComponent.generated.h"
 
+class UMTD_AbilitySystemComponent;
 class UPlayerMappableInputConfig;
 class UMTD_PawnData;
 struct FInputActionValue;
@@ -36,6 +37,8 @@ protected:
 	
 	void Input_Move(const FInputActionValue &InputActionValue);
 	void Input_LookMouse(const FInputActionValue &InputActionValue);
+
+	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
 	
 private:
 	UPROPERTY()
