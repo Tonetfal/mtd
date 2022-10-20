@@ -7,8 +7,6 @@ UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 {
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.bCanEverTick = false;
-
-	SetIsReplicatedByDefault(true);
 }
 
 void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
@@ -53,7 +51,7 @@ void UMTD_PawnExtensionComponent::InitializeAbilitySystem(
 	APawn *Pawn = GetPawnChecked<APawn>();
 	const AActor *ExistingAvatar = InAsc->GetAvatarActor();
 
-	MTD_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s]",
+	MTDS_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s]",
 		*GetNameSafe(InAsc), *GetNameSafe(Pawn),
 		*GetNameSafe(InOwnerActor), *GetNameSafe(ExistingAvatar));
 

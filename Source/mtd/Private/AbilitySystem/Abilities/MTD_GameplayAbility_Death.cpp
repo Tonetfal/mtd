@@ -7,9 +7,6 @@
 
 UMTD_GameplayAbility_Death::UMTD_GameplayAbility_Death()
 {
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
-
 	UGameplayTagsManager::Get().CallOrRegister_OnDoneAddingNativeTagsDelegate(
 		FSimpleDelegate::CreateUObject(
 			this, &ThisClass::OnDoneAddingNativeTags));

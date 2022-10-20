@@ -7,6 +7,9 @@
 
 AMTD_PlayerState::AMTD_PlayerState()
 {
+	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+	
 	AbilitySystemComponent =
 		CreateDefaultSubobject<UMTD_AbilitySystemComponent>(
 			TEXT("MTD Ability System Component"));
@@ -28,9 +31,7 @@ UAbilitySystemComponent *AMTD_PlayerState::GetAbilitySystemComponent() const
 void AMTD_PlayerState::GrantAbility(
 	TSubclassOf<UGameplayAbility> AbilityClass, int32 Level, int32 InputCode)
 {
-	if (GetLocalRole() == ROLE_Authority &&
-		IsValid(AbilitySystemComponent) &&
-		IsValid(AbilityClass))
+	if (IsValid(AbilitySystemComponent) && IsValid(AbilityClass))
 	{
 		auto Ability = AbilityClass->GetDefaultObject<UGameplayAbility>();
 

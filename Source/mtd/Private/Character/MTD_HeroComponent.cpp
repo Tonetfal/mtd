@@ -12,6 +12,8 @@
 
 UMTD_HeroComponent::UMTD_HeroComponent()
 {
+	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UMTD_HeroComponent::OnRegister()

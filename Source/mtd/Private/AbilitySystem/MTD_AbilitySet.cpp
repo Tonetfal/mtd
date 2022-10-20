@@ -34,10 +34,6 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(
 {
 	check(MtdAsc);
 
-	// Must be authoritative to give or take ability sets
-	if (!MtdAsc->IsOwnerActorAuthoritative())
-		return;
-
 	for (const FGameplayAbilitySpecHandle &Handle : AbilitySpecHandles)
 	{
 		if (Handle.IsValid())
@@ -70,10 +66,6 @@ void UMTD_AbilitySet::GiveToAbilitySystem(
 	UObject *SourceObject) const
 {
 	check(MtdAsc);
-
-	// Must be authoritative to give or take ability sets
-	if (!MtdAsc->IsOwnerActorAuthoritative())
-		return;
 
 	GrantAbilities(MtdAsc, OutGrantedHandles, SourceObject);
 	GrantEffects(MtdAsc, OutGrantedHandles, SourceObject);

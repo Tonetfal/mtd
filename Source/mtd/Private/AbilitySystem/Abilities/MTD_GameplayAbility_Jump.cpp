@@ -3,6 +3,10 @@
 #include "Character/MTD_BaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+UMTD_GameplayAbility_Jump::UMTD_GameplayAbility_Jump()
+{
+}
+
 bool UMTD_GameplayAbility_Jump::CanActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo *ActorInfo,

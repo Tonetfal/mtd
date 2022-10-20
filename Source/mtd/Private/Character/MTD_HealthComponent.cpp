@@ -19,15 +19,15 @@ void UMTD_HealthComponent::InitializeWithAbilitySystem(
 
 	if (AbilitySystemComponent)
 	{
-		MTD_ERROR("Health component for owner [%s] has already been initilized "
-			"with an ability system", *Owner->GetName());
+		MTDS_ERROR("Health component for owner [%s] has already been "
+			"initilized with an ability system", *Owner->GetName());
 		return;
 	}
 
 	AbilitySystemComponent = Asc;
 	if (!AbilitySystemComponent)
 	{
-		MTD_ERROR("Cannot initilize health component for owner [%s] with a "
+		MTDS_ERROR("Cannot initilize health component for owner [%s] with a "
 			"NULL ability system", *Owner->GetName());
 		return;
 	}

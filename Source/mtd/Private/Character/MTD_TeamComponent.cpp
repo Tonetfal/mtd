@@ -2,17 +2,10 @@
 
 #include "Utility/MTD_Utility.h"
 
-void UMTD_TeamComponent::BeginPlay()
+UMTD_TeamComponent::UMTD_TeamComponent()
 {
-	Super::BeginPlay();
-
-	if (TeamId == EMTD_TeamId::Unknown)
-	{
-		MTD_WARN("%s does not belong to any team",
-			IsValid(GetOwner()) ? *GetOwner()->GetName() : TEXT("Owner"));
-	}
-
-	SetMtdTeamId(TeamId);
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UMTD_TeamComponent::SetMtdTeamId(EMTD_TeamId Id)
@@ -40,14 +33,14 @@ void UMTD_TeamComponent::SetGenericTeamId(const FGenericTeamId &Id)
 	AActor *Owner = GetOwner();
 	if (!IsValid(Owner))
 	{
-		MTD_WARN("Owner is invalid");
+		MTDS_WARN("Owner is invalid");
 		return;
 	}
 	
 	auto *OwnerTeamAgent = Cast<IGenericTeamAgentInterface>(Owner);
 	if (!OwnerTeamAgent)
 	{
-		MTD_WARN("%s does not inherit IGenericTeamAgentInterface", 
+		MTDS_WARN("[%s] does not inherit IGenericTeamAgentInterface",
 			*Owner->GetName());
 		return;
 	}
@@ -66,4 +59,16 @@ ETeamAttitude::Type UMTD_TeamComponent::GetTeamAttitudeTowards(
 	}
 
 	return IGenericTeamAgentInterface::GetTeamAttitudeTowards(Other);
+}
+
+void UMTD_TeamComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (TeamId == EMTD_TeamId::Unknown)
+	{
+		MTDS_WARN("[%s] does not belong to any team", *GetNameSafe(GetOwner()));
+	}
+
+	SetMtdTeamId(TeamId);
 }

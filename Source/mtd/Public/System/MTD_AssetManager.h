@@ -16,7 +16,6 @@ public:
 	static UMTD_AssetManager &Get();
 
 protected:
-	
 	//~UAssetManager interface
 	virtual void StartInitialLoading() override;
 	//~End of UAssetManager interface

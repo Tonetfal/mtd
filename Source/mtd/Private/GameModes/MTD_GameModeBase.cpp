@@ -20,13 +20,13 @@ void AMTD_GameModeBase::BeginPlay()
 	
 	if (LevelPathManagers.IsEmpty())
 	{
-		MTD_ERROR("Level path manager is missing!");
+		MTDS_ERROR("Level path manager is missing!");
 		return;
 	}
 	if (LevelPathManagers.Num() > 1)
 	{
-		MTD_WARN("There are more than one level path manager! "
-				"Only the first one will be used!");
+		MTDS_WARN("There are more than one level path manager! "
+			"Only the first one will be used!");
 	}
 	
 	LevelPathManager = Cast<AMTD_LevelPathManager>(LevelPathManagers[0]);

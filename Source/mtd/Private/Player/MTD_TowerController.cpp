@@ -7,6 +7,7 @@
 AMTD_TowerController::AMTD_TowerController()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 	
 	Team =
 		CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));

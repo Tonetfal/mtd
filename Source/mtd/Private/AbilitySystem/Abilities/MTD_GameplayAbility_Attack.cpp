@@ -8,9 +8,6 @@
 
 UMTD_GameplayAbility_Attack::UMTD_GameplayAbility_Attack()
 {
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
-
 	AbilityTags.AddTag(FMTD_GameplayTags::Get().Gameplay_Ability_AttackMelee);
 }
 

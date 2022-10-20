@@ -67,18 +67,6 @@ void AMTD_BaseCharacter::Reset()
 	Super::Reset();
 }
 
-void AMTD_BaseCharacter::GetLifetimeReplicatedProps(
-	TArray<FLifetimeProperty> &OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
-void AMTD_BaseCharacter::PreReplication(
-	IRepChangedPropertyTracker &ChangedPropertyTracker)
-{
-	Super::PreReplication(ChangedPropertyTracker);
-}
-
 void AMTD_BaseCharacter::NotifyControllerChanged()
 {
 	Super::NotifyControllerChanged();
@@ -114,11 +102,8 @@ void AMTD_BaseCharacter::OnAbilitySystemUninitialized()
 
 void AMTD_BaseCharacter::DestroyDueToDeath()
 {
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		DetachFromControllerPendingDestroy();
-		SetLifeSpan(0.1f);
-	}
+	DetachFromControllerPendingDestroy();
+	SetLifeSpan(0.1f);
 
 	Uninit();
 }

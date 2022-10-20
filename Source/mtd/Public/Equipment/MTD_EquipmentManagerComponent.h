@@ -28,6 +28,6 @@ public:
 	//~End of UActorComponent interface
 
 private:
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TObjectPtr<UMTD_EquipmentInstance> EquipmentInstance;
 };

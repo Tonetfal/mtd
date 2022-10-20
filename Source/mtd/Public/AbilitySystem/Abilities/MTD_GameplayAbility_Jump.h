@@ -11,6 +11,8 @@ class MTD_API UMTD_GameplayAbility_Jump : public UMTD_GameplayAbility
 	GENERATED_BODY()
 	
 public:
+	UMTD_GameplayAbility_Jump();
+	
 	virtual bool CanActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo *ActorInfo,

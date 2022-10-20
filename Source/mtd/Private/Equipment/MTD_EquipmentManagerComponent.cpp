@@ -10,14 +10,8 @@ UMTD_EquipmentManagerComponent::UMTD_EquipmentManagerComponent(
 	const FObjectInitializer &ObjectInitializer)
 : UPawnComponent(ObjectInitializer)
 {
-}
-
-void UMTD_EquipmentManagerComponent::GetLifetimeReplicatedProps(
-	TArray<FLifetimeProperty> &OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ThisClass, EquipmentInstance);
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(

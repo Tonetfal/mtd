@@ -6,8 +6,10 @@
 
 AMTD_PlayerController::AMTD_PlayerController()
 {
-	Team =
-		CreateDefaultSubobject<UMTD_TeamComponent>("MTD Team Component");
+	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+	
+	Team = CreateDefaultSubobject<UMTD_TeamComponent>("MTD Team Component");
 }
 
 UMTD_AbilitySystemComponent*

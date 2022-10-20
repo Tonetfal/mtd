@@ -7,6 +7,7 @@
 UMTD_PathFollowingComponent::UMTD_PathFollowingComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UMTD_PathFollowingComponent::BeginPlay()
@@ -16,41 +17,41 @@ void UMTD_PathFollowingComponent::BeginPlay()
 	const UWorld *World = GetWorld();
 	if (!IsValid(World))
 	{
-		MTD_WARN("World is invalid");
+		MTDS_WARN("World is invalid");
 		return;
 	}
 
 	const AActor *ActorOwner = GetOwner();
 	if (!IsValid(ActorOwner))
 	{
-		MTD_WARN("Owner is invalid");
+		MTDS_WARN("Owner is invalid");
 		return;
 	}
 	
 	AGameModeBase *GM = UGameplayStatics::GetGameMode(GetWorld());
 	if (!IsValid(GM))
 	{
-		MTD_WARN("Game mode is invalid");
+		MTDS_WARN("Game mode is invalid");
 		return;
 	}
 
 	AMTD_GameModeBase *GameMode = Cast<AMTD_GameModeBase>(GM);
 	if (!IsValid(GameMode))
 	{
-		MTD_WARN("MTD Game mode is invalid");
+		MTDS_WARN("Failed to cast [%s] to MTD GM", *GM->GetName());
 		return;
 	}
 
 	PathManager = GameMode->GetLevelPathManager();
 	if (!IsValid(PathManager))
 	{
-		MTD_WARN("Path manager is invalid");
+		MTDS_WARN("[%s] has an invalid path manager", *GM->GetName());
 		return;
 	}
 }
 
 void UMTD_PathFollowingComponent::EndPlay(
-	const EEndPlayReason::Type EndPlayReason)
+    const EEndPlayReason::Type EndPlayReason)
 {
 	if (AllowToPrepareTimerHandle.IsValid())
 		GetWorld()->GetTimerManager().ClearTimer(AllowToPrepareTimerHandle);
@@ -66,11 +67,11 @@ void UMTD_PathFollowingComponent::PreparePath()
 	const AActor *ActorOwner = GetOwner();
 	if (!IsValid(ActorOwner))
 	{
-		MTD_WARN("Owner is invalid");
+		MTDS_WARN("Owner is invalid");
 		return;
 	}
 	
-	MTD_VVERBOSE("Preparing a level path...");
+	MTDS_VVERBOSE("Preparing a level path...");
 
 	Path = PathManager->GetNavigationPath(
 		ActorOwner->GetActorLocation(), PathChannel);
@@ -89,12 +90,14 @@ bool UMTD_PathFollowingComponent::SelectNextPathPoint()
 	
 	if (Path.Num() <= PathIndex)
 	{
-		MTD_VVERBOSE("%s has reached terminated", *GetName());
+		MTDS_VVERBOSE("Path is terminated", *GetName());
 		return false;
 	}
-	
-	MTD_VVERBOSE("Moving on next path point");
-	return true;
+	else
+	{	
+        MTDS_VVERBOSE("Moving on next path point");
+        return true;
+	}
 }
 
 void UMTD_PathFollowingComponent::OnMoveToFinished(bool bSuccess)

@@ -6,16 +6,15 @@
 
 #include "MTD_TeamComponent.generated.h"
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_TeamComponent : public UActorComponent,
 	public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
-protected:
-	virtual void BeginPlay() override;
-
 public:
+	UMTD_TeamComponent();
+
 	void SetMtdTeamId(EMTD_TeamId Id);
 	EMTD_TeamId GetMtdTeamId() const;
 	
@@ -24,6 +23,11 @@ public:
 
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(
 		const AActor &Other) const override;
+	
+protected:
+	//~UActorComponent interface
+	virtual void BeginPlay() override;
+	//~End of UActorComponent interface
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD Team Component",
