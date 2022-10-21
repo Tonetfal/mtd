@@ -6,8 +6,9 @@
 
 AMTD_PlayerController::AMTD_PlayerController()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	// Has to process input each tick
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 	
 	Team = CreateDefaultSubobject<UMTD_TeamComponent>("MTD Team Component");
 }
