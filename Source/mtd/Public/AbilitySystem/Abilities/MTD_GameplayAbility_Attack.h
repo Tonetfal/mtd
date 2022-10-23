@@ -5,6 +5,7 @@
 
 #include "MTD_GameplayAbility_Attack.generated.h"
 
+struct FMTD_AbilityAnimations;
 class UMTD_AbilitySystemComponent;
 
 // Note: C++ implementation is only about triggering new/continuing
@@ -45,38 +46,26 @@ protected:
 private:
 	void HandleAttackGameplayEffect(
 		UMTD_AbilitySystemComponent *MtdAsc,
-		int32 &OutAttackMontageIndex) const;
+		int32 &OutAttackEffectLevel) const;
 
 	FActiveGameplayEffectHandle GetFirstActiveAttackGameplayEffect(
 		const UMTD_AbilitySystemComponent *MtdAsc) const;
 
 	int32 GetAttackMontageIndexToPlay(
-		FActiveGameplayEffectHandle AttackGeHandle,
-		const UMTD_AbilitySystemComponent *MtdAsc) const;
+		const TArray<UAnimMontage*> Animations, int32 AttackEffectLevel) const;
+
+	UAnimMontage *GetAbilityAnimMontage(
+		TArray<UAnimMontage*> Animations, int32 AttackEffectLevel) const;
 
 	void CancelPreviousAttack(UMTD_AbilitySystemComponent *MtdAsc) const;
 
 	void CreateAndApplyAttackGameplayEffectOnSelf(
 		UMTD_AbilitySystemComponent *MtdAsc) const;
 
-	void PlayAttackAnimation(const ACharacter *PlayOn, int32 AnimMontageIndex);
+	void PlayAttackAnimation(
+		const ACharacter *PlayOn, UAnimMontage *AbilityAnimMontage);
 
 protected:
-	// Instead of having a vector of anim montages inside the GA put them in the
-	// character instead since different character will be able to use the same
-	// weapon which will have the same ability, so we must not give some anim
-	// montages for an ability, we'd create many same abilities with just
-	// different montages that way.
-	// Instead, the weapon should hold its type (Sword, Axe, Knife etc) inside,
-	// and the attack ability (though this applies not only to attacks) will
-	// know what weapon type it's animating, so the ability will ask the avatar
-	// to play a certain animation at a given index for a certain weapon type.
-	// The anim montage index is got from computing from
-	// - AnimMontages.Num() % AttackGEs.Num()
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Ability",
-		meta=(AllowPrivateAccess="true"))
-	TArray<TObjectPtr<UAnimMontage>> AttackAnimMontages;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Ability",
 		meta=(AllowPrivateAccess="true", DisplayName="Attack Gameplay Effect Duration"))
 	float AttackGeDuration = 0.f;

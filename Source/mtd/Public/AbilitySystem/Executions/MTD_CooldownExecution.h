@@ -6,6 +6,10 @@
 
 #include "MTD_CooldownExecution.generated.h"
 
+/**
+ * Gameplay mod magnitude calculation class for UMTD_GameplayEffect class that
+ * makes use of its internal CooldownDuration field.
+ */
 UCLASS()
 class MTD_API UMTD_CooldownExecution :
 	public UGameplayModMagnitudeCalculation

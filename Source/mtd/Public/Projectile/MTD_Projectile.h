@@ -25,8 +25,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category="MTD|Projectile")
-	virtual void SetupParameters(
-		FMTD_ProjectileParameters ProjectileParameters);
+	virtual void SetupProjectile(FMTD_ProjectileParameters Params);
 
 protected:
 	UFUNCTION()
@@ -41,6 +40,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Projectile")
 	void OnSelfDestroy();
 	virtual void OnSelfDestroy_Implementation();
+
+	virtual void ApplyGameplayEffectToTarget(AActor *Target);
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
@@ -56,13 +57,12 @@ protected:
 	TObjectPtr<UMTD_ProjectileMovementComponent> ProjectileMovement = nullptr;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Projectile|Runtime",
+	UPROPERTY()
+	FMTD_ProjectileParameters ProjectileParameters;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile",
 		meta=(AllowPrivateAccess="true"))
-	FMTD_ProjectileParameters Parameters;
-
-	UPROPERTY(BlueprintReadWrite, Category="MTD|Projectile",
-		meta=(AllowPrivateAccess="true"))
-	TArray<FGameplayEffectSpecHandle> GameplayEffectSpecHandles;
-
+	float SecondsToSelfDestroy = 120.f;
+	
 	FTimerHandle SelfDestroyTimerHandle;
 };

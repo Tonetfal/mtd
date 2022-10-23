@@ -22,7 +22,10 @@ DECLARE_MULTICAST_DELEGATE_FourParams(
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-UCLASS()
+/**
+ * Default attribute set used in this project.
+ */
+UCLASS(meta=(ToolTip="Default attribute set used in this project."))
 class MTD_API UMTD_AttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()

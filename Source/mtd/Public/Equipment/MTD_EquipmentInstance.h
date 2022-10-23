@@ -6,6 +6,7 @@
 
 #include "MTD_EquipmentInstance.generated.h"
 
+class UMTD_EquipmentManagerComponent;
 class UAbilitySystemComponent;
 class UMTD_AbilitySystemComponent;
 class UMTD_CombatSet;
@@ -16,6 +17,8 @@ class UMTD_EquipmentInstance : public UObject
 {
 	GENERATED_BODY()
 
+	friend UMTD_EquipmentManagerComponent;
+
 public:
 	UMTD_EquipmentInstance();
 
@@ -25,28 +28,25 @@ public:
 	virtual UWorld *GetWorld() const override final;
 	//~End of UObject interface
 
-	UFUNCTION(BlueprintPure, Category="Equipment")
-	UObject *GetInstigator() const
-		{ return Instigator; }
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+	AActor *GetOwner() const
+		{ return Owner; }
 
-	void SetInstigator(UObject *InInstigator)
-		{ Instigator = InInstigator; }
-
-	UFUNCTION(BlueprintPure, Category="Equipment")
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
 	APawn *GetPawn() const;
 
-	UFUNCTION(BlueprintPure, Category="Equipment",
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment",
 		meta=(DeterminesOutputType=PawnType))
 	APawn *GetTypedPawn(TSubclassOf<APawn> PawnType) const;
 
-	UFUNCTION(BlueprintPure, Category="Equipment")
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
 	AActor *GetSpawnedActor() const
 		{ return SpawnedActor; }
 		
-	UFUNCTION(BlueprintPure, Category="Equipment")
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
 	UAbilitySystemComponent *GetAbilitySystemComponent() const;
 
-	UFUNCTION(BlueprintPure, Category="Equipment")
+	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
 	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
 
 	virtual void SpawnEquipmentActor(
@@ -57,11 +57,11 @@ public:
 	virtual void OnUnequipped();
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, Category="Equipment",
+	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
 		meta=(DisplayName="OnEquipped"))
 	void K2_OnEquipped();
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Equipment",
+	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
 		meta=(DisplayName="OnUnequipped"))
 	void K2_OnUnequipped();
 
@@ -69,17 +69,20 @@ protected:
 	bool IsPlayer() const;
 
 private:
+	void SetOwner(AActor *InOwner)
+		{ Owner = InOwner; }
+	
 	void GrantStats();
 	void TakeBackStats();
 
 private:
 	UPROPERTY()
-	TObjectPtr<UObject> Instigator;
+	TObjectPtr<AActor> Owner = nullptr;
 
 	UPROPERTY()
-	TObjectPtr<AActor> SpawnedActor;
+	TObjectPtr<AActor> SpawnedActor = nullptr;
 
-	UPROPERTY(EditAnywhere, Category="MTD|Stats",
-		meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, Category="MTD|Equipment|Stats",
+		meta=(AllowPrivateAccess="true"), DisplayName="Player")
 	FMTD_EquipmentPlayerStats PlayerStats;
 };

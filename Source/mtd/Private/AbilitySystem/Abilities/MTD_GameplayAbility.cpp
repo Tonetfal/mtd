@@ -1,7 +1,9 @@
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cooldown.h"
+#include "Character/MTD_BaseCharacter.h"
 
 UMTD_GameplayAbility::UMTD_GameplayAbility()
 {
@@ -15,6 +17,28 @@ void UMTD_GameplayAbility::OnGiveAbility(
 	Super::OnGiveAbility(ActorInfo,Spec);
 
 	TryActivateAbilityOnSpawn(ActorInfo, Spec);
+}
+
+const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(
+	AActor *AvatarActor) const
+{
+	if (!IsValid(AvatarActor))
+		return nullptr;
+
+	const auto Character = CastChecked<AMTD_BaseCharacter>(AvatarActor);
+	TArray<UAnimMontage*> Animations =
+		Character->GetAbilityAnimMontages(MainAbilityTag).Animations;
+
+	const int32 Size = Animations.Num();
+	if (Size == 0)
+	{
+		MTDS_WARN("There are no animations to play with Gameplay Tag [%s]",
+			*MainAbilityTag.ToString());
+		return nullptr;
+	}
+
+	const int32 Index = FMath::Rand() % Size;
+	return Animations[Index];
 }
 
 const FGameplayTagContainer *UMTD_GameplayAbility::GetCooldownTags() const

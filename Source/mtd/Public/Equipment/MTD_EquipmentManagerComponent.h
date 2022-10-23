@@ -14,6 +14,11 @@ class UMTD_EquipmentManagerComponent : public UPawnComponent
 
 public:
 	UMTD_EquipmentManagerComponent(const FObjectInitializer &ObjectInitializer);
+	
+	//~UActorComponent interface
+	virtual void InitializeComponent() override;
+	virtual void UninitializeComponent() override;
+	//~End of UActorComponent interface
 
 	UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
 	UMTD_EquipmentInstance *EquipItem(
@@ -21,11 +26,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
 	void UnequipItem();
-	
-	//~UActorComponent interface
-	virtual void InitializeComponent() override;
-	virtual void UninitializeComponent() override;
-	//~End of UActorComponent interface
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
+	const UMTD_EquipmentInstance *GetEquipmentInstance() const
+		{ return EquipmentInstance; }
 
 private:
 	UPROPERTY()

@@ -31,8 +31,14 @@ public:
 		const FGameplayAbilityActorInfo *ActorInfo,
 		const FGameplayAbilitySpec &Spec) override;
 
+	FGameplayTag GetMainAbilityTag() const
+		{ return MainAbilityTag; }
+
 	EMTD_AbilityActivationPolicy GetActivationPolicy() const
 		{ return ActivationPolicy; }
+
+	UFUNCTION(BlueprintCallable, Category="MTD|Ability Animation")
+	const UAnimMontage *GetRandomAbilityAnimMontage(AActor *AvatarActor) const;
 	
 	virtual const FGameplayTagContainer *GetCooldownTags() const override;
 	virtual void ApplyCooldown(
@@ -44,16 +50,28 @@ private:
 	void TryActivateAbilityOnSpawn(
 		const FGameplayAbilityActorInfo *ActorInfo,
 		const FGameplayAbilitySpec &Spec) const;
-	
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Cooldown")
 	FScalableFloat CooldownDuration;
 	
 private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability",
+		meta=(AllowPrivateAccess="true"))
+	FGameplayTag MainAbilityTag = FGameplayTag::EmptyTag;
+	
 	UPROPERTY(EditDefaultsOnly, Category="MTD|Activation",
 		meta=(AllowPrivateAccess="true"))
 	EMTD_AbilityActivationPolicy ActivationPolicy =
 		EMTD_AbilityActivationPolicy::OnInputTriggered;
+		
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Damage",
+		meta=(AllowPrivateAccess="true"))
+	float DamageAdditive = 0.f;
+		
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Damage",
+		meta=(AllowPrivateAccess="true"))
+	float DamageMultiplier = 1.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Cooldown",
 		meta=(AllowPrivateAccess="true"))

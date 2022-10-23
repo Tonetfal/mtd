@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Sockets.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "Equipment/MTD_EquipmentDefinition.h"

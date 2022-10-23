@@ -21,14 +21,16 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 	AddTag(Ability_ActivateFail_Cost, "Ability.ActivateFail.Cost", "Ability failed to activate because it did not pass the cost checks.");
 	AddTag(Ability_ActivateFail_TagsBlocked, "Ability.ActivateFail.TagsBlocked", "Ability failed to activate because tags are blocking it.");
 	AddTag(Ability_ActivateFail_TagsMissing, "Ability.ActivateFail.TagsMissing", "Ability failed to activate because tags are missing.");
-	AddTag(Ability_ActivateFail_Networking, "Ability.ActivateFail.Networking", "Ability failed to activate because it did not pass the network checks.");
 	AddTag(Ability_ActivateFail_ActivationGroup, "Ability.ActivateFail.ActivationGroup", "Ability failed to activate because of its activation group.");
 
 	AddTag(Gameplay_Ability_Behavior_SurvivesDeath, "Gameplay.Ability.Behavior.SurvivesDeath", "An ability with this type tag should not be canceled due to death.");
 	
-	AddTag(Gameplay_Ability_AttackMelee, "Gameplay.Ability.AttackMelee", "Melee attack ability.");
+	AddTag(Gameplay_Ability_Attack_Melee, "Gameplay.Ability.Attack.Melee", "Melee attack ability.");
+	AddTag(Gameplay_Ability_Attack_Ranged, "Gameplay.Ability.Attack.Fire", "Ranged attack ability.");
+	AddTag(Gameplay_Ability_Death, "Gameplay.Ability.Death", "Melee attack ability.");
 
 	AddTag(InputTag_Attack, "InputTag.Attack", "Attack input.");
+	AddTag(InputTag_AlternativeAttack, "InputTag.AlternativeAttack", "Alternative attack input.");
 	AddTag(InputTag_Move, "InputTag.Move", "Move input.");
 	AddTag(InputTag_Look_Mouse, "InputTag.Look.Mouse", "Look (mouse) input.");
 	AddTag(InputTag_Look_Stick, "InputTag.Look.Stick", "Look (stick) input.");
@@ -38,11 +40,9 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 	AddTag(Gameplay_Event_Reset, "Gameplay.Event.Reset", "Event that fires once a player reset is executed.");
 	AddTag(Gameplay_Event_RequestReset, "Gameplay.Event.RequestReset", "Event to request a player's pawn to be instantly replaced with a new one at a valid spawn location.");
 
-	AddTag(SetByCaller_Damage, "SetByCaller.Damage", "SetByCaller tag used by damage gameplay effects.");
-	AddTag(SetByCaller_Heal, "SetByCaller.Heal", "SetByCaller tag used by healing gameplay effects.");
-
-	AddTag(Cheat_GodMode, "Cheat.GodMode", "GodMode cheat is active on the owner.");
-	AddTag(Cheat_UnlimitedHealth, "Cheat.UnlimitedHealth", "UnlimitedHealth cheat is active on the owner.");
+	AddTag(SetByCaller_Damage_Base, "SetByCaller.Damage.Base", "SetByCaller tag used by damage gameplay effects.");
+	AddTag(SetByCaller_Damage_Additive, "SetByCaller.Damage.Additive", "SetByCaller tag used by damage gameplay effects.");
+	AddTag(SetByCaller_Damage_Multiplier, "SetByCaller.Damage.Multiplier", "SetByCaller tag used by damage gameplay effects.");
 
 	AddTag(Status_Death, "Status.Death", "Target has the death status.");
 	AddTag(Status_Death_Dying, "Status.Death.Dying", "Target has begun the death process.");

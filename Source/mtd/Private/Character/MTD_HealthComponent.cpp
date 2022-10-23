@@ -190,8 +190,8 @@ void UMTD_HealthComponent::OnOutOfHealth(
 	if (!IsValid(AbilitySystemComponent))
 		return;
 	
-	// Send the "GameplayEvent.Death" gameplay event through the owner's
-	// ability system. This can be used to trigger a death gameplay ability
+	// Send the "Gameplay.Event.Death" gameplay event through the owner's
+	// ability system. This can be used to trigger a death gameplay ability.
 	FGameplayEventData Payload;
 	Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_Death;
 	Payload.Instigator = DamageInstigator;

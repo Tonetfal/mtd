@@ -1,5 +1,7 @@
 #include "Projectile/MTD_Projectile.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Projectile/MTD_ProjectileMovementComponent.h"
@@ -19,7 +21,7 @@ AMTD_Projectile::AMTD_Projectile()
 
 	ProjectileMovement =
 		CreateDefaultSubobject<UMTD_ProjectileMovementComponent>
-			(TEXT("MTD Movement Component"));
+			(TEXT("MTD Projectile Movement Component"));
 	ProjectileMovement->SetUpdatedComponent(CollisionCapsule);
 }
 
@@ -34,25 +36,16 @@ void AMTD_Projectile::BeginPlay()
 		this, &AMTD_Projectile::OnBeginOverlap);
 }
 
-void AMTD_Projectile::SetupParameters(
-	FMTD_ProjectileParameters ProjectileParameters)
+void AMTD_Projectile::SetupProjectile(FMTD_ProjectileParameters Params)
 {
-	Parameters = ProjectileParameters;
+	ProjectileParameters = Params;
+		
+	CollisionCapsule->SetCollisionProfileName(Params.CollisionProfileName.Name);
 	
-	ProjectileMovement->SetInitialSpeed(Parameters.InitialSpeed);
-	ProjectileMovement->SetMaxSpeed(Parameters.MaxSpeed);
-	ProjectileMovement->SetAcceleration(Parameters.Acceleration);
-	ProjectileMovement->SetRotationFollowsVelocity(
-		Parameters.bRotationFollowsVelocity);
-	ProjectileMovement->SetHomingTarget(Parameters.HomingTarget);
-	ProjectileMovement->SetDirection(Parameters.Direction);
-	CollisionCapsule->SetCollisionProfileName(Parameters.CollisionProfileName);
+	GetWorldTimerManager().SetTimer(SelfDestroyTimerHandle,this,
+		&AMTD_Projectile::OnSelfDestroy, SecondsToSelfDestroy);
 	
-	GetWorldTimerManager().SetTimer(
-		SelfDestroyTimerHandle,
-		this,
-		&AMTD_Projectile::OnSelfDestroy,
-		Parameters.SecondsToSelfDestroy);
+	ProjectileMovement->SetMovementParameters(Params.MovementParameters);
 }
 
 void AMTD_Projectile::OnBeginOverlap(
@@ -63,6 +56,7 @@ void AMTD_Projectile::OnBeginOverlap(
 	bool bFromSweep,
 	const FHitResult &SweepResult)
 {
+	ApplyGameplayEffectToTarget(OtherActor);
 	Destroy();
 }
 
@@ -74,4 +68,30 @@ void AMTD_Projectile::OnSelfDestroy_Implementation()
 	}
 
 	Destroy();
+}
+
+void AMTD_Projectile::ApplyGameplayEffectToTarget(AActor *Target)
+{
+	UAbilitySystemComponent *TargetAsc =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
+	if (!IsValid(TargetAsc))
+		return;
+
+	for (const FGameplayEffectSpecHandle &SpecHandle : 
+		ProjectileParameters.GameplayEffectsToGrantOnHit)
+	{
+		if (!SpecHandle.IsValid() || !SpecHandle.Data)
+			continue;
+
+		// TODO: Check if it's a radial projectile, apply GEs around if so
+
+		FActiveGameplayEffectHandle ActiveGeHandle =
+			TargetAsc->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+		if (!ActiveGeHandle.WasSuccessfullyApplied())
+		{
+			MTDS_WARN("Gameplay effect handle [%s] was not successfully "
+				"applied to [%s]", *ActiveGeHandle.ToString(),
+				*Target->GetName());
+		}
+	}
 }

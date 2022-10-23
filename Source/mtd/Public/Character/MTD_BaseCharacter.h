@@ -3,6 +3,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "mtd.h"
+#include "AbilitySystem/MTD_AbilityAnimationSet.h"
 
 #include "MTD_BaseCharacter.generated.h"
 
@@ -32,6 +33,9 @@ public:
 	//~APawn interface
 	virtual void NotifyControllerChanged() override;
 	//~End of APawn interface
+
+	FMTD_AbilityAnimations GetAbilityAnimMontages(
+		FGameplayTag AbilityTag) const;
 
 protected:
 	virtual void OnAbilitySystemInitialized();
@@ -81,4 +85,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
 		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
+		meta=(AllowPrivateAccess="true"))
+	TObjectPtr<const UMTD_AbilityAnimationSet> AnimationSet = nullptr;
 };

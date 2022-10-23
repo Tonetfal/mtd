@@ -71,20 +71,15 @@ bool UMTD_HeroComponent::IsPawnComponentReadyToInitialize() const
 	if (!IsValid(Pawn))
 		return false;
 	
-	// If we're authority or autonomous, we need to wait for a controller with
-	// registered ownership of the player state
-	if (Pawn->GetLocalRole() != ROLE_SimulatedProxy)
-	{
-		const AController* Controller = GetController<AController>();
+	const auto Controller = GetController<AController>();
 
-		const bool bHasControllerPairedWithPS =
-			(Controller) &&
-			(Controller->PlayerState) &&
-			(Controller->PlayerState->GetOwner() == Controller);
+	const bool bHasControllerPairedWithPS =
+		(Controller) &&
+		(Controller->PlayerState) &&
+		(Controller->PlayerState->GetOwner() == Controller);
 
-		if (!bHasControllerPairedWithPS)
-			return false;
-	}
+	if (!bHasControllerPairedWithPS)
+		return false;
 
 	const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
 	const bool bIsBot = Pawn->IsBotControlled();
@@ -109,13 +104,13 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 	if (!IsValid(Pawn))
 		return;
 	
-	auto MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
+	const auto MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
 	check(MtdPs);
 
 	UMTD_AbilitySystemComponent *MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
 
 	PawnData = nullptr;
-	auto PawnExtComp =
+	const auto PawnExtComp =
 		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
 	if (IsValid(PawnExtComp))
 	{
@@ -137,7 +132,7 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 			*GetNameSafe(GetOwner()));
 	}
 
-	auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
+	const auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
 	if (IsValid(MtdPc) && IsValid(Pawn->InputComponent))
 	{
 		InitializePlayerInput(Pawn->InputComponent);
@@ -156,10 +151,10 @@ void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
 	auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
 	check(MtdInputComponent);
 
-	auto Pawn = GetPawn<APawn>();
+	const auto Pawn = GetPawn<APawn>();
 	check(Pawn);
 
-	auto ExtPawnComp =
+	const auto ExtPawnComp =
 		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
 	check(ExtPawnComp);
 
@@ -217,7 +212,6 @@ void UMTD_HeroComponent::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 
 void UMTD_HeroComponent::Input_Move(const FInputActionValue &InputActionValue)
 {
-	MTD_WARN("Move");
 	auto Character = GetPawn<ACharacter>();
 	check(Character);
 

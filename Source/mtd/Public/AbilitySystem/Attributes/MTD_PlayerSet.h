@@ -5,6 +5,10 @@
 
 #include "MTD_PlayerSet.generated.h"
 
+/**
+ * Attribute set that defines all the player statistics data which is given by
+ * its equipment.
+ */
 UCLASS()
 class MTD_API UMTD_PlayerSet : public UMTD_AttributeSet
 {

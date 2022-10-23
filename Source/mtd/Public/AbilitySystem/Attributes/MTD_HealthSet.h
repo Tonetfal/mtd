@@ -5,6 +5,10 @@
 
 #include "MTD_HealthSet.generated.h"
 
+/**
+ * Attribute set that defines all the life related required data for a Pawn that
+ * makes use of the Ability System Component.
+ */
 UCLASS()
 class MTD_API UMTD_HealthSet : public UMTD_AttributeSet
 {

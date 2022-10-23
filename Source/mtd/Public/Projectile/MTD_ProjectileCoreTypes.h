@@ -2,43 +2,69 @@
 
 #include "mtd.h"
 
+#include "GameplayEffect.h"
+
 #include "MTD_ProjectileCoreTypes.generated.h"
 
+class AMTD_Projectile;
+
 USTRUCT(BlueprintType)
-struct MTD_API FMTD_ProjectileParameters
+struct FMTD_ProjectileMovementParameters
 {
 	GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+public:
+    UPROPERTY(BlueprintReadWrite)
     float InitialSpeed = 0.f;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MaxSpeed = 1000.f;
+    UPROPERTY(BlueprintReadWrite)
+    float MaxSpeed = 0.f;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(BlueprintReadWrite)
     float Acceleration = 0.f;
 	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Damage = 0.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bIsHoming = false;
 	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsRadial = false;
-	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float RadialDamageRadius = 100.f;
-	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bRotationFollowsVelocity = false;
-	
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(BlueprintReadWrite)
 	TWeakObjectPtr<AActor> HomingTarget = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(BlueprintReadWrite)
 	FVector Direction = FVector::ZeroVector;
+};
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	FName CollisionProfileName = "NoCollision";
+USTRUCT(BlueprintType)
+struct FMTD_ProjectileParameters
+{
+	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float SecondsToSelfDestroy = 120.f;
+public:
+	UPROPERTY(BlueprintReadWrite)
+	FCollisionProfileName CollisionProfileName { FName(TEXT("NoCollision")) };
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bIsRadial = false;
+	
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite,
+    	meta=(EditCondition="bIsRadial"))
+	float RadialDamageRadius = 100.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<FGameplayEffectSpecHandle> GameplayEffectsToGrantOnHit;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FMTD_ProjectileMovementParameters MovementParameters;
+};
+
+UCLASS(BlueprintType)
+class MTD_API UMTD_FireData : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AMTD_Projectile> ProjectileClass = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FMTD_ProjectileParameters ProjectileParameters;
 };

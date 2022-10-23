@@ -74,6 +74,13 @@ void AMTD_BaseCharacter::NotifyControllerChanged()
 	PawnExtentionComponent->HandleControllerChanged();
 }
 
+FMTD_AbilityAnimations AMTD_BaseCharacter::GetAbilityAnimMontages(
+	FGameplayTag AbilityTag) const
+{
+	return IsValid(AnimationSet) ?
+		AnimationSet->GetAbilityAnimMontages(AbilityTag) : FMTD_AbilityAnimations();
+}
+
 void AMTD_BaseCharacter::SetupPlayerInputComponent(
 	UInputComponent *PlayerInputComponent)
 {

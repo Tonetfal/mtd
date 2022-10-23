@@ -16,8 +16,11 @@ void UMTD_ProjectileMovementComponent::TickComponent(
 
 	if (UpdatedComponent->IsSimulatingPhysics())
 		return;
+	
+	const bool bHome = (MovementParameters.bIsHoming &&
+		!IsValid(MovementParameters.HomingTarget.Get()));
 
-	if (Direction.IsZero() && !IsValid(MovementParameters.HomingTarget.Get()))
+	if (Direction.IsZero() && bHome)
 		return;
 
 	const float AccelDelta = MovementParameters.Acceleration * DeltaSeconds;
@@ -25,21 +28,18 @@ void UMTD_ProjectileMovementComponent::TickComponent(
 		MovementParameters.InitialSpeed, MovementParameters.MaxSpeed);
 
 	// TODO Rotate to the target direction depending on some offset
-	if (!IsValid(MovementParameters.HomingTarget.Get()))
+	if (bHome)
 	{
-		Velocity = ComputeVelocity(Direction);
+		Velocity = ComputeVelocity(ComputeHomingDirection());
 	}
 	else
 	{
-		Velocity = ComputeVelocity(ComputeHomingDirection());
+		Velocity = ComputeVelocity(Direction);
 	}
 	
 	const FVector MoveDelta = Velocity * DeltaSeconds;
 
-	if (MovementParameters.bRotationFollowsVelocity)
-	{
-		// TODO Rotation
-	}
+	// TODO Make rotation follow the velocity
 
 	UpdatedComponent->SetWorldLocation(
 		UpdatedComponent->GetComponentLocation() + MoveDelta);
@@ -72,14 +72,15 @@ bool UMTD_ProjectileMovementComponent::CheckStillInWorld()
 		return false;
 	}
 	// Check if box has poked outside the world
-	else if( UpdatedComponent && UpdatedComponent->IsRegistered() )
+	else if (UpdatedComponent && UpdatedComponent->IsRegistered())
 	{
 		const FBox&	Box = UpdatedComponent->Bounds.GetBox();
 		if (Box.Min.X < -HALF_WORLD_MAX || Box.Max.X > HALF_WORLD_MAX ||
 			Box.Min.Y < -HALF_WORLD_MAX || Box.Max.Y > HALF_WORLD_MAX ||
 			Box.Min.Z < -HALF_WORLD_MAX || Box.Max.Z > HALF_WORLD_MAX)
 		{
-			MTD_WARN("%s is outside the world bounds!", *ActorOwner->GetName());
+			MTDS_WARN("[%s] is outside the world bounds!",
+				*ActorOwner->GetName());
 			ActorOwner->OutsideWorldBounds();
 			
 			// It is not safe to use physics or collision at this point
@@ -106,80 +107,9 @@ FVector UMTD_ProjectileMovementComponent::ComputeVelocity(
 	return MovementDirection * CurrentSpeed;
 }
 
-void UMTD_ProjectileMovementComponent::SetInitialSpeed(float Value)
-{
-	MovementParameters.InitialSpeed = Value;
-}
-
-void UMTD_ProjectileMovementComponent::SetMaxSpeed(float Value)
-{
-	MovementParameters.MaxSpeed = Value;
-}
-
-void UMTD_ProjectileMovementComponent::SetAcceleration(float Value)
-{
-	MovementParameters.Acceleration = Value;
-}
-
-void UMTD_ProjectileMovementComponent::SetHomingTarget(
-	TWeakObjectPtr<AActor> Value)
-{
-	MovementParameters.HomingTarget = Value;
-}
-
-void UMTD_ProjectileMovementComponent::SetDirection(FVector Value)
-{
-#if WITH_EDITOR
-	if (!FMath::IsNearlyEqual(Value.Length(), 1.f))
-		MTDS_WARN("Vector %s is not a unit vector", *Value.ToString());
-#endif
-	Direction = Value;
-}
-
-void UMTD_ProjectileMovementComponent::SetRotationFollowsVelocity(bool Value)
-{
-	MovementParameters.bRotationFollowsVelocity = Value;
-}
-
 void UMTD_ProjectileMovementComponent::SetMovementParameters(
-	FMTD_ProjectileParameters Parms)
+	FMTD_ProjectileMovementParameters Parms)
 {
 	MovementParameters = Parms;
-}
-
-float UMTD_ProjectileMovementComponent::GetInitialSpeed() const
-{
-	return MovementParameters.InitialSpeed;
-}
-
-float UMTD_ProjectileMovementComponent::GetMaxSpeed() const
-{
-	return MovementParameters.MaxSpeed;
-}
-
-float UMTD_ProjectileMovementComponent::GetAcceleration() const
-{
-	return MovementParameters.Acceleration;
-}
-
-TWeakObjectPtr<AActor>
-UMTD_ProjectileMovementComponent::GetHomingTarget() const
-{
-	return MovementParameters.HomingTarget;
-}
-
-FVector UMTD_ProjectileMovementComponent::GetDirection() const
-{
-	return Direction;
-}
-
-bool UMTD_ProjectileMovementComponent::GetRotationFollowsVelocity() const
-{
-	return MovementParameters.bRotationFollowsVelocity;
-}
-
-FMTD_ProjectileParameters
-UMTD_ProjectileMovementComponent::GetMovementParameters() const
-{
-	return MovementParameters;
+	Direction = Parms.Direction;
 }

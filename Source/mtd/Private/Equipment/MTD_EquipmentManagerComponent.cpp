@@ -2,9 +2,11 @@
 
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "Engine/StaticMeshSocket.h"
 #include "Equipment/MTD_EquipmentDefinition.h"
 #include "Equipment/MTD_EquipmentInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "Utility/MTD_Utility.h"
 
 UMTD_EquipmentManagerComponent::UMTD_EquipmentManagerComponent(
 	const FObjectInitializer &ObjectInitializer)
@@ -12,6 +14,18 @@ UMTD_EquipmentManagerComponent::UMTD_EquipmentManagerComponent(
 {
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UMTD_EquipmentManagerComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+}
+
+void UMTD_EquipmentManagerComponent::UninitializeComponent()
+{
+	UnequipItem();
+	
+	Super::UninitializeComponent();
 }
 
 UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(
@@ -35,6 +49,7 @@ UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(
 
 	Equipment->AbilitySetToGrant->GiveToAbilitySystem(MtdAsc, nullptr, Owner);
 	EquipmentInstance = NewObject<UMTD_EquipmentInstance>(Owner, InstanceType);
+	EquipmentInstance->SetOwner(Owner);
 	EquipmentInstance->SpawnEquipmentActor(Equipment->ActorToSpawn);
 	EquipmentInstance->OnEquipped();
 
@@ -47,16 +62,4 @@ void UMTD_EquipmentManagerComponent::UnequipItem()
 		return;
 	
 	EquipmentInstance->OnUnequipped();
-}
-
-void UMTD_EquipmentManagerComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-}
-
-void UMTD_EquipmentManagerComponent::UninitializeComponent()
-{
-	UnequipItem();
-	
-	Super::UninitializeComponent();
 }
