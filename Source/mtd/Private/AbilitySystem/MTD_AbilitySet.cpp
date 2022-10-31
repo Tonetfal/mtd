@@ -2,6 +2,8 @@
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
+#include "AbilitySystem/Attributes/MTD_AttributeSet.h"
+#include "AbilitySystem/Effects/MTD_GameplayEffect.h"
 
 void FMTD_AbilitySet_GrantedHandles::AddAbilitySpecHandle(
 	const FGameplayAbilitySpecHandle &Handle)
@@ -72,6 +74,14 @@ void UMTD_AbilitySet::GiveToAbilitySystem(
 	GrantAttributes(MtdAsc, OutGrantedHandles, SourceObject);
 }
 
+void UMTD_AbilitySet::K2_GiveToAbilitySystem(
+	UMTD_AbilitySystemComponent *MtdAsc,
+	FMTD_AbilitySet_GrantedHandles &OutGrantedHandles,
+	UObject *SourceObject)
+{
+	GiveToAbilitySystem(MtdAsc, &OutGrantedHandles, SourceObject);
+}
+
 void UMTD_AbilitySet::GrantAbilities(
 	UMTD_AbilitySystemComponent *MtdAsc,
 	FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
@@ -126,7 +136,8 @@ void UMTD_AbilitySet::GrantEffects(
 		}
 
 		const auto GameplayEffect =
-			EffectToGrant.GameplayEffect->GetDefaultObject<UGameplayEffect>();
+			EffectToGrant.GameplayEffect->GetDefaultObject<
+				UMTD_GameplayEffect>();
 		const FActiveGameplayEffectHandle GameplayEffectHandle =
 			MtdAsc->ApplyGameplayEffectToSelf(
 				GameplayEffect,
@@ -158,7 +169,7 @@ void UMTD_AbilitySet::GrantAttributes(
 			continue;
 		}
 
-		const auto NewSet = NewObject<UAttributeSet>(
+		const auto NewSet = NewObject<UMTD_AttributeSet>(
 			MtdAsc->GetOwner(), SetToGrant.AttributeSet);
 		MtdAsc->AddAttributeSetSubobject(NewSet);
 

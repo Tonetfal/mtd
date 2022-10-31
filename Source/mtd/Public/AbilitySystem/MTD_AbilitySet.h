@@ -2,7 +2,6 @@
 
 #include "Engine/DataAsset.h"
 #include "GameplayAbilitySpec.h"
-#include "GameplayEffectTypes.h"
 #include "GameplayTagContainer.h"
 #include "mtd.h"
 
@@ -10,6 +9,8 @@
 
 class UMTD_AbilitySystemComponent;
 class UMTD_GameplayAbility;
+class UMTD_GameplayEffect;
+class UMTD_AttributeSet;
 class UGameplayEffect;
 
 USTRUCT(BlueprintType)
@@ -39,7 +40,7 @@ struct FMTD_AbilitySet_GameplayEffect
 public:
 	// Gameplay effect to grant.
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayEffect> GameplayEffect = nullptr;
+	TSubclassOf<UMTD_GameplayEffect> GameplayEffect = nullptr;
 
 	// Level of gameplay effect to grant.
 	UPROPERTY(EditDefaultsOnly)
@@ -54,7 +55,7 @@ struct FMTD_AbilitySet_AttributeSet
 public:
 	// Gameplay effect to grant.
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UAttributeSet> AttributeSet = nullptr;
+	TSubclassOf<UMTD_AttributeSet> AttributeSet = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -101,6 +102,13 @@ public:
 		UMTD_AbilitySystemComponent *MtdAsc,
 		FMTD_AbilitySet_GrantedHandles *OutGrantedHandles,
 		UObject *SourceObject = nullptr) const;
+
+	UFUNCTION(BlueprintCallable, Category="MTD|Ability Set",
+		meta=(DisplayName="GiveToAbilitySystem"))
+	void K2_GiveToAbilitySystem(
+		UMTD_AbilitySystemComponent *MtdAsc,
+		FMTD_AbilitySet_GrantedHandles &OutGrantedHandles,
+		UObject *SourceObject = nullptr);
 
 private:
 	void GrantAbilities(

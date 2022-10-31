@@ -32,12 +32,12 @@ void AMTD_TowerController::BeginPlay()
 
 void AMTD_TowerController::OnPossess(APawn *InPawn)
 {
-	Super::OnPossess(InPawn);
-
 	check(SightConfig);
 	check(PerceptionComponent);
 
 	InitConfig();
+	Super::OnPossess(InPawn);
+	
 	PerceptionComponent->ConfigureSense(*SightConfig);
 	PerceptionComponent->RequestStimuliListenerUpdate();
 }

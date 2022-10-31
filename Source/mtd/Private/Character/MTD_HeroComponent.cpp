@@ -65,7 +65,7 @@ void UMTD_HeroComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 bool UMTD_HeroComponent::IsPawnComponentReadyToInitialize() const
 {
-	const APawn *Pawn = GetPawn<APawn>();
+	const auto Pawn = GetPawn<APawn>();
 
 	// A pawn is required
 	if (!IsValid(Pawn))
@@ -115,10 +115,10 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 	if (IsValid(PawnExtComp))
 	{
 		PawnData = PawnExtComp->GetPawnData<UMTD_PawnData>();
-		
+
 		PawnExtComp->InitializeAbilitySystem(MtdAsc, MtdPs);
 	}
-
+	
 	if (IsValid(PawnData))
 	{
 		for (const UMTD_AbilitySet *AbilitySet : PawnData->AbilitySets)
@@ -129,7 +129,7 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 	else
 	{
 		MTDS_WARN("Pawn Data asset on owner [%s] is invalid!",
-			*GetNameSafe(GetOwner()));
+			*Pawn->GetName());
 	}
 
 	const auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
@@ -198,6 +198,7 @@ void UMTD_HeroComponent::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 	if (!IsValid(MtdAsc))
 		return;
 
+	MTDS_WARN("Pressed %s", *InputTag.ToString());
 	MtdAsc->OnAbilityInputTagPressed(InputTag);
 }
 	

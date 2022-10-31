@@ -72,7 +72,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<UMTD_AbilitySystemComponent> AbilitySystemComponent = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "MTD|Pawn")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MTD|Pawn",
+		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<const UMTD_PawnData> PawnData = nullptr;
 
 	bool bPawnReadyToInitialize = false;

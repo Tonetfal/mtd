@@ -20,7 +20,7 @@ public:
 	AMTD_PlayerState();
 	
 	UFUNCTION(BlueprintCallable, Category = "MTD|PlayerState")
-	AMTD_PlayerController* GetLyraPlayerController() const;
+	AMTD_PlayerController *GetMtdPlayerController() const;
 
 	UFUNCTION(BlueprintCallable, Category="MTD|PlayerState")
 	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const

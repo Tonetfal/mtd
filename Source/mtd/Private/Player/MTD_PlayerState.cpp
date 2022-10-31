@@ -3,6 +3,7 @@
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
+#include "AbilitySystem/Attributes/MTD_ManaSet.h"
 #include "Player/MTD_PlayerController.h"
 
 AMTD_PlayerState::AMTD_PlayerState()
@@ -14,11 +15,13 @@ AMTD_PlayerState::AMTD_PlayerState()
 		CreateDefaultSubobject<UMTD_AbilitySystemComponent>(
 			TEXT("MTD Ability System Component"));
 
+	// Everything has health to lose, mana to use/drop, damage to deal
 	CreateDefaultSubobject<UMTD_HealthSet>(TEXT("HealthSet"));
+	CreateDefaultSubobject<UMTD_ManaSet>(TEXT("ManaSet"));
 	CreateDefaultSubobject<UMTD_CombatSet>(TEXT("CombatSet"));
 }
 
-AMTD_PlayerController *AMTD_PlayerState::GetLyraPlayerController() const
+AMTD_PlayerController *AMTD_PlayerState::GetMtdPlayerController() const
 {
 	return Cast<AMTD_PlayerController>(GetOwner());
 }

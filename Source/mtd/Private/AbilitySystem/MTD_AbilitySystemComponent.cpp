@@ -20,7 +20,6 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(
 			continue;
 
 		const auto Ability = CastChecked<UMTD_GameplayAbility>(Spec->Ability);
-		check(Ability);
 
 		if (Ability->GetActivationPolicy() ==
 			EMTD_AbilityActivationPolicy::WhileInputActive)

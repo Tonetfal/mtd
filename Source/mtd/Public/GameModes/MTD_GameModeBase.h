@@ -7,6 +7,7 @@
 
 // Forward declarations
 class AMTD_LevelPathManager;
+class UMTD_LevelDefinition;
 
 UCLASS()
 class MTD_API AMTD_GameModeBase : public AGameModeBase
@@ -23,6 +24,11 @@ public:
 	AMTD_LevelPathManager *GetLevelPathManager() const;
 
 private:
-	UPROPERTY(VisibleAnywhere, Category="MTD Components")
+	UPROPERTY()
 	TObjectPtr<AMTD_LevelPathManager> LevelPathManager = nullptr;
+
+	// TODO: Tmp
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Level",
+		meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UMTD_LevelDefinition> LevelDefinition = nullptr;
 };

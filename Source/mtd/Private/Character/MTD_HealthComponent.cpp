@@ -50,9 +50,6 @@ void UMTD_HealthComponent::InitializeWithAbilitySystem(
 	HealthSet->OnOutOfHealthDelegate.AddUObject(
 		this, &ThisClass::OnOutOfHealth);
 
-	AbilitySystemComponent->SetNumericAttributeBase(
-		UMTD_HealthSet::GetHealthAttribute(), HealthSet->GetMaxHealth());
-	
 	OnHealthChangedDelegate.Broadcast(
 		this, HealthSet->GetHealth(), HealthSet->GetHealth(), nullptr);
 	OnMaxHealthChangedDelegate.Broadcast(
