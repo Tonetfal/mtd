@@ -25,6 +25,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="MTD|Player Controller")
 	AMTD_PlayerState *GetMtdPlayerState() const;
 	
+	virtual void AddYawInput(float Val) override;
+
+	UFUNCTION(BlueprintCallable, Category="MTD|Player Controller")
+	float ConsumeLastYawRotation();
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn *InPawn) override;
@@ -39,4 +44,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
 		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UMTD_TeamComponent> Team = nullptr;
+
+	float LastYaw = 0.f;
 };

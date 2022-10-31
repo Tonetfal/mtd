@@ -25,6 +25,19 @@ AMTD_PlayerState* AMTD_PlayerController::GetMtdPlayerState() const
 	return GetPlayerState<AMTD_PlayerState>();
 }
 
+void AMTD_PlayerController::AddYawInput(float Val)
+{
+	Super::AddYawInput(Val);
+	LastYaw = Val;
+}
+
+float AMTD_PlayerController::ConsumeLastYawRotation()
+{
+	const float Tmp = LastYaw;
+	LastYaw = 0.f;
+	return Tmp;
+}
+
 void AMTD_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
