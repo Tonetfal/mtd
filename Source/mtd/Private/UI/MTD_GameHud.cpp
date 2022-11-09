@@ -6,11 +6,16 @@ void AMTD_GameHud::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerWidgetClass)
-	{
-		PlayerWidget = CreateWidget(GetWorld(), PlayerWidgetClass);
+	APlayerController *Pc = GetOwningPlayerController();
+	if (!IsValid(Pc))
+		return;
 
-		if (IsValid(PlayerWidget))
-			PlayerWidget->AddToViewport();
-	}
+	if (!PlayerWidgetClass)
+		return;
+	
+	PlayerWidget = CreateWidget(GetWorld(), PlayerWidgetClass);
+	PlayerWidget->SetOwningPlayer(Pc);
+
+	if (IsValid(PlayerWidget))
+		PlayerWidget->AddToViewport();
 }

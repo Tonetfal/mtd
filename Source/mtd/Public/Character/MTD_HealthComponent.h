@@ -14,8 +14,9 @@ struct FOnAttributeChangeData;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	FDeathEventSignature,
 	AActor*, OwningActor);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
-	FAttributeChangedSignature,
+	FHealthAttributeChangedSignature,
 	UMTD_HealthComponent*, HealthComponent, 
 	float, OldValue,
 	float, NewValue,
@@ -94,10 +95,10 @@ public:
 	FDeathEventSignature OnDeathFinished;
 	
 	UPROPERTY(BlueprintAssignable)
-	FAttributeChangedSignature OnHealthChangedDelegate;
+	FHealthAttributeChangedSignature OnHealthChangedDelegate;
 	
 	UPROPERTY(BlueprintAssignable)
-	FAttributeChangedSignature OnMaxHealthChangedDelegate;
+	FHealthAttributeChangedSignature OnMaxHealthChangedDelegate;
 		
 private:
 	UPROPERTY()

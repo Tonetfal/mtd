@@ -5,6 +5,7 @@
 
 #include "MTD_HeroComponent.generated.h"
 
+class UMTD_InputConfig;
 class UMTD_AbilitySystemComponent;
 class UPlayerMappableInputConfig;
 class UMTD_PawnData;
@@ -18,6 +19,9 @@ class MTD_API UMTD_HeroComponent : public UMTD_PawnComponent
 
 public:
 	UMTD_HeroComponent();
+
+	UFUNCTION(BlueprintCallable, Category="MTD|Input")
+	void AddAdditionalInputConfig(const UMTD_InputConfig *InputConfig);
 
 protected:
 	virtual void OnRegister() override;
@@ -34,10 +38,19 @@ protected:
 	
 	void Input_AbilityInputTagPressed(FGameplayTag InputTag);
 	void Input_AbilityInputTagReleased(FGameplayTag InputTag);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Input",
+		DisplayName="Can Move")
+	bool K2_CanMove();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Input",
+		DisplayName="Can Look")
+	bool K2_CanLook();
 	
 	void Input_Move(const FInputActionValue &InputActionValue);
 	void Input_LookMouse(const FInputActionValue &InputActionValue);
 
+	UFUNCTION(BlueprintCallable, Category="MTD|Hero Component")
 	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
 	
 private:

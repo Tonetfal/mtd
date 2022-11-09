@@ -9,6 +9,7 @@
 
 class UMTD_HeroComponent;
 class UMTD_HealthComponent;
+class UMTD_ManaComponent;
 class UMTD_PawnExtensionComponent;
 class UMTD_AbilitySystemComponent;
 class AMTD_PlayerState;
@@ -65,6 +66,9 @@ protected:
 public:
 	UMTD_HealthComponent *GetHealthComponent() const
 		{ return HealthComponent; }
+		
+	UMTD_ManaComponent *GetManaComponent() const
+		{ return ManaComponent; }
 	
 	UFUNCTION(BlueprintCallable, Category="MTD|Character")
 	AMTD_PlayerState *GetMtdPlayerState() const;
@@ -85,6 +89,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
 		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
+		meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UMTD_ManaComponent> ManaComponent = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
 		meta=(AllowPrivateAccess="true"))

@@ -19,7 +19,8 @@ public class mtd : ModuleRules
 			"GameplayTags",
 			"ModularGameplay",
 			// "ModularGameplayActors",
-			"NetCore"
+			"NetCore",
+			"EnhancedInput"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

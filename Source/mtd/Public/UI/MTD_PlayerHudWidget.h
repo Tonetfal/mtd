@@ -32,16 +32,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="MTD|UI")
 	bool IsPlayerSpectating() const;
-	
-	UFUNCTION(BlueprintCallable, Category="MTD|UI")
-	FMTD_TraceData GetTraceData() const;
 
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Player HUD Widget",
-		meta=(AllowPrivateAccess="true", ClampMin = "0.1"))
-	float MaxScaleDownLength = 5000.f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Player HUD Widget",
-		meta=(AllowPrivateAccess="true", ClampMin = "0.1"))
-	float TraceLineLength = 10000.f;
 };

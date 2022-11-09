@@ -14,10 +14,10 @@ struct FMTD_InputAction
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<const UInputAction> InputAction = nullptr;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayTag InputTag;
 };
 
@@ -33,15 +33,15 @@ public:
 		FGameplayTag InputTag) const;
 	
 public:
-	// List of input actions used by the owner.
-	// These input actions are mapped to a gameplay tag and must be manually
-	// bound.
+	/// List of input actions used by the owner.
+	/// These input actions are mapped to a gameplay tag and must be manually
+	/// bound.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FMTD_InputAction> NativeInputActions;
 
-	// List of input actions used by the owner.
-	// These input actions are mapped to a gameplay tag and are automatically
-	// bound to abilities with matching input tags.
+	/// List of input actions used by the owner.
+	/// These input actions are mapped to a gameplay tag and are automatically
+	/// bound to abilities with matching input tags.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FMTD_InputAction> AbilityInputActions;
 };

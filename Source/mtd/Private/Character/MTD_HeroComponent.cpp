@@ -16,6 +16,27 @@ UMTD_HeroComponent::UMTD_HeroComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
+void UMTD_HeroComponent::AddAdditionalInputConfig(
+	const UMTD_InputConfig *InputConfig)
+{
+	check(InputConfig);
+
+	auto Owner = GetPawn<APawn>();
+	if (!IsValid(Owner))
+		return;
+
+	auto InputComponent = Owner->FindComponentByClass<UInputComponent>();
+	check(InputComponent);
+
+	auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
+
+	MtdInputComponent->BindAbilityActions(
+		InputConfig,
+		this,
+		&ThisClass::Input_AbilityInputTagPressed,
+		&ThisClass::Input_AbilityInputTagReleased);
+}
+
 void UMTD_HeroComponent::OnRegister()
 {
 	Super::OnRegister();
@@ -213,6 +234,9 @@ void UMTD_HeroComponent::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 
 void UMTD_HeroComponent::Input_Move(const FInputActionValue &InputActionValue)
 {
+	if (!K2_CanMove())
+		return;
+		
 	auto Character = GetPawn<ACharacter>();
 	check(Character);
 
@@ -232,6 +256,9 @@ void UMTD_HeroComponent::Input_Move(const FInputActionValue &InputActionValue)
 void UMTD_HeroComponent::Input_LookMouse(
 	const FInputActionValue &InputActionValue)
 {
+	if (!K2_CanLook())
+		return;
+		
 	auto Character = GetPawn<ACharacter>();
 	check(Character);
 

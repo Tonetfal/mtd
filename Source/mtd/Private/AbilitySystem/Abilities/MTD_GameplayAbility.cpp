@@ -3,11 +3,20 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cooldown.h"
+#include "AbilitySystem/Effects/MTD_GameplayEffect_Cost.h"
 #include "Character/MTD_BaseCharacter.h"
 
 UMTD_GameplayAbility::UMTD_GameplayAbility()
 {
+	CostGameplayEffectClass = UMTD_GameplayEffect_Cost::StaticClass();
 	CooldownGameplayEffectClass = UMTD_GameplayEffect_Cooldown::StaticClass();
+
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+}
+
+void UMTD_GameplayAbility::foo()
+{
+	int32 a = 5;
 }
 
 void UMTD_GameplayAbility::OnGiveAbility(
@@ -41,6 +50,30 @@ const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(
 	return Animations[Index];
 }
 
+void UMTD_GameplayAbility::GetOwnedGameplayTags(
+	FGameplayTagContainer &TagContainer) const
+{
+	TagContainer = AbilityTags;
+}
+
+float UMTD_GameplayAbility::GetCooldownNormilized() const
+{
+	const float Remaining = GetCooldownTimeRemaining();
+	return CooldownDuration.Value != 0.f ?
+		Remaining / CooldownDuration.Value : 0.f;
+}
+
+void UMTD_GameplayAbility::ActivateAbility(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo *ActorInfo, 
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData *TriggerEventData)
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	OnAbilityActivatedDelegate.Broadcast(this);
+}
+
 const FGameplayTagContainer *UMTD_GameplayAbility::GetCooldownTags() const
 {
 	FGameplayTagContainer *MutableTags =
@@ -62,18 +95,47 @@ void UMTD_GameplayAbility::ApplyCooldown(
 	const FGameplayAbilityActorInfo *ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo) const
 {
+	if (!CooldownTags.IsValid() || CooldownDuration.GetValue() <= 0.f)
+		return;
+	
 	const UGameplayEffect *CooldownGe = GetCooldownGameplayEffect();
-	if (!CooldownGe)
+	if (!IsValid(CooldownGe))
 		return;
 
+	const float AbilityLevel = GetAbilityLevel();
 	FGameplayEffectSpecHandle GeSpecHandle = MakeOutgoingGameplayEffectSpec(
-		CooldownGe->GetClass(), GetAbilityLevel());
+		CooldownGe->GetClass(), AbilityLevel);
 
 	GeSpecHandle.Data->DynamicGrantedTags.AppendTags(CooldownTags);
 
 	// ReSharper disable once CppExpressionWithoutSideEffects
 	ApplyGameplayEffectSpecToOwner(
 		Handle, ActorInfo, ActivationInfo, GeSpecHandle);
+		
+	OnApplyCooldownDelegate.Broadcast(
+		this, CooldownDuration.GetValueAtLevel(AbilityLevel));
+}
+
+void UMTD_GameplayAbility::EndAbility(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo *ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	bool bReplicateEndAbility,
+	bool bWasCancelled)
+{
+	Super::EndAbility(
+		Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	OnAbilityEndedDelegate.Broadcast(this);
+}
+
+void UMTD_GameplayAbility::InputPressed(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo *ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	MTDS_WARN("InputPressed");
+	OnInputPressedDelegate.Broadcast(this);
 }
 
 void UMTD_GameplayAbility::TryActivateAbilityOnSpawn(

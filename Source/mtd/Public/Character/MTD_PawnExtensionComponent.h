@@ -8,7 +8,7 @@
 class UMTD_PawnData;
 class UMTD_AbilitySystemComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSignature);
 
 UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_PawnExtensionComponent : public UMTD_PawnComponent
@@ -63,7 +63,7 @@ protected:
 	FSimpleMulticastDelegate OnPawnReadyToInitialize;
 	
 	UPROPERTY(BlueprintAssignable, meta=(DisplayName="On Pawn Ready To Initialize"))
-	FDynamicMulticastDelegate BP_OnPawnReadyToInitialize;
+	FDynamicMulticastSignature BP_OnPawnReadyToInitialize;
 	
 	FSimpleMulticastDelegate OnAbilitySystemInitialized;
 	FSimpleMulticastDelegate OnAbilitySystemUninitialized;

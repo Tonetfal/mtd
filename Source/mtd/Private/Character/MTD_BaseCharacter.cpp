@@ -3,6 +3,7 @@
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_HealthComponent.h"
 #include "Character/MTD_HeroComponent.h"
+#include "Character/MTD_ManaComponent.h"
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,6 +35,10 @@ AMTD_BaseCharacter::AMTD_BaseCharacter()
 	HealthComponent =
 		CreateDefaultSubobject<UMTD_HealthComponent>(
 			TEXT("MTD Health Component"));
+	
+	ManaComponent =
+		CreateDefaultSubobject<UMTD_ManaComponent>(
+			TEXT("MTD Mana Component"));
 }
 
 void AMTD_BaseCharacter::PreInitializeComponents()
@@ -100,11 +105,13 @@ void AMTD_BaseCharacter::OnAbilitySystemInitialized()
 	check(MtdAsc);
 
 	HealthComponent->InitializeWithAbilitySystem(MtdAsc);
+	ManaComponent->InitializeWithAbilitySystem(MtdAsc);
 }
 
 void AMTD_BaseCharacter::OnAbilitySystemUninitialized()
 {
 	HealthComponent->UninitializeFromAbilitySystem();
+	ManaComponent->UninitializeFromAbilitySystem();
 }
 
 void AMTD_BaseCharacter::DestroyDueToDeath()
