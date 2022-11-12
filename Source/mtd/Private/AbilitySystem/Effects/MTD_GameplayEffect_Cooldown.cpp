@@ -4,11 +4,10 @@
 
 UMTD_GameplayEffect_Cooldown::UMTD_GameplayEffect_Cooldown()
 {
-	DurationPolicy = EGameplayEffectDurationType::HasDuration;
-	
-	FCustomCalculationBasedFloat CustomCalc;
-	CustomCalc.CalculationClassMagnitude =
-		UMTD_CooldownExecution::StaticClass();
-	
-	DurationMagnitude = FGameplayEffectModifierMagnitude(CustomCalc);
+    DurationPolicy = EGameplayEffectDurationType::HasDuration;
+
+    FCustomCalculationBasedFloat CustomCalc;
+    CustomCalc.CalculationClassMagnitude = UMTD_CooldownExecution::StaticClass();
+
+    DurationMagnitude = FGameplayEffectModifierMagnitude(CustomCalc);
 }

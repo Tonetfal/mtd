@@ -9,34 +9,32 @@
 UCLASS()
 class MTD_API UMTD_ProjectileMovementComponent : public UMovementComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void TickComponent(
-		float DeltaSeconds,
-		ELevelTick TickType, 
-		FActorComponentTickFunction *ThisTickFunction) override;
+    virtual void TickComponent(
+        float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 
 protected:
-	virtual bool CheckStillInWorld();
+    virtual bool CheckStillInWorld();
 
 private:
-	FVector ComputeHomingDirection() const;
-	FVector ComputeVelocity(FVector MovementDirection) const;
-	
+    FVector ComputeHomingDirection() const;
+    FVector ComputeVelocity(FVector MovementDirection) const;
+
 public:
-	void SetMovementParameters(FMTD_ProjectileMovementParameters Parms);
+    void SetMovementParameters(FMTD_ProjectileMovementParameters Parms);
 
 private:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Projectile Movement Component",
-    	meta=(AllowPrivateAccess="true"))
-	FMTD_ProjectileMovementParameters MovementParameters;
-	
+        meta=(AllowPrivateAccess="true"))
+    FMTD_ProjectileMovementParameters MovementParameters;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Projectile Movement Component",
-    	meta=(AllowPrivateAccess="true"))
-	float CurrentSpeed = 0.f;
-	
+        meta=(AllowPrivateAccess="true"))
+    float CurrentSpeed = 0.f;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Projectile Movement Component",
-    	meta=(AllowPrivateAccess="true"))
-	FVector Direction;
+        meta=(AllowPrivateAccess="true"))
+    FVector Direction;
 };

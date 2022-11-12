@@ -9,31 +9,30 @@ UMTD_AssetManager::UMTD_AssetManager()
 
 UMTD_AssetManager &UMTD_AssetManager::Get()
 {
-	check(GEngine);
+    check(GEngine);
 
-	auto Singleton = Cast<UMTD_AssetManager>(GEngine->AssetManager);
-	if (Singleton)
-	{
-		return *Singleton;
-	}
+    auto Singleton = Cast<UMTD_AssetManager>(GEngine->AssetManager);
+    if (Singleton)
+    {
+        return *Singleton;
+    }
 
-	MTD_FATAL("Invalid AssetManagerClassName in DefaultEngine.ini. "
-		"It must be set to MTD_AssetManager!");
+    MTD_FATAL("Invalid AssetManagerClassName in DefaultEngine.ini. It must be set to MTD_AssetManager!");
 
-	// Fatal error above prevents this from being called
-	return *NewObject<UMTD_AssetManager>();
+    // Fatal error above prevents this from being called
+    return *NewObject<UMTD_AssetManager>();
 }
 
 void UMTD_AssetManager::StartInitialLoading()
 {
-	Super::StartInitialLoading();
+    Super::StartInitialLoading();
 
-	InitializeAbilitySystem();
+    InitializeAbilitySystem();
 }
 
 void UMTD_AssetManager::InitializeAbilitySystem()
 {
-	FMTD_GameplayTags::InitializeNativeTags();
+    FMTD_GameplayTags::InitializeNativeTags();
 
-	UAbilitySystemGlobals::Get().InitGlobalData();
+    UAbilitySystemGlobals::Get().InitGlobalData();
 }

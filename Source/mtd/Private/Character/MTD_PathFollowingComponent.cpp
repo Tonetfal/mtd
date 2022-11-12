@@ -6,107 +6,106 @@
 
 UMTD_PathFollowingComponent::UMTD_PathFollowingComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UMTD_PathFollowingComponent::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	const UWorld *World = GetWorld();
-	if (!IsValid(World))
-	{
-		MTDS_WARN("World is invalid");
-		return;
-	}
+    Super::BeginPlay();
 
-	const AActor *ActorOwner = GetOwner();
-	if (!IsValid(ActorOwner))
-	{
-		MTDS_WARN("Owner is invalid");
-		return;
-	}
-	
-	AGameModeBase *GM = UGameplayStatics::GetGameMode(GetWorld());
-	if (!IsValid(GM))
-	{
-		MTDS_WARN("Game mode is invalid");
-		return;
-	}
+    const UWorld *World = GetWorld();
+    if (!IsValid(World))
+    {
+        MTDS_WARN("World is invalid");
+        return;
+    }
 
-	AMTD_GameModeBase *GameMode = Cast<AMTD_GameModeBase>(GM);
-	if (!IsValid(GameMode))
-	{
-		MTDS_WARN("Failed to cast [%s] to MTD GM", *GM->GetName());
-		return;
-	}
+    const AActor *ActorOwner = GetOwner();
+    if (!IsValid(ActorOwner))
+    {
+        MTDS_WARN("Owner is invalid");
+        return;
+    }
 
-	PathManager = GameMode->GetLevelPathManager();
-	if (!IsValid(PathManager))
-	{
-		MTDS_WARN("[%s] has an invalid path manager", *GM->GetName());
-		return;
-	}
+    AGameModeBase *GM = UGameplayStatics::GetGameMode(GetWorld());
+    if (!IsValid(GM))
+    {
+        MTDS_WARN("Game mode is invalid");
+        return;
+    }
+
+    auto GameMode = Cast<AMTD_GameModeBase>(GM);
+    if (!IsValid(GameMode))
+    {
+        MTDS_WARN("Failed to cast [%s] to MTD GM", *GM->GetName());
+        return;
+    }
+
+    PathManager = GameMode->GetLevelPathManager();
+    if (!IsValid(PathManager))
+    {
+        MTDS_WARN("[%s] has an invalid path manager", *GM->GetName());
+    }
 }
 
 void UMTD_PathFollowingComponent::EndPlay(
     const EEndPlayReason::Type EndPlayReason)
 {
-	if (AllowToPrepareTimerHandle.IsValid())
-		GetWorld()->GetTimerManager().ClearTimer(AllowToPrepareTimerHandle);
-	
-	Super::EndPlay(EndPlayReason);
+    if (AllowToPrepareTimerHandle.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(AllowToPrepareTimerHandle);
+    }
+
+    Super::EndPlay(EndPlayReason);
 }
 
 void UMTD_PathFollowingComponent::PreparePath()
 {
-	if (!bIsAllowedToPrepare)
-		return;
-	
-	const AActor *ActorOwner = GetOwner();
-	if (!IsValid(ActorOwner))
-	{
-		MTDS_WARN("Owner is invalid");
-		return;
-	}
-	
-	MTDS_VVERBOSE("Preparing a level path...");
+    if (!bIsAllowedToPrepare)
+    {
+        return;
+    }
 
-	Path = PathManager->GetNavigationPath(
-		ActorOwner->GetActorLocation(), PathChannel);
-	
-	PathIndex = 0;
+    const AActor *ActorOwner = GetOwner();
+    if (!IsValid(ActorOwner))
+    {
+        MTDS_WARN("Owner is invalid");
+        return;
+    }
 
-	// Disallow too frequent prepation requests
-	GetWorld()->GetTimerManager().SetTimer(AllowToPrepareTimerHandle,this,
-		&UMTD_PathFollowingComponent::AllowToPrepare, 1.f);
-	bIsAllowedToPrepare = false;
+    MTDS_VVERBOSE("Preparing a level path...");
+
+    Path = PathManager->GetNavigationPath(ActorOwner->GetActorLocation(), PathChannel);
+
+    PathIndex = 0;
+
+    // Disallow too frequent prepation requests
+    GetWorld()->GetTimerManager().SetTimer(
+        AllowToPrepareTimerHandle, this, &UMTD_PathFollowingComponent::AllowToPrepare, 1.f);
+    bIsAllowedToPrepare = false;
 }
 
 bool UMTD_PathFollowingComponent::SelectNextPathPoint()
 {
-	PathIndex++;
-	
-	if (Path.Num() <= PathIndex)
-	{
-		MTDS_VVERBOSE("Path is terminated", *GetName());
-		return false;
-	}
-	else
-	{	
-        MTDS_VVERBOSE("Moving on next path point");
-        return true;
-	}
+    PathIndex++;
+
+    if (Path.Num() <= PathIndex)
+    {
+        MTDS_VVERBOSE("Path is terminated", *GetName());
+        return false;
+    }
+    MTDS_VVERBOSE("Moving on next path point");
+    return true;
 }
 
 void UMTD_PathFollowingComponent::OnMoveToFinished(bool bSuccess)
 {
-	bFailedToGetFollowPoint = !bSuccess;
-	OnDestinationDelegate.Broadcast(bSuccess);
+    bFailedToGetFollowPoint = (!bSuccess);
+    OnDestinationDelegate.Broadcast(bSuccess);
 }
 
 void UMTD_PathFollowingComponent::AllowToPrepare()
 {
-	bIsAllowedToPrepare = true;
+    bIsAllowedToPrepare = true;
 }

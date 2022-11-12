@@ -6,43 +6,47 @@
 
 void UMTD_WeaponInstance::ModStats(float Multiplier)
 {
-	Super::ModStats(Multiplier);
+    Super::ModStats(Multiplier);
 
-	UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-	if (!IsValid(Asc))
-		return;
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    if (!IsValid(Asc))
+    {
+        return;
+    }
 
-	check(Asc->GetAttributeSet(UMTD_CombatSet::StaticClass()));
+    check(Asc->GetAttributeSet(UMTD_CombatSet::StaticClass()));
 
-	Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(),
-		EGameplayModOp::Additive, WeaponStats.BaseDamage * Multiplier);
+    Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(),
+        EGameplayModOp::Additive, WeaponStats.BaseDamage * Multiplier);
 }
 
-TArray<FGameplayEffectSpecHandle>
-	UMTD_WeaponInstance::GetGameplayEffectSpecHandlesToGrantOnHit() const
+TArray<FGameplayEffectSpecHandle> UMTD_WeaponInstance::GetGameplayEffectSpecHandlesToGrantOnHit() const
 {
-	TArray<FGameplayEffectSpecHandle> Result;
+    TArray<FGameplayEffectSpecHandle> Result;
 
-	AActor *GeOwner = GetOwner();
-	if (!IsValid(GeOwner))
-		return Result;
+    AActor *GeOwner = GetOwner();
+    if (!IsValid(GeOwner))
+    {
+        return Result;
+    }
 
-	const UAbilitySystemComponent *Asc =
-		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GeOwner);
-	if (!IsValid(Asc))
-		return Result;
+    const UAbilitySystemComponent *Asc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GeOwner);
+    if (!IsValid(Asc))
+    {
+        return Result;
+    }
 
-	const FGameplayEffectContextHandle GeContextHandle = 
-		Asc->MakeEffectContext();
+    const FGameplayEffectContextHandle GeContextHandle = Asc->MakeEffectContext();
 
-	for (const TSubclassOf<UGameplayEffect> GeClass :
-		GameplayEffectsToGrantOnHit)
-	{
-		if (!GeClass)
-			continue;
+    for (const TSubclassOf<UGameplayEffect> GeClass :GameplayEffectsToGrantOnHit)
+    {
+        if (!GeClass)
+        {
+            continue;
+        }
 
-		Result.Add(Asc->MakeOutgoingSpec(GeClass, 1.f, GeContextHandle));
-	}
+        Result.Add(Asc->MakeOutgoingSpec(GeClass, 1.f, GeContextHandle));
+    }
 
-	return Result;
+    return Result;
 }

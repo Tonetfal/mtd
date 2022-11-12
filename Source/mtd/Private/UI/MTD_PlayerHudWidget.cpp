@@ -5,18 +5,17 @@
 
 bool UMTD_PlayerHudWidget::Initialize()
 {
-	return Super::Initialize();
+    return Super::Initialize();
 }
 
 bool UMTD_PlayerHudWidget::IsPlayerAlive() const
 {
-	const auto Health =
-		UMTD_HealthComponent::FindHealthComponent(GetOwningPlayer());
-	return IsValid(Health) && !Health->IsDeadOrDying();
+    const auto Health = UMTD_HealthComponent::FindHealthComponent(GetOwningPlayer());
+    return ((IsValid(Health)) && (!Health->IsDeadOrDying()));
 }
 
 bool UMTD_PlayerHudWidget::IsPlayerSpectating() const
 {
-	const APlayerController *Pc = GetOwningPlayer();
-	return IsValid(Pc) && Pc->GetStateName() == NAME_Spectating;
+    const APlayerController *Pc = GetOwningPlayer();
+    return ((IsValid(Pc)) && (Pc->GetStateName() == NAME_Spectating));
 }

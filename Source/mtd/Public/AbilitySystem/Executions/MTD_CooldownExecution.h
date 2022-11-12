@@ -11,14 +11,12 @@
  * makes use of its internal CooldownDuration field.
  */
 UCLASS()
-class MTD_API UMTD_CooldownExecution :
-	public UGameplayModMagnitudeCalculation
+class MTD_API UMTD_CooldownExecution : public UGameplayModMagnitudeCalculation
 {
-	GENERATED_BODY()
-	
-public:
-	UMTD_CooldownExecution();
+    GENERATED_BODY()
 
-	virtual float CalculateBaseMagnitude_Implementation(
-		const FGameplayEffectSpec &Spec) const override;
+public:
+    UMTD_CooldownExecution();
+
+    virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const override;
 };

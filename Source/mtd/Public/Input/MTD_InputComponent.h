@@ -10,68 +10,66 @@
 UCLASS(Config=Input)
 class MTD_API UMTD_InputComponent : public UEnhancedInputComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UMTD_InputComponent();
-	
-public:
-	template<class UserClass, typename FuncType>
-	void BindNativeAction(
-		const UMTD_InputConfig *InputConfig,
-		const FGameplayTag &InputTag,
-		ETriggerEvent TriggerEvent,
-		UserClass *Object,
-		FuncType Func);
+    UMTD_InputComponent();
 
-	template<
-		class UserClass, typename PressedFuncType, typename ReleasedFuncType>
-	void BindAbilityActions(
-		const UMTD_InputConfig *InputConfig,
-		UserClass *Object,
-		PressedFuncType PressedFunc,
-		ReleasedFuncType ReleasedFunc);
+public:
+    template <class UserClass, typename FuncType>
+    void BindNativeAction(
+        const UMTD_InputConfig *InputConfig,
+        const FGameplayTag &InputTag,
+        ETriggerEvent TriggerEvent,
+        UserClass *Object,
+        FuncType Func);
+
+    template <class UserClass, typename PressedFuncType, typename ReleasedFuncType>
+    void BindAbilityActions(
+        const UMTD_InputConfig *InputConfig,
+        UserClass *Object,
+        PressedFuncType PressedFunc,
+        ReleasedFuncType ReleasedFunc);
 };
 
-template<class UserClass, typename FuncType>
+template <class UserClass, typename FuncType>
 void UMTD_InputComponent::BindNativeAction(
-	const UMTD_InputConfig *InputConfig,
-	const FGameplayTag &InputTag,
-	ETriggerEvent TriggerEvent,
-	UserClass *Object,
-	FuncType Func)
+    const UMTD_InputConfig *InputConfig,
+    const FGameplayTag &InputTag,
+    ETriggerEvent TriggerEvent,
+    UserClass *Object,
+    FuncType Func)
 {
-	check(InputConfig);
+    check(InputConfig);
 
-	const UInputAction *Action =
-		InputConfig->FindNativeInputActionForTag(InputTag);
-	if (!IsValid(Action))
-		return;
+    const UInputAction *Action = InputConfig->FindNativeInputActionForTag(InputTag);
+    if (!IsValid(Action))
+    {
+        return;
+    }
 
-	BindAction(Action, TriggerEvent, Object, Func);
+    BindAction(Action, TriggerEvent, Object, Func);
 }
 
-template<class UserClass, typename PressedFuncType, typename ReleasedFuncType>
+template <class UserClass, typename PressedFuncType, typename ReleasedFuncType>
 void UMTD_InputComponent::BindAbilityActions(
-	const UMTD_InputConfig *InputConfig,
-	UserClass *Object,
-	PressedFuncType PressedFunc,
-	ReleasedFuncType ReleasedFunc)
+    const UMTD_InputConfig *InputConfig,
+    UserClass *Object,
+    PressedFuncType PressedFunc,
+    ReleasedFuncType ReleasedFunc)
 {
-	check(InputConfig);
+    check(InputConfig);
 
-	for (const FMTD_InputAction &Action : InputConfig->AbilityInputActions)
-	{
-		if (PressedFunc)
-		{
-			BindAction(Action.InputAction, ETriggerEvent::Triggered, Object,
-				PressedFunc, Action.InputTag);
-		}
-		
-		if (ReleasedFunc)
-		{
-			BindAction(Action.InputAction, ETriggerEvent::Completed, Object,
-				ReleasedFunc, Action.InputTag);
-		}
-	}
+    for (const FMTD_InputAction &Action : InputConfig->AbilityInputActions)
+    {
+        if (PressedFunc)
+        {
+            BindAction(Action.InputAction, ETriggerEvent::Triggered, Object, PressedFunc, Action.InputTag);
+        }
+
+        if (ReleasedFunc)
+        {
+            BindAction(Action.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, Action.InputTag);
+        }
+    }
 }

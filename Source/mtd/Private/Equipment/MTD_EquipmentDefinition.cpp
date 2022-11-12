@@ -4,5 +4,5 @@
 
 UMTD_EquipmentDefinition::UMTD_EquipmentDefinition()
 {
-	InstanceType = UMTD_EquipmentInstance::StaticClass();
+    InstanceType = UMTD_EquipmentInstance::StaticClass();
 }

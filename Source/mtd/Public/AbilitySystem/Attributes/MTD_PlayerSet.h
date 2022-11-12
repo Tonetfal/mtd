@@ -6,26 +6,25 @@
 #include "MTD_PlayerSet.generated.h"
 
 /**
- * Attribute set that defines all the player statistics data which is given by
- * its equipment.
+ * Attribute set that defines all the player statistics data which is given by its equipment.
  */
 UCLASS()
 class MTD_API UMTD_PlayerSet : public UMTD_AttributeSet
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, HealthStat);
-	ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, DamageStat);
-	ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, SpeedStat);
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, HealthStat);
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, DamageStat);
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, SpeedStat);
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData HealthStat;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData DamageStat;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayAttributeData SpeedStat;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData HealthStat;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData DamageStat;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData SpeedStat;
 };

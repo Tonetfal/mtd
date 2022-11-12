@@ -7,37 +7,40 @@
 UENUM(BlueprintType)
 enum class ELevelDifficulty : uint8
 {
-	Invalid,
-	Easy,
-	Medium,
-	Hard
+    Invalid,
+    Easy,
+    Medium,
+    Hard
 };
 
 UCLASS(Blueprintable, BlueprintType)
 class MTD_API UMTD_LevelDefinition : public UDataAsset
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UCurveTable> EntitiesAttributeTable = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TObjectPtr<UCurveTable> EntitiesAttributeTable = nullptr;
 
-	// EntitiesToSpawn from various portals
-	// Rewards with possibilities
-	// Achievements
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,
+        meta=(ClampMin="0.0"))
+    float CoreHealth = 1000.f;
+
+    // EntitiesToSpawn from various portals
+    // Rewards with possibilities
+    // Achievements
 };
 
 UCLASS(Blueprintable, BlueprintType)
 class MTD_API UMTD_MapDefinition : public UObject
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UMTD_MapDefinition();
+    UMTD_MapDefinition();
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TMap<ELevelDifficulty, TObjectPtr<UMTD_LevelDefinition>> LevelDefinitions;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TMap<ELevelDifficulty,TObjectPtr<UMTD_LevelDefinition>> LevelDefinitions;
 };

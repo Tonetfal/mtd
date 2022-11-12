@@ -12,282 +12,281 @@
 
 UMTD_HeroComponent::UMTD_HeroComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UMTD_HeroComponent::AddAdditionalInputConfig(
-	const UMTD_InputConfig *InputConfig)
+void UMTD_HeroComponent::AddAdditionalInputConfig(const UMTD_InputConfig *InputConfig)
 {
-	check(InputConfig);
+    check(InputConfig);
 
-	auto Owner = GetPawn<APawn>();
-	if (!IsValid(Owner))
-		return;
+    auto Owner = GetPawn<APawn>();
+    if (!IsValid(Owner))
+    {
+        return;
+    }
 
-	auto InputComponent = Owner->FindComponentByClass<UInputComponent>();
-	check(InputComponent);
+    auto InputComponent = Owner->FindComponentByClass<UInputComponent>();
+    check(InputComponent);
 
-	auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
+    auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
 
-	MtdInputComponent->BindAbilityActions(
-		InputConfig,
-		this,
-		&ThisClass::Input_AbilityInputTagPressed,
-		&ThisClass::Input_AbilityInputTagReleased);
+    MtdInputComponent->BindAbilityActions(
+        InputConfig, this, &ThisClass::Input_AbilityInputTagPressed, &ThisClass::Input_AbilityInputTagReleased);
 }
 
 void UMTD_HeroComponent::OnRegister()
 {
-	Super::OnRegister();
+    Super::OnRegister();
 
-	const APawn *Owner = GetPawn<APawn>();
-	if (!IsValid(Owner))
-	{
-		MTDS_ERROR("Owner [%s] must be a Pawn actor", *GetNameSafe(GetOwner()));
-		return;
-	}
+    const auto Owner = GetPawn<APawn>();
+    if (!IsValid(Owner))
+    {
+        MTDS_ERROR("Owner [%s] must be a Pawn actor", *GetNameSafe(GetOwner()));
+        return;
+    }
 
-	auto *PawnExtComp =
-		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Owner);
+    auto PawnExtComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Owner);
 
-	if (!IsValid(PawnExtComp))
-	{
-		MTDS_ERROR("Owner [%s] must have MTD_PawnExtensionComponent",
-			*GetNameSafe(Owner));
-		return;
-	}
+    if (!IsValid(PawnExtComp))
+    {
+        MTDS_ERROR("Owner [%s] must have MTD_PawnExtensionComponent", *GetNameSafe(Owner));
+        return;
+    }
 
-	PawnExtComp->OnPawnReadyToInitialize_RegisterAndCall(
-		FSimpleMulticastDelegate::FDelegate::CreateUObject(
-			this, &ThisClass::OnPawnReadyToInitialize));
+    PawnExtComp->OnPawnReadyToInitialize_RegisterAndCall(
+        FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnPawnReadyToInitialize));
 }
 
 void UMTD_HeroComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 void UMTD_HeroComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	const auto Pawn = GetPawn<APawn>();
-	if (IsValid(Pawn))
-	{
-		auto ExtComp =
-			UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-		if (IsValid(ExtComp))
-		{
-			ExtComp->UninitializeAbilitySystem();
-		}
-	}
-	
-	Super::EndPlay(EndPlayReason);
+    const auto Pawn = GetPawn<APawn>();
+    if (IsValid(Pawn))
+    {
+        auto ExtComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+        if (IsValid(ExtComp))
+        {
+            ExtComp->UninitializeAbilitySystem();
+        }
+    }
+
+    Super::EndPlay(EndPlayReason);
 }
 
 bool UMTD_HeroComponent::IsPawnComponentReadyToInitialize() const
 {
-	const auto Pawn = GetPawn<APawn>();
+    const auto Pawn = GetPawn<APawn>();
 
-	// A pawn is required
-	if (!IsValid(Pawn))
-		return false;
-	
-	const auto Controller = GetController<AController>();
+    // A pawn is required
+    if (!IsValid(Pawn))
+    {
+        return false;
+    }
 
-	const bool bHasControllerPairedWithPS =
-		(Controller) &&
-		(Controller->PlayerState) &&
-		(Controller->PlayerState->GetOwner() == Controller);
+    const auto Controller = GetController<AController>();
 
-	if (!bHasControllerPairedWithPS)
-		return false;
+    const bool bHasControllerPairedWithPS =
+        (Controller) && (Controller->PlayerState) && (Controller->PlayerState->GetOwner() == Controller);
 
-	const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
-	const bool bIsBot = Pawn->IsBotControlled();
+    if (!bHasControllerPairedWithPS)
+    {
+        return false;
+    }
 
-	if (bIsLocallyControlled && !bIsBot)
-	{
-		// The input component is required when locally controlled
-		if (!Pawn->InputComponent)
-			return false;
-	}
+    const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
+    const bool bIsBot = Pawn->IsBotControlled();
 
-	return true;
+    if (bIsLocallyControlled && !bIsBot)
+    {
+        // The input component is required when locally controlled
+        if (!Pawn->InputComponent)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void UMTD_HeroComponent::OnPawnReadyToInitialize()
 {
-	// Don't initialize twice
-	if (!ensure(!bPawnHasInitialized))
-		return;
+    // Don't initialize twice
+    if (!ensure(!bPawnHasInitialized))
+    {
+        return;
+    }
 
-	const auto Pawn = GetPawn<APawn>();
-	if (!IsValid(Pawn))
-		return;
-	
-	const auto MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
-	check(MtdPs);
+    const auto Pawn = GetPawn<APawn>();
+    if (!IsValid(Pawn))
+    {
+        return;
+    }
 
-	UMTD_AbilitySystemComponent *MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
+    const auto MtdPs = Pawn->GetPlayerStateChecked<AMTD_PlayerState>();
+    check(MtdPs);
 
-	PawnData = nullptr;
-	const auto PawnExtComp =
-		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-	if (IsValid(PawnExtComp))
-	{
-		PawnData = PawnExtComp->GetPawnData<UMTD_PawnData>();
+    UMTD_AbilitySystemComponent *MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
 
-		PawnExtComp->InitializeAbilitySystem(MtdAsc, MtdPs);
-	}
-	
-	if (IsValid(PawnData))
-	{
-		for (const UMTD_AbilitySet *AbilitySet : PawnData->AbilitySets)
-		{
-			AbilitySet->GiveToAbilitySystem(MtdAsc, nullptr, GetOwner());
-		}
-	}
-	else
-	{
-		MTDS_WARN("Pawn Data asset on owner [%s] is invalid!",
-			*Pawn->GetName());
-	}
+    PawnData = nullptr;
+    const auto PawnExtComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+    if (IsValid(PawnExtComp))
+    {
+        PawnData = PawnExtComp->GetPawnData<UMTD_PawnData>();
 
-	const auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
-	if (IsValid(MtdPc) && IsValid(Pawn->InputComponent))
-	{
-		InitializePlayerInput(Pawn->InputComponent);
-	}
+        PawnExtComp->InitializeAbilitySystem(MtdAsc, MtdPs);
+    }
 
-	bPawnHasInitialized = true;
+    if (IsValid(PawnData))
+    {
+        for (const UMTD_AbilitySet *AbilitySet :PawnData->AbilitySets)
+        {
+            AbilitySet->GiveToAbilitySystem(MtdAsc, nullptr, GetOwner());
+        }
+    }
+    else
+    {
+        MTDS_WARN("Pawn Data asset on owner [%s] is invalid!", *Pawn->GetName());
+    }
+
+    const auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
+    if (IsValid(MtdPc) && IsValid(Pawn->InputComponent))
+    {
+        InitializePlayerInput(Pawn->InputComponent);
+    }
+
+    bPawnHasInitialized = true;
 }
 
 void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
 {
-	check(InputComponent);
+    check(InputComponent);
 
-	if (!IsValid(PawnData))
-		return;
+    if (!IsValid(PawnData))
+    {
+        return;
+    }
 
-	auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
-	check(MtdInputComponent);
+    auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
+    check(MtdInputComponent);
 
-	const auto Pawn = GetPawn<APawn>();
-	check(Pawn);
+    const auto Pawn = GetPawn<APawn>();
+    check(Pawn);
 
-	const auto ExtPawnComp =
-		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-	check(ExtPawnComp);
+    const auto ExtPawnComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+    check(ExtPawnComp);
 
-	// PawnData = ExtPawnComp->GetPawnData<UMTD_PawnData>();
-	check(PawnData);
+    // PawnData = ExtPawnComp->GetPawnData<UMTD_PawnData>();
+    check(PawnData);
 
-	const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
-	UMTD_InputConfig *InputConfig = PawnData->InputConfig;
-	
-	if (!IsValid(InputConfig))
-	{
-		MTDS_WARN("Input Config on Pawn Data [%s] is invalid",
-			*PawnData->GetName());
-		return;
-	}
+    const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
+    UMTD_InputConfig *InputConfig = PawnData->InputConfig;
 
-	MtdInputComponent->BindAbilityActions(
-		InputConfig,
-		this,
-		&ThisClass::Input_AbilityInputTagPressed,
-		&ThisClass::Input_AbilityInputTagReleased);
+    if (!IsValid(InputConfig))
+    {
+        MTDS_WARN("Input Config on Pawn Data [%s] is invalid", *PawnData->GetName());
+        return;
+    }
 
-	auto BindNativeAction =
-		[&, this] (FGameplayTag GameplayTag, auto Delegate)
-	{
-		MtdInputComponent->BindNativeAction(
-			InputConfig,
-			GameplayTag,
-			ETriggerEvent::Triggered,
-			this,
-			Delegate);
-	};
-	
-	BindNativeAction(GameplayTags.InputTag_Move, &ThisClass::Input_Move);
-	BindNativeAction(GameplayTags.InputTag_Look_Mouse, &ThisClass::Input_LookMouse);
+    MtdInputComponent->BindAbilityActions(
+        InputConfig, this, &ThisClass::Input_AbilityInputTagPressed, &ThisClass::Input_AbilityInputTagReleased);
+
+    auto BindNativeAction =
+        [&, this](FGameplayTag GameplayTag, auto Delegate) {
+        MtdInputComponent->BindNativeAction(InputConfig, GameplayTag, ETriggerEvent::Triggered, this, Delegate);
+    };
+
+    BindNativeAction(GameplayTags.InputTag_Move, &ThisClass::Input_Move);
+    BindNativeAction(GameplayTags.InputTag_Look_Mouse, &ThisClass::Input_LookMouse);
 }
 
 void UMTD_HeroComponent::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
-	if (!IsValid(MtdAsc))
-		return;
+    UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
+    if (!IsValid(MtdAsc))
+    {
+        return;
+    }
 
-	MTDS_WARN("Pressed %s", *InputTag.ToString());
-	MtdAsc->OnAbilityInputTagPressed(InputTag);
+    MtdAsc->OnAbilityInputTagPressed(InputTag);
 }
-	
+
 void UMTD_HeroComponent::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
-	if (!IsValid(MtdAsc))
-		return;
-		
-	MtdAsc->OnAbilityInputTagReleased(InputTag);
+    UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
+    if (!IsValid(MtdAsc))
+    {
+        return;
+    }
+
+    MtdAsc->OnAbilityInputTagReleased(InputTag);
 }
 
 void UMTD_HeroComponent::Input_Move(const FInputActionValue &InputActionValue)
 {
-	if (!K2_CanMove())
-		return;
-		
-	auto Character = GetPawn<ACharacter>();
-	check(Character);
+    if (!K2_CanMove())
+    {
+        return;
+    }
 
-	const FVector2D Dir = InputActionValue.Get<FVector2D>();
-	
-	if (Dir.X != 0.f)
-	{
-		Character->AddMovementInput(Character->GetActorRightVector(), Dir.X);
-	}
+    auto Character = GetPawn<ACharacter>();
+    check(Character);
 
-	if (Dir.Y != 0.f)
-	{
-		Character->AddMovementInput(Character->GetActorForwardVector(), Dir.Y);
-	}
+    const FVector2D Dir = InputActionValue.Get<FVector2D>();
+
+    if (Dir.X != 0.f)
+    {
+        Character->AddMovementInput(Character->GetActorRightVector(), Dir.X);
+    }
+
+    if (Dir.Y != 0.f)
+    {
+        Character->AddMovementInput(Character->GetActorForwardVector(), Dir.Y);
+    }
 }
 
-void UMTD_HeroComponent::Input_LookMouse(
-	const FInputActionValue &InputActionValue)
+void UMTD_HeroComponent::Input_LookMouse(const FInputActionValue &InputActionValue)
 {
-	if (!K2_CanLook())
-		return;
-		
-	auto Character = GetPawn<ACharacter>();
-	check(Character);
+    if (!K2_CanLook())
+    {
+        return;
+    }
 
-	const FVector2D Dir = InputActionValue.Get<FVector2D>();
-	
-	// TODO: Store XY turn ratio
-	
-	if (Dir.X != 0.f)
-	{
-		Character->AddControllerYawInput(Dir.X);
-	}
-	
-	if (Dir.Y != 0.f)
-	{
-		Character->AddControllerPitchInput(Dir.Y);
-	}
+    auto Character = GetPawn<ACharacter>();
+    check(Character);
+
+    const FVector2D Dir = InputActionValue.Get<FVector2D>();
+
+    // TODO: Store XY turn ratio
+
+    if (Dir.X != 0.f)
+    {
+        Character->AddControllerYawInput(Dir.X);
+    }
+
+    if (Dir.Y != 0.f)
+    {
+        Character->AddControllerPitchInput(Dir.Y);
+    }
 }
 
-UMTD_AbilitySystemComponent*
-	UMTD_HeroComponent::GetMtdAbilitySystemComponent() const
+UMTD_AbilitySystemComponent *UMTD_HeroComponent::GetMtdAbilitySystemComponent() const
 {
-	const auto Pawn = GetPawn<APawn>();
-	if (!IsValid(Pawn))
-		return nullptr;
+    const auto Pawn = GetPawn<APawn>();
+    if (!IsValid(Pawn))
+    {
+        return nullptr;
+    }
 
-	const auto ExtPawnComp =
-		UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
-	if (!IsValid(ExtPawnComp))
-		return nullptr;
+    const auto ExtPawnComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Pawn);
+    if (!IsValid(ExtPawnComp))
+    {
+        return nullptr;
+    }
 
-	return ExtPawnComp->GetMtdAbilitySystemComponent();
+    return ExtPawnComp->GetMtdAbilitySystemComponent();
 }

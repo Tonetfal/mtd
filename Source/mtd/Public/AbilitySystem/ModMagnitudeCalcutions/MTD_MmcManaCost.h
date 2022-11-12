@@ -8,9 +8,8 @@
 UCLASS()
 class MTD_API UMTD_MmcManaCost : public UGameplayModMagnitudeCalculation
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-	virtual float CalculateBaseMagnitude_Implementation(
-		const FGameplayEffectSpec &Spec) const override;
+    virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const override;
 };

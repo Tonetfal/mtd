@@ -15,74 +15,83 @@ struct FMTD_EquipmentActorToSpawn;
 UCLASS(BlueprintType, Blueprintable)
 class UMTD_EquipmentInstance : public UObject
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	friend UMTD_EquipmentManagerComponent;
+    friend UMTD_EquipmentManagerComponent;
 
 public:
-	UMTD_EquipmentInstance();
+    UMTD_EquipmentInstance();
 
-	//~UObject interface
-	virtual bool IsSupportedForNetworking() const override
-		{ return true; }
-	virtual UWorld *GetWorld() const override final;
-	//~End of UObject interface
+    //~UObject interface
+    virtual bool IsSupportedForNetworking() const override
+    {
+        return true;
+    }
 
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-	AActor *GetOwner() const
-		{ return Owner; }
+    virtual UWorld *GetWorld() const override final;
+    //~End of UObject interface
 
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-	APawn *GetPawn() const;
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+    AActor *GetOwner() const
+    {
+        return Owner;
+    }
 
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment",
-		meta=(DeterminesOutputType=PawnType))
-	APawn *GetTypedPawn(TSubclassOf<APawn> PawnType) const;
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+    APawn *GetPawn() const;
 
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-	AActor *GetSpawnedActor() const
-		{ return SpawnedActor; }
-		
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-	UAbilitySystemComponent *GetAbilitySystemComponent() const;
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment",
+        meta=(DeterminesOutputType=PawnType))
+    APawn *GetTypedPawn(TSubclassOf<APawn> PawnType) const;
 
-	UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-	UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+    AActor *GetSpawnedActor() const
+    {
+        return SpawnedActor;
+    }
 
-	virtual void SpawnEquipmentActor(
-		const FMTD_EquipmentActorToSpawn &ActorToSpawn);
-	virtual void DestroyEquipmentActor();
-	
-	virtual void OnEquipped();
-	virtual void OnUnequipped();
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+    UAbilitySystemComponent *GetAbilitySystemComponent() const;
+
+    UFUNCTION(BlueprintPure, Category="MTD|Equipment")
+    UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
+
+    virtual void SpawnEquipmentActor(
+        const FMTD_EquipmentActorToSpawn &ActorToSpawn);
+    virtual void DestroyEquipmentActor();
+
+    virtual void OnEquipped();
+    virtual void OnUnequipped();
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
-		meta=(DisplayName="OnEquipped"))
-	void K2_OnEquipped();
+    UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
+        meta=(DisplayName="OnEquipped"))
+    void K2_OnEquipped();
 
-	UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
-		meta=(DisplayName="OnUnequipped"))
-	void K2_OnUnequipped();
+    UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment",
+        meta=(DisplayName="OnUnequipped"))
+    void K2_OnUnequipped();
 
-	virtual void ModStats(float Multiplier);
-	bool IsPlayer() const;
-
-private:
-	void SetOwner(AActor *InOwner)
-		{ Owner = InOwner; }
-	
-	void GrantStats();
-	void TakeBackStats();
+    virtual void ModStats(float Multiplier);
+    bool IsPlayer() const;
 
 private:
-	UPROPERTY()
-	TObjectPtr<AActor> Owner = nullptr;
+    void SetOwner(AActor *InOwner)
+    {
+        Owner = InOwner;
+    }
 
-	UPROPERTY()
-	TObjectPtr<AActor> SpawnedActor = nullptr;
+    void GrantStats();
+    void TakeBackStats();
 
-	UPROPERTY(EditAnywhere, Category="MTD|Equipment|Stats",
-		meta=(AllowPrivateAccess="true"), DisplayName="Player")
-	FMTD_EquipmentPlayerStats PlayerStats;
+private:
+    UPROPERTY()
+    TObjectPtr<AActor> Owner = nullptr;
+
+    UPROPERTY()
+    TObjectPtr<AActor> SpawnedActor = nullptr;
+
+    UPROPERTY(EditAnywhere, Category="MTD|Equipment|Stats",
+        meta=(AllowPrivateAccess="true"), DisplayName="Player")
+    FMTD_EquipmentPlayerStats PlayerStats;
 };

@@ -2,7 +2,6 @@
 
 UMTD_GameplayEffect_Attack::UMTD_GameplayEffect_Attack()
 {
-	DurationPolicy = EGameplayEffectDurationType::HasDuration;
-	DurationMagnitude =
-		FGameplayEffectModifierMagnitude(FSetByCallerFloat());
+    DurationPolicy = EGameplayEffectDurationType::HasDuration;
+    DurationMagnitude = FGameplayEffectModifierMagnitude(FSetByCallerFloat());
 }

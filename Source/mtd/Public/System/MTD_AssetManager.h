@@ -8,18 +8,18 @@
 UCLASS()
 class MTD_API UMTD_AssetManager : public UAssetManager
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	UMTD_AssetManager();
+    UMTD_AssetManager();
 
-	static UMTD_AssetManager &Get();
+    static UMTD_AssetManager &Get();
 
 protected:
-	//~UAssetManager interface
-	virtual void StartInitialLoading() override;
-	//~End of UAssetManager interface
+    //~UAssetManager interface
+    virtual void StartInitialLoading() override;
+    //~End of UAssetManager interface
 
 private:
-	void InitializeAbilitySystem();
+    void InitializeAbilitySystem();
 };

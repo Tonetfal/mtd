@@ -10,31 +10,31 @@ class AMTD_Projectile;
 UCLASS()
 class MTD_API UMTD_RangedWeaponInstance : public UMTD_WeaponInstance
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void ModStats(float Multiplier) override;
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Weapon")
-	FVector GetFirePointWorldPosition() const;
+    virtual void ModStats(float Multiplier) override;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Weapon")
+    FVector GetFirePointWorldPosition() const;
 
 private:
-	bool InitializeFirePoint() const;
+    bool InitializeFirePoint() const;
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Equipment|Stats|Weapon",
-		meta=(AllowPrivateAccess="true"))
-	FMTD_EquipmentRangedWeaponStats RangedWeaponStats;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
-		meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UMTD_FireData> ProjectileData = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Equipment|Stats|Weapon",
+        meta=(AllowPrivateAccess="true"))
+    FMTD_EquipmentRangedWeaponStats RangedWeaponStats;
 
-	const FName FirePointSocketName { TEXT("FirePoint") };
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_FireData> ProjectileData = nullptr;
 
-	UPROPERTY()
-	mutable TObjectPtr<const UStaticMeshSocket> FirePointSocket = nullptr;
+    const FName FirePointSocketName{TEXT("FirePoint")};
 
-	UPROPERTY()
-	mutable TObjectPtr<const UStaticMeshComponent> WeaponMesh = nullptr;
+    UPROPERTY()
+    mutable TObjectPtr<const UStaticMeshSocket> FirePointSocket = nullptr;
+
+    UPROPERTY()
+    mutable TObjectPtr<const UStaticMeshComponent> WeaponMesh = nullptr;
 };

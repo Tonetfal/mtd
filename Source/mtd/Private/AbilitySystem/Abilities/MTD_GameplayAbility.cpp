@@ -8,150 +8,136 @@
 
 UMTD_GameplayAbility::UMTD_GameplayAbility()
 {
-	CostGameplayEffectClass = UMTD_GameplayEffect_Cost::StaticClass();
-	CooldownGameplayEffectClass = UMTD_GameplayEffect_Cooldown::StaticClass();
+    CostGameplayEffectClass = UMTD_GameplayEffect_Cost::StaticClass();
+    CooldownGameplayEffectClass = UMTD_GameplayEffect_Cooldown::StaticClass();
 
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+    InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
-void UMTD_GameplayAbility::foo()
+void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorInfo, const FGameplayAbilitySpec &Spec)
 {
-	int32 a = 5;
+    Super::OnGiveAbility(ActorInfo, Spec);
+
+    TryActivateAbilityOnSpawn(ActorInfo, Spec);
 }
 
-void UMTD_GameplayAbility::OnGiveAbility(
-	const FGameplayAbilityActorInfo *ActorInfo,
-	const FGameplayAbilitySpec &Spec) 
+const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(AActor *AvatarActor) const
 {
-	Super::OnGiveAbility(ActorInfo,Spec);
+    if (!IsValid(AvatarActor))
+    {
+        return nullptr;
+    }
 
-	TryActivateAbilityOnSpawn(ActorInfo, Spec);
+    const auto Character = CastChecked<AMTD_BaseCharacter>(AvatarActor);
+    TArray<UAnimMontage *> Animations = Character->GetAbilityAnimMontages(MainAbilityTag).Animations;
+
+    const int32 Size = Animations.Num();
+    if (Size == 0)
+    {
+        MTDS_WARN("There are no animations to play with Gameplay Tag [%s]", *MainAbilityTag.ToString());
+        return nullptr;
+    }
+
+    const int32 Index = FMath::Rand() % Size;
+    return Animations[Index];
 }
 
-const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(
-	AActor *AvatarActor) const
+void UMTD_GameplayAbility::GetOwnedGameplayTags(FGameplayTagContainer &TagContainer) const
 {
-	if (!IsValid(AvatarActor))
-		return nullptr;
-
-	const auto Character = CastChecked<AMTD_BaseCharacter>(AvatarActor);
-	TArray<UAnimMontage*> Animations =
-		Character->GetAbilityAnimMontages(MainAbilityTag).Animations;
-
-	const int32 Size = Animations.Num();
-	if (Size == 0)
-	{
-		MTDS_WARN("There are no animations to play with Gameplay Tag [%s]",
-			*MainAbilityTag.ToString());
-		return nullptr;
-	}
-
-	const int32 Index = FMath::Rand() % Size;
-	return Animations[Index];
-}
-
-void UMTD_GameplayAbility::GetOwnedGameplayTags(
-	FGameplayTagContainer &TagContainer) const
-{
-	TagContainer = AbilityTags;
+    TagContainer = AbilityTags;
 }
 
 float UMTD_GameplayAbility::GetCooldownNormilized() const
 {
-	const float Remaining = GetCooldownTimeRemaining();
-	return CooldownDuration.Value != 0.f ?
-		Remaining / CooldownDuration.Value : 0.f;
+    const float Remaining = GetCooldownTimeRemaining();
+    return (CooldownDuration.Value != 0.f) ? (Remaining / CooldownDuration.Value) : (0.f);
 }
 
 void UMTD_GameplayAbility::ActivateAbility(
-	const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo *ActorInfo, 
-	const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData *TriggerEventData)
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo *ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    const FGameplayEventData *TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	OnAbilityActivatedDelegate.Broadcast(this);
+    OnAbilityActivatedDelegate.Broadcast(this);
 }
 
 const FGameplayTagContainer *UMTD_GameplayAbility::GetCooldownTags() const
 {
-	FGameplayTagContainer *MutableTags =
-		const_cast<FGameplayTagContainer*>(&TempCooldownTags);
-	MutableTags->Reset();
+    FGameplayTagContainer *MutableTags = const_cast<FGameplayTagContainer *>(&TempCooldownTags);
+    MutableTags->Reset();
 
-	const FGameplayTagContainer *ParentTags = Super::GetCooldownTags();
-	if (ParentTags)
-	{
-		MutableTags->AppendTags(*ParentTags);
-	}
-	MutableTags->AppendTags(CooldownTags);
+    const FGameplayTagContainer *ParentTags = Super::GetCooldownTags();
+    if (ParentTags)
+    {
+        MutableTags->AppendTags(*ParentTags);
+    }
+    MutableTags->AppendTags(CooldownTags);
 
-	return MutableTags;
+    return MutableTags;
 }
 
 void UMTD_GameplayAbility::ApplyCooldown(
-	const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo *ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo) const
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo *ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (!CooldownTags.IsValid() || CooldownDuration.GetValue() <= 0.f)
-		return;
-	
-	const UGameplayEffect *CooldownGe = GetCooldownGameplayEffect();
-	if (!IsValid(CooldownGe))
-		return;
+    if (!CooldownTags.IsValid() || CooldownDuration.GetValue() <= 0.f)
+    {
+        return;
+    }
 
-	const float AbilityLevel = GetAbilityLevel();
-	FGameplayEffectSpecHandle GeSpecHandle = MakeOutgoingGameplayEffectSpec(
-		CooldownGe->GetClass(), AbilityLevel);
+    const UGameplayEffect *CooldownGe = GetCooldownGameplayEffect();
+    if (!IsValid(CooldownGe))
+    {
+        return;
+    }
 
-	GeSpecHandle.Data->DynamicGrantedTags.AppendTags(CooldownTags);
+    const float AbilityLevel = GetAbilityLevel();
+    FGameplayEffectSpecHandle GeSpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGe->GetClass(), AbilityLevel);
 
-	// ReSharper disable once CppExpressionWithoutSideEffects
-	ApplyGameplayEffectSpecToOwner(
-		Handle, ActorInfo, ActivationInfo, GeSpecHandle);
-		
-	OnApplyCooldownDelegate.Broadcast(
-		this, CooldownDuration.GetValueAtLevel(AbilityLevel));
+    GeSpecHandle.Data->DynamicGrantedTags.AppendTags(CooldownTags);
+
+    // ReSharper disable once CppExpressionWithoutSideEffects
+    ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, GeSpecHandle);
+
+    OnApplyCooldownDelegate.Broadcast(this, CooldownDuration.GetValueAtLevel(AbilityLevel));
 }
 
 void UMTD_GameplayAbility::EndAbility(
-	const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo *ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility,
-	bool bWasCancelled)
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo *ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo,
+    bool bReplicateEndAbility,
+    bool bWasCancelled)
 {
-	Super::EndAbility(
-		Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
-	OnAbilityEndedDelegate.Broadcast(this);
+    OnAbilityEndedDelegate.Broadcast(this);
 }
 
 void UMTD_GameplayAbility::InputPressed(
-	const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo *ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo)
+    const FGameplayAbilitySpecHandle Handle,
+    const FGameplayAbilityActorInfo *ActorInfo,
+    const FGameplayAbilityActivationInfo ActivationInfo)
 {
-	MTDS_WARN("InputPressed");
-	OnInputPressedDelegate.Broadcast(this);
+    OnInputPressedDelegate.Broadcast(this);
 }
 
 void UMTD_GameplayAbility::TryActivateAbilityOnSpawn(
-	const FGameplayAbilityActorInfo *ActorInfo,
-	const FGameplayAbilitySpec &Spec) const
+    const FGameplayAbilityActorInfo *ActorInfo,
+    const FGameplayAbilitySpec &Spec) const
 {
-	check(ActorInfo);
+    check(ActorInfo);
 
-	UAbilitySystemComponent *Asc = ActorInfo->AbilitySystemComponent.Get();
-	
-	if (Spec.IsActive() ||
-		ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn ||
-		!Asc)
-	{
-		return;
-	}
+    UAbilitySystemComponent *Asc = ActorInfo->AbilitySystemComponent.Get();
 
-	Asc->TryActivateAbility(Spec.Handle);
+    if (Spec.IsActive() || ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn || !Asc)
+    {
+        return;
+    }
+
+    Asc->TryActivateAbility(Spec.Handle);
 }

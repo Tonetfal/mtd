@@ -5,95 +5,82 @@
 #include "GameplayEffectExtension.h"
 #include "GameplayEffectTypes.h"
 
-bool UMTD_HealthSet::PreGameplayEffectExecute(
-	FGameplayEffectModCallbackData &Data)
+bool UMTD_HealthSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData &Data)
 {
-	if (!Super::PreGameplayEffectExecute(Data))
-		return false;
+    if (!Super::PreGameplayEffectExecute(Data))
+    {
+        return false;
+    }
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		// ...
-	}
-	
-	return true;
+    return true;
 }
 
-void UMTD_HealthSet::PostGameplayEffectExecute(
-	const FGameplayEffectModCallbackData &Data)
+void UMTD_HealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData &Data)
 {
-	Super::PostGameplayEffectExecute(Data);
+    Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		const float HealthValue = GetHealth();
-		if ((HealthValue <= 0.f) && (!bOutOfHealth))
-		{
-			if (OnOutOfHealthDelegate.IsBound())
-			{
-				const FGameplayEffectContextHandle &EffectContext =
-					Data.EffectSpec.GetEffectContext();
-				AActor *Instigator = EffectContext.GetOriginalInstigator();
-				AActor *Causer = EffectContext.GetEffectCauser();
+    if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+    {
+        const float HealthValue = GetHealth();
+        if ((HealthValue <= 0.f) && (!bOutOfHealth))
+        {
+            if (OnOutOfHealthDelegate.IsBound())
+            {
+                const FGameplayEffectContextHandle &EffectContext = Data.EffectSpec.GetEffectContext();
+                AActor *Instigator = EffectContext.GetOriginalInstigator();
+                AActor *Causer = EffectContext.GetEffectCauser();
 
-				OnOutOfHealthDelegate.Broadcast(Instigator, Causer,
-					Data.EffectSpec, Data.EvaluatedData.Magnitude);
-			}
-		}
+                OnOutOfHealthDelegate.Broadcast(Instigator, Causer, Data.EffectSpec, Data.EvaluatedData.Magnitude);
+            }
+        }
 
-		bOutOfHealth = (HealthValue <= 0.f);
-	}
+        bOutOfHealth = (HealthValue <= 0.f);
+    }
 }
 
-void UMTD_HealthSet::PreAttributeBaseChange(
-	const FGameplayAttribute &Attribute, float &NewValue) const
+void UMTD_HealthSet::PreAttributeBaseChange(const FGameplayAttribute &Attribute, float &NewValue) const
 {
-	Super::PreAttributeBaseChange(Attribute, NewValue);
+    Super::PreAttributeBaseChange(Attribute, NewValue);
 
-	ClampAttribute(Attribute, NewValue);
+    ClampAttribute(Attribute, NewValue);
 }
 
-void UMTD_HealthSet::PreAttributeChange(
-	const FGameplayAttribute &Attribute, float &NewValue)
+void UMTD_HealthSet::PreAttributeChange(const FGameplayAttribute &Attribute, float &NewValue)
 {
-	Super::PreAttributeChange(Attribute, NewValue);
+    Super::PreAttributeChange(Attribute, NewValue);
 
-	ClampAttribute(Attribute, NewValue);
-}	
-
-void UMTD_HealthSet::PostAttributeChange(
-	const FGameplayAttribute &Attribute, float OldValue, float NewValue)
-{
-	Super::PostAttributeChange(Attribute, OldValue, NewValue);
-
-	if (Attribute == GetMaxHealthAttribute())
-	{
-		// Decrease current health if max health has decreased
-		if (GetHealth() > NewValue)
-		{
-			UAbilitySystemComponent *AbilitySystem = 
-				GetOwningAbilitySystemComponentChecked();
-
-			AbilitySystem->ApplyModToAttribute(
-				GetHealthAttribute(), EGameplayModOp::Override, NewValue);
-		}
-	}
-
-	if (bOutOfHealth && GetHealth() > 0.f)
-	{
-		bOutOfHealth = false;
-	}
+    ClampAttribute(Attribute, NewValue);
 }
 
-void UMTD_HealthSet::ClampAttribute(
-	const FGameplayAttribute &Attribute, float &NewValue) const
+void UMTD_HealthSet::PostAttributeChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue)
 {
-	if (Attribute == GetHealthAttribute())
-	{
-		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
-	}
-	else if (Attribute == GetMaxHealthAttribute())
-	{
-		NewValue = FMath::Max(NewValue, 1.f);
-	}
+    Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+    if (Attribute == GetMaxHealthAttribute())
+    {
+        // Decrease current health if max health has decreased
+        if (GetHealth() > NewValue)
+        {
+            UAbilitySystemComponent *AbilitySystem = GetOwningAbilitySystemComponentChecked();
+
+            AbilitySystem->ApplyModToAttribute(GetHealthAttribute(), EGameplayModOp::Override, NewValue);
+        }
+    }
+
+    if (bOutOfHealth && GetHealth() > 0.f)
+    {
+        bOutOfHealth = false;
+    }
+}
+
+void UMTD_HealthSet::ClampAttribute(const FGameplayAttribute &Attribute, float &NewValue) const
+{
+    if (Attribute == GetHealthAttribute())
+    {
+        NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
+    }
+    else if (Attribute == GetMaxHealthAttribute())
+    {
+        NewValue = FMath::Max(NewValue, 1.f);
+    }
 }
