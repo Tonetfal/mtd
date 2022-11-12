@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,8 +6,8 @@
 class FSimpleBuildSystemRuntimeModule : public IModuleInterface
 {
 public:
-	//~IModuleInterface
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
-	//~End of IModuleInterface
+    //~IModuleInterface
+    virtual void StartupModule() override;
+    virtual void ShutdownModule() override;
+    //~End of IModuleInterface
 };
