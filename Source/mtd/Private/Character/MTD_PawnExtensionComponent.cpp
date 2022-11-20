@@ -1,6 +1,7 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "Character/MTD_CharacterCoreTypes.h"
 #include "Character/MTD_PawnData.h"
 
 UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
@@ -20,7 +21,7 @@ void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
         return;
     }
 
-    if (PawnData)
+    if (IsValid(PawnData))
     {
         MTDS_ERROR("Trying to set PawnData [%s] that already has valid PawnData [%s]",
             *GetNameSafe(InPawnData), *GetNameSafe(PawnData));
@@ -30,6 +31,27 @@ void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
     PawnData = InPawnData;
 
     CheckPawnReadyToInitialize();
+}
+
+void UMTD_PawnExtensionComponent::SetPlayerData(const UMTD_PlayerData *InPlayerData)
+{
+    check(InPlayerData);
+
+    auto Pawn = GetPawnChecked<APawn>();
+
+    if (Pawn->GetLocalRole() != ROLE_Authority)
+    {
+        return;
+    }
+
+    if (PlayerData)
+    {
+        MTDS_ERROR("Trying to set PlayerData [%s] that already has valid PlayerData [%s]",
+            *GetNameSafe(InPlayerData), *GetNameSafe(PawnData));
+        return;
+    }
+
+    PlayerData = InPlayerData;
 }
 
 void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComponent *InAsc, AActor *InOwnerActor)
@@ -129,7 +151,7 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
         return true;
     }
 
-    const APawn *Pawn = GetPawnChecked<APawn>();
+    const auto Pawn = GetPawnChecked<APawn>();
 
     const bool bHasAuthority = Pawn->HasAuthority();
     const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
@@ -146,9 +168,9 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
     // Allow pawn components to have requirements
     TArray<UActorComponent *> InteractableComponents = Pawn->GetComponentsByInterface(
         UMTD_ReadyInterface::StaticClass());
-    for (UActorComponent *InteractableComponent :InteractableComponents)
+    for (UActorComponent *InteractableComponent : InteractableComponents)
     {
-        const IMTD_ReadyInterface *Ready = CastChecked<IMTD_ReadyInterface>(InteractableComponent);
+        const auto Ready = CastChecked<IMTD_ReadyInterface>(InteractableComponent);
         if (!Ready->IsPawnComponentReadyToInitialize())
         {
             return false;
@@ -163,8 +185,7 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
     return true;
 }
 
-void UMTD_PawnExtensionComponent::OnPawnReadyToInitialize_RegisterAndCall(
-    FSimpleMulticastDelegate::FDelegate Delegate)
+void UMTD_PawnExtensionComponent::OnPawnReadyToInitialize_RegisterAndCall(FSimpleMulticastDelegate::FDelegate Delegate)
 {
     if (!OnPawnReadyToInitialize.IsBoundToObject(Delegate.GetUObject()))
     {

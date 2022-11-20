@@ -9,7 +9,7 @@ AMTD_TowerController::AMTD_TowerController()
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    Team = CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
+    TeamComponent = CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
 
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
 

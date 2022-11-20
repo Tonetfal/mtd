@@ -1,7 +1,8 @@
 #include "Equipment/MTD_RangedWeaponInstance.h"
 
-#include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
+#include "AbilitySystemComponent.h"
+#include "Character/MTD_CharacterCoreTypes.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Utility/MTD_Utility.h"
 

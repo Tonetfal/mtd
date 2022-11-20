@@ -34,7 +34,12 @@ public:
 
     virtual FGenericTeamId GetGenericTeamId() const override
     {
-        return Team->GetGenericTeamId();
+        return TeamComponent->GetGenericTeamId();
+    }
+
+    UMTD_TeamComponent *GetTeamComponent() const
+    {
+        return TeamComponent;
     }
 
 protected:
@@ -46,7 +51,7 @@ protected:
 private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_TeamComponent> Team = nullptr;
+    TObjectPtr<UMTD_TeamComponent> TeamComponent = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))

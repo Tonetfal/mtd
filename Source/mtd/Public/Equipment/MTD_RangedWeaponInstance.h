@@ -6,6 +6,7 @@
 #include "MTD_RangedWeaponInstance.generated.h"
 
 class AMTD_Projectile;
+class UMTD_TowerData;
 
 UCLASS()
 class MTD_API UMTD_RangedWeaponInstance : public UMTD_WeaponInstance
@@ -28,7 +29,7 @@ private:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
         meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_FireData> ProjectileData = nullptr;
+    TObjectPtr<UMTD_TowerData> ProjectileData = nullptr;
 
     const FName FirePointSocketName{TEXT("FirePoint")};
 

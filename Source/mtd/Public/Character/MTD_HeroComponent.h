@@ -5,6 +5,7 @@
 
 #include "MTD_HeroComponent.generated.h"
 
+class UMTD_PlayerData;
 class UMTD_InputConfig;
 class UMTD_AbilitySystemComponent;
 class UPlayerMappableInputConfig;
@@ -34,6 +35,7 @@ protected:
     virtual bool IsPawnComponentReadyToInitialize() const override;
     void OnPawnReadyToInitialize();
 
+    UFUNCTION(BlueprintCallable)
     virtual void InitializePlayerInput(UInputComponent *InputComponent);
 
     void Input_AbilityInputTagPressed(FGameplayTag InputTag);
@@ -56,6 +58,9 @@ protected:
 private:
     UPROPERTY()
     TObjectPtr<const UMTD_PawnData> PawnData = nullptr;
+    
+    UPROPERTY()
+    TObjectPtr<const UMTD_PlayerData> PlayerData = nullptr;
 
     bool bPawnHasInitialized = false;
 };

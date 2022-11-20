@@ -21,6 +21,8 @@ protected:
 private:
     FVector ComputeHomingDirection() const;
     FVector ComputeVelocity(FVector MovementDirection) const;
+    FRotator ComputeRotator(FVector DirectionToTarget) const;
+    FVector GetRotatedDirection(FVector DirectionToTarget, float DeltaSeconds) const;
 
 public:
     void SetMovementParameters(FMTD_ProjectileMovementParameters Parms);

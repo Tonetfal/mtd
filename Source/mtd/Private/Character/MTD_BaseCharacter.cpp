@@ -108,8 +108,7 @@ void AMTD_BaseCharacter::DestroyDueToDeath()
 
 void AMTD_BaseCharacter::Uninit()
 {
-    // Uninit if we are still the avatar; we could be kicked from ASC if someone
-    // else owned it instead
+    // Uninit if we are still the avatar; we could be kicked from ASC if someone else owned it instead
     const UMTD_AbilitySystemComponent *Asc = GetMtdAbilitySystemComponent();
     if (IsValid(Asc))
     {

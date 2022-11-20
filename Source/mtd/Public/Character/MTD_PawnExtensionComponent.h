@@ -5,6 +5,7 @@
 
 #include "MTD_PawnExtensionComponent.generated.h"
 
+class UMTD_PlayerData;
 class UMTD_PawnData;
 class UMTD_AbilitySystemComponent;
 
@@ -29,8 +30,15 @@ public:
     {
         return Cast<T>(PawnData);
     }
+    
+    template <class T>
+    const T *GetPlayerData() const
+    {
+        return Cast<T>(PlayerData);
+    }
 
     void SetPawnData(const UMTD_PawnData *InPawnData);
+    void SetPlayerData(const UMTD_PlayerData *InPlayerData);
 
     UFUNCTION(BlueprintPure, Category = "MTD|Pawn")
     UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const
@@ -38,8 +46,7 @@ public:
         return AbilitySystemComponent;
     }
 
-    void InitializeAbilitySystem(
-        UMTD_AbilitySystemComponent *InAsc, AActor *InOwnerActor);
+    void InitializeAbilitySystem(UMTD_AbilitySystemComponent *InAsc, AActor *InOwnerActor);
     void UninitializeAbilitySystem();
 
     void HandleControllerChanged();
@@ -76,6 +83,10 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MTD|Pawn",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<const UMTD_PawnData> PawnData = nullptr;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MTD|Player",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<const UMTD_PlayerData> PlayerData = nullptr;
 
     bool bPawnReadyToInitialize = false;
 };
