@@ -8,8 +8,7 @@ class UMTD_GameplayEffect;
 class AMTD_Projectile;
 class UMTD_InputConfig;
 
-UCLASS(BlueprintType,
-    meta=(ShortTooltip = "Data asset used to define a Player."))
+UCLASS(BlueprintType, meta=(ShortTooltip = "Data asset used to define a Player."))
 class MTD_API UMTD_PlayerData : public UDataAsset
 {
     GENERATED_BODY()
@@ -24,8 +23,7 @@ public:
     TObjectPtr<UMTD_InputConfig> InputConfig = nullptr;
 };
 
-UCLASS(BlueprintType,
-    meta=(ShortTooltip = "Data asset used to define a Tower."))
+UCLASS(BlueprintType, meta=(ShortTooltip = "Data asset used to define a Tower."))
 class MTD_API UMTD_TowerData : public UDataAsset
 {
     GENERATED_BODY()

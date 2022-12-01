@@ -1,12 +1,25 @@
 #pragma once
 
+#include "AI/Navigation/NavQueryFilter.h"
 #include "GameFramework/GameModeBase.h"
 #include "mtd.h"
 
 #include "MTD_GameModeBase.generated.h"
 
-class AMTD_LevelPathManager;
+class UNavigationQueryFilter;
+class ANavigationData;
 class UMTD_LevelDefinition;
+
+UENUM(BlueprintType)
+enum class EMTD_GameResult : uint8
+{
+    Lose,
+    Win
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+    FOnGameTerminatedSignature,
+    EMTD_GameResult, GameResult);
 
 UCLASS()
 class MTD_API AMTD_GameModeBase : public AGameModeBase
@@ -16,18 +29,26 @@ class MTD_API AMTD_GameModeBase : public AGameModeBase
 public:
     AMTD_GameModeBase();
 
-public:
+protected:
     virtual void BeginPlay() override;
     virtual void StartPlay() override;
 
-    AMTD_LevelPathManager *GetLevelPathManager() const;
+public:
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Game Mode")
+    virtual AActor *GetGameTarget(APawn *Client) const;
+
+protected:
+    void TerminateGame(EMTD_GameResult Reason);
+
+public:
+    UPROPERTY(BlueprintAssignable)
+    FOnGameTerminatedSignature OnGameTerminatedDelegate;
 
 private:
-    UPROPERTY()
-    TObjectPtr<AMTD_LevelPathManager> LevelPathManager = nullptr;
-
-    // TODO: Tmp
+    // TODO: Move in an appropriate place instead. Temporary solution.
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Level",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_LevelDefinition> LevelDefinition = nullptr;
+
+    bool bGameOver = false;
 };

@@ -1,4 +1,4 @@
-#include "System/MTD_Core.h"
+#include "GameModes/MTD_Core.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_HealthComponent.h"

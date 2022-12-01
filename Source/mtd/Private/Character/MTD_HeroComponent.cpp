@@ -146,7 +146,7 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 
     if (IsValid(PawnData))
     {
-        for (const UMTD_AbilitySet *AbilitySet :PawnData->AbilitySets)
+        for (const UMTD_AbilitySet *AbilitySet : PawnData->AbilitySets)
         {
             AbilitySet->GiveToAbilitySystem(MtdAsc, nullptr, GetOwner());
         }
@@ -157,7 +157,7 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
     }
 
     const auto MtdPc = Pawn->GetController<AMTD_PlayerController>();
-    if (IsValid(MtdPc) && IsValid(Pawn->InputComponent))
+    if ((IsValid(MtdPc)) && (IsValid(Pawn->InputComponent)))
     {
         InitializePlayerInput(Pawn->InputComponent);
     }
