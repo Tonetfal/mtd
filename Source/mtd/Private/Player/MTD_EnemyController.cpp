@@ -1,35 +1,40 @@
 #include "Player/MTD_EnemyController.h"
 
 #include "Character/MTD_TeamComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Utility/MTD_Utility.h"
 
 AMTD_EnemyController::AMTD_EnemyController()
 {
-    PrimaryActorTick.bCanEverTick = false;
-    PrimaryActorTick.bStartWithTickEnabled = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     Team = CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
 
+    bAttachToPawn = true;
     bWantsPlayerState = true;
 }
 
-FPathFollowingRequestResult AMTD_EnemyController::MoveTo(const FAIMoveRequest &MoveRequest, FNavPathSharedPtr *OutPath)
+void AMTD_EnemyController::Tick(float DeltaSeconds)
 {
-    bIsMoving = true;
-    return Super::MoveTo(MoveRequest, OutPath);
-}
+    Super::Tick(DeltaSeconds);
 
-void AMTD_EnemyController::BeginPlay()
-{
-    Super::BeginPlay();
-
-    UPathFollowingComponent *PathFollowing = GetPathFollowingComponent();
-    if (IsValid(PathFollowing))
+    const AActor *FocusActor = GetFocusActor();
+    if ((!IsValid(FocusActor)) && (IsValid(OwnerMovementComponent)))
     {
-        PathFollowing->OnRequestFinished.AddUObject(this, &ThisClass::OnMoveFinished);
+        const FRotator DirRot = OwnerMovementComponent->Velocity.GetSafeNormal().ToOrientationRotator();
+        SetControlRotation(DirRot);
     }
 }
 
-void AMTD_EnemyController::OnMoveFinished(FAIRequestID RequestID, const FPathFollowingResult &Result)
+void AMTD_EnemyController::OnPossess(APawn *InPawn)
 {
-    bIsMoving = false;
+    Super::OnPossess(InPawn);
+
+    OwnerMovementComponent = FMTD_Utility::GetActorComponent<UMovementComponent>(InPawn);
+    if (!IsValid(OwnerMovementComponent))
+    {
+        MTDS_WARN("Owner [%s] does not have a Movement Component.", *InPawn->GetName());
+        return;
+    }
 }

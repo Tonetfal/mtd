@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AI/Navigation/NavQueryFilter.h"
+#include "Character/MTD_GameResultInterface.h"
 #include "GameFramework/GameModeBase.h"
 #include "mtd.h"
 
@@ -10,18 +10,11 @@ class UNavigationQueryFilter;
 class ANavigationData;
 class UMTD_LevelDefinition;
 
-UENUM(BlueprintType)
-enum class EMTD_GameResult : uint8
-{
-    Lose,
-    Win
-};
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FOnGameTerminatedSignature,
     EMTD_GameResult, GameResult);
 
-UCLASS()
+UCLASS(meta=(ShortTooltip="The base Game Mode Base class used by this project."))
 class MTD_API AMTD_GameModeBase : public AGameModeBase
 {
     GENERATED_BODY()
@@ -38,6 +31,7 @@ public:
     virtual AActor *GetGameTarget(APawn *Client) const;
 
 protected:
+    UFUNCTION(BlueprintCallable, Category="MTD|Game Mode")
     void TerminateGame(EMTD_GameResult Reason);
 
 public:

@@ -19,7 +19,7 @@ class MTD_API UMTD_PawnExtensionComponent : public UMTD_PawnComponent
 public:
     UMTD_PawnExtensionComponent();
 
-    UFUNCTION(BlueprintPure, Category = "MTD|Pawn")
+    UFUNCTION(BlueprintPure, Category="MTD|Pawn")
     static UMTD_PawnExtensionComponent *FindPawnExtensionComponent(const AActor *Actor)
     {
         return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_PawnExtensionComponent>()) : (nullptr);

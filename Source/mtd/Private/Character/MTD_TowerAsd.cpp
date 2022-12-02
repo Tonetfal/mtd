@@ -10,6 +10,7 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
 #include "Player/MTD_TowerController.h"
 #include "Projectile/MTD_Projectile.h"
@@ -86,18 +87,28 @@ void AMTD_TowerAsd::BeginPlay()
 {
     Super::BeginPlay();
 
+    check(HealthComponent);
+
     HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
     HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
+
+    UWorld *World = GetWorld();
+    AGameModeBase *Gm = World->GetAuthGameMode();
+    if (IsValid(Gm))
+    {
+        auto MtdGm = CastChecked<AMTD_GameModeBase>(Gm);
+        MtdGm->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
+    }
 
     if (!IsValid(TowerData))
         MTD_WARN("TowerData on owner [%s] is invalid", *GetName());
 
     if (!IsValid(TowerData->AttributeTable))
         MTD_WARN("AttributeTable on TowerData [%s] is invalid", *TowerData->GetName());
-    
+
     if (!TowerData->ProjectileClass)
         MTD_WARN("ProjectileClass on TowerData [%s] is invalid", *TowerData->GetName());
-    
+
     if (!TowerData->DamageGameplayEffectClass)
         MTD_WARN("DamageGameplayEffectClass on TowerData [%s] is invalid", *TowerData->GetName());
 }

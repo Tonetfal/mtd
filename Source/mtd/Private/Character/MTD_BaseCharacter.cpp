@@ -7,6 +7,7 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
 
 AMTD_BaseCharacter::AMTD_BaseCharacter()
@@ -45,8 +46,18 @@ void AMTD_BaseCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    check(HealthComponent);
+
     HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
     HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
+    
+    UWorld *World = GetWorld();
+    AGameModeBase *Gm = World->GetAuthGameMode();
+    if (IsValid(Gm))
+    {
+        auto MtdGm = CastChecked<AMTD_GameModeBase>(Gm);
+        MtdGm->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
+    }
 }
 
 void AMTD_BaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)

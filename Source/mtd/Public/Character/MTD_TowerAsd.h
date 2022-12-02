@@ -4,6 +4,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
 #include "mtd.h"
+#include "MTD_GameResultInterface.h"
 #include "Projectile/MTD_ProjectileCoreTypes.h"
 
 #include "MTD_TowerAsd.generated.h"
@@ -20,7 +21,7 @@ class UMTD_TowerData;
 class USphereComponent;
 
 UCLASS()
-class MTD_API AMTD_TowerAsd : public APawn, public IAbilitySystemInterface
+class MTD_API AMTD_TowerAsd : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
 {
 	GENERATED_BODY()
 
@@ -39,7 +40,7 @@ public:
     //~APawn interface
     virtual void NotifyControllerChanged() override;
     //~End of APawn interface
-
+    
     FMTD_AbilityAnimations GetAbilityAnimMontages(FGameplayTag AbilityTag) const;
 
 protected:

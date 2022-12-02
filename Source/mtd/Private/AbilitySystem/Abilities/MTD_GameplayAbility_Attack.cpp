@@ -126,8 +126,7 @@ void UMTD_GameplayAbility_Attack::CancelPreviousAttack(UMTD_AbilitySystemCompone
     MtdAsc->CancelAbilities(&AbilityTypesToCancel, nullptr, nullptr);
 }
 
-void UMTD_GameplayAbility_Attack::CreateAndApplyAttackGameplayEffectOnSelf(
-    UMTD_AbilitySystemComponent *MtdAsc) const
+void UMTD_GameplayAbility_Attack::CreateAndApplyAttackGameplayEffectOnSelf(UMTD_AbilitySystemComponent *MtdAsc) const
 {
     const FGameplayEffectSpecHandle SpecHandle =
         MtdAsc->MakeOutgoingSpec(UMTD_GameplayEffect_Attack::StaticClass(), 1.f, MtdAsc->MakeEffectContext());

@@ -3,6 +3,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "mtd.h"
+#include "MTD_GameResultInterface.h"
 #include "AbilitySystem/MTD_AbilityAnimationSet.h"
 
 #include "MTD_BaseCharacter.generated.h"
@@ -15,7 +16,7 @@ class UMTD_AbilitySystemComponent;
 class AMTD_PlayerState;
 
 UCLASS()
-class MTD_API AMTD_BaseCharacter : public ACharacter, public IAbilitySystemInterface
+class MTD_API AMTD_BaseCharacter : public ACharacter, public IAbilitySystemInterface, public IMTD_GameResultInterface
     // public IGenericTeamAgentInterface
 {
     GENERATED_BODY()

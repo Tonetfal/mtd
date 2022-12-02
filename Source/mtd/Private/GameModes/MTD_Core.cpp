@@ -4,6 +4,7 @@
 #include "Character/MTD_HealthComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
 
 AMTD_Core::AMTD_Core()
@@ -48,4 +49,12 @@ void AMTD_Core::BeginPlay()
 
     HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &ThisClass::OnCoreHealthChanged);
     HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnCoreDestroyed);
+    
+    UWorld *World = GetWorld();
+    AGameModeBase *Gm = World->GetAuthGameMode();
+    if (IsValid(Gm))
+    {
+        auto MtdGm = CastChecked<AMTD_GameModeBase>(Gm);
+        MtdGm->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
+    }
 }

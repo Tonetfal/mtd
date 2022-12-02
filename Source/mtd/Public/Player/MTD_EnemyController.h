@@ -6,6 +6,8 @@
 
 #include "MTD_EnemyController.generated.h"
 
+class UMovementComponent;
+
 UCLASS()
 class MTD_API AMTD_EnemyController : public AAIController
 {
@@ -13,8 +15,7 @@ class MTD_API AMTD_EnemyController : public AAIController
 
 public:
     AMTD_EnemyController();
-
-    virtual FPathFollowingRequestResult MoveTo(const FAIMoveRequest &MoveRequest, FNavPathSharedPtr *OutPath) override;
+    virtual void Tick(float DeltaSeconds) override;
 
     virtual FGenericTeamId GetGenericTeamId() const override
     {
@@ -22,16 +23,13 @@ public:
     }
 
 protected:
-    virtual void BeginPlay() override;
-
-private:
-    void OnMoveFinished(FAIRequestID RequestID, const FPathFollowingResult &Result);
+    virtual void OnPossess(APawn *InPawn) override;
 
 private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_TeamComponent> Team = nullptr;
 
-    UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    bool bIsMoving = false;
+    UPROPERTY()
+    TObjectPtr<UMovementComponent> OwnerMovementComponent = nullptr;
 };

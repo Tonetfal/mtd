@@ -3,6 +3,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
 #include "mtd.h"
+#include "Character/MTD_GameResultInterface.h"
 
 #include "MTD_Core.generated.h"
 
@@ -18,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCoreDestroyedSignature);
 
 UCLASS()
-class MTD_API AMTD_Core : public APawn, public IAbilitySystemInterface
+class MTD_API AMTD_Core : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
 {
     GENERATED_BODY()
 
