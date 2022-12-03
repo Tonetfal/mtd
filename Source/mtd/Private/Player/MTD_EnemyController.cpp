@@ -20,7 +20,7 @@ void AMTD_EnemyController::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
 
     const AActor *FocusActor = GetFocusActor();
-    if ((!IsValid(FocusActor)) && (IsValid(OwnerMovementComponent)))
+    if ((!IsValid(FocusActor)) && (IsValid(OwnerMovementComponent)) && (!OwnerMovementComponent->Velocity.IsZero()))
     {
         const FRotator DirRot = OwnerMovementComponent->Velocity.GetSafeNormal().ToOrientationRotator();
         SetControlRotation(DirRot);

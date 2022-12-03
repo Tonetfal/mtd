@@ -49,7 +49,6 @@ void UMTD_HeroComponent::OnRegister()
     }
 
     auto PawnExtComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(Owner);
-
     if (!IsValid(PawnExtComp))
     {
         MTDS_ERROR("Owner [%s] must have MTD_PawnExtensionComponent", *GetNameSafe(Owner));

@@ -156,8 +156,7 @@ static void Execute_Implementation(
     // 	RangedDamageStatics().DamageMultiplierDef, EvaluationParams,
     // 	DamageMultiplier);
     float DamageMultiplier =
-        ExecutionParams.GetOwningSpec().GetSetByCallerMagnitude(
-            Tags.SetByCaller_Damage_Multiplier);
+        ExecutionParams.GetOwningSpec().GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
 
     float DamageStat = 0.f;
     const bool bDamageStatFound = ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
