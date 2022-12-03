@@ -4,8 +4,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Character.h"
 #include "SBS_BuildGhostActor.h"
+#include "Kismet/GameplayStatics.h"
 
-DECLARE_LOG_CATEGORY_CLASS(LogSbs, All, All);
+DECLARE_LOG_CATEGORY_CLASS(LogSimpleBuildSystem, All, All);
 
 bool FSBS_BuildingData::IsValid() const
 {
@@ -34,16 +35,14 @@ void USBS_BuildComponent::BeginPlay()
     Owner = GetPawn<ACharacter>();
     if (!IsValid(Owner))
     {
-        UE_LOG(LogSbs, Warning, TEXT("Owner is invalid."));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Owner is invalid."));
         return;
     }
 
     ensure(BuildModeMappingContext);
 
-    UActorComponent *CameraComponent = Owner->GetComponentByClass(UCameraComponent::StaticClass());
-    check(IsValid(CameraComponent));
-
-    OwnerCamera = Cast<UCameraComponent>(CameraComponent);
+    OwnerCamera = Owner->FindComponentByClass<UCameraComponent>();
+    check(IsValid(OwnerCamera));
 
     OwnerController = Owner->GetLocalViewingPlayerController();
     check(IsValid(OwnerController));
@@ -127,8 +126,7 @@ void USBS_BuildComponent::ProgressBuilding_Implementation(float DeltaSeconds)
     }
 }
 
-float USBS_BuildComponent::GetBuildProgressRatioPerTick_Implementation(
-    float DeltaSeconds) const
+float USBS_BuildComponent::GetBuildProgressRatioPerTick_Implementation(float DeltaSeconds) const
 {
     if (ActiveBuildingData.Duration <= 0.f)
     {
@@ -174,17 +172,14 @@ void USBS_BuildComponent::BindBuildDelegates()
 {
     check(BuildGhostActor);
 
-    BuildGhostActor->OnBuildAllowedDelegate.AddUObject(
-        this, &ThisClass::OnBuildAllowed);
-    BuildGhostActor->OnBuildForbidDelegate.AddUObject(
-        this, &ThisClass::OnBuildForbid);
+    BuildGhostActor->OnBuildAllowedDelegate.AddUObject(this, &ThisClass::OnBuildAllowed);
+    BuildGhostActor->OnBuildForbidDelegate.AddUObject(this, &ThisClass::OnBuildForbid);
 }
 
 void USBS_BuildComponent::CreateGhostBuildActor()
 {
     FActorSpawnParameters SpawnParameters;
-    SpawnParameters.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
     BuildGhostActor = Cast<ASBS_BuildGhostActor>(GetWorld()->SpawnActor(
         BuildGhostActorClass, nullptr, nullptr, SpawnParameters));
@@ -201,12 +196,10 @@ AActor *USBS_BuildComponent::SpawnBuilding() const
     const FVector Offset(0.f, 0.f, BuildGhostActor->GetOffsetZ());
     Transform.SetLocation(Transform.GetLocation() + Offset);
 
-    FActorSpawnParameters SpawnParameters;
-    SpawnParameters.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    const auto HdlMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    AActor *Actor = GetWorld()->SpawnActor(
-        ActiveBuildingData.ObjectClass, &Transform, SpawnParameters);
+    AActor *Actor = GetWorld()->SpawnActorDeferred<AActor>(
+        ActiveBuildingData.ObjectClass, Transform, Owner, Owner, HdlMethod);
 
     if (bTryCreateDefaultControllersOnSpawn)
     {
@@ -217,8 +210,7 @@ AActor *USBS_BuildComponent::SpawnBuilding() const
         }
     }
 
-    Actor->SetOwner(Owner);
-    Actor->SetInstigator(Owner);
+    UGameplayStatics::FinishSpawningActor(Actor, Transform);
 
     return Actor;
 }
@@ -226,6 +218,7 @@ AActor *USBS_BuildComponent::SpawnBuilding() const
 void USBS_BuildComponent::OnBuildAllowed()
 {
     check(BuildGhostActor);
+    ensure(!bCanPlaceBuilding);
 
     bCanPlaceBuilding = true;
     BuildGhostActor->SetMaterial(ActiveBuildingData.AllowMaterial);
@@ -236,32 +229,27 @@ void USBS_BuildComponent::OnBuildForbid()
     check(BuildGhostActor);
     ensure(bCanPlaceBuilding);
 
-    bCanPlaceBuilding = true;
+    bCanPlaceBuilding = false;
     BuildGhostActor->SetMaterial(ActiveBuildingData.ForbidMaterial);
 }
 
-void USBS_BuildComponent::AddInputContext(
-    const UInputMappingContext *InputMappingContext)
+void USBS_BuildComponent::AddInputContext(const UInputMappingContext *InputMappingContext)
 {
     check(OwnerController);
 
-    auto EiSubsystem = OwnerController->GetLocalPlayer()->
-        GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    auto EiSubsystem = OwnerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 
     FModifyContextOptions ContextOptions;
     ContextOptions.bIgnoreAllPressedKeysUntilRelease = false;
 
-    EiSubsystem->AddMappingContext(
-        InputMappingContext, MappingContextPriority, ContextOptions);
+    EiSubsystem->AddMappingContext(InputMappingContext, MappingContextPriority, ContextOptions);
 }
 
-void USBS_BuildComponent::RemoveInputContext(
-    const UInputMappingContext *InputMappingContext)
+void USBS_BuildComponent::RemoveInputContext(const UInputMappingContext *InputMappingContext)
 {
     check(OwnerController);
 
-    auto EiSubsystem = OwnerController->GetLocalPlayer()->
-        GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    auto EiSubsystem = OwnerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 
     FModifyContextOptions ContextOptions;
     ContextOptions.bIgnoreAllPressedKeysUntilRelease = false;
@@ -288,8 +276,7 @@ FVector USBS_BuildComponent::FindObservedPoint(float TraceLength) const
     QueryParams.AddIgnoredActor(Owner);
 
     FHitResult Hit;
-    GetWorld()->LineTraceSingleByObjectType(
-        Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
+    GetWorld()->LineTraceSingleByObjectType(Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
 
     return Hit.bBlockingHit ? Hit.ImpactPoint : LineEnd;
 }
@@ -311,8 +298,7 @@ FVector USBS_BuildComponent::FindGround(FVector LineStart) const
     QueryParams.bTraceComplex = true;
 
     FHitResult Hit;
-    GetWorld()->LineTraceSingleByObjectType(
-        Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
+    GetWorld()->LineTraceSingleByObjectType(Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
 
     return Hit.bBlockingHit ? Hit.ImpactPoint : LineEnd;
 }
@@ -327,7 +313,7 @@ bool USBS_BuildComponent::BuildModeEnable(FSBS_BuildingData Data)
 
     if (!Data.IsValid())
     {
-        UE_LOG(LogSbs, Warning, TEXT("Data is invalid"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Data is invalid"));
         return false;
     }
 
@@ -346,13 +332,13 @@ void USBS_BuildComponent::ChangeBuildingData(FSBS_BuildingData Data)
     // BuildModeEnable must be used if it is not enabled
     if (!bIsBuildModeActive)
     {
-        UE_LOG(LogSbs, Warning, TEXT("Build Mode is not active"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Build Mode is not active"));
         return;
     }
 
     if (!Data.IsValid())
     {
-        UE_LOG(LogSbs, Warning, TEXT("Data is invalid"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Data is invalid"));
         return;
     }
 
@@ -378,15 +364,14 @@ void USBS_BuildComponent::BuildModeDisable()
 {
     if (!bIsBuildModeActive)
     {
-        return
-
-            SetComponentTickEnabled(false);
+        return SetComponentTickEnabled(false);
     }
     RemoveInputContext(BuildModeMappingContext.Get());
 
     BuildAbort();
 
     bIsBuildModeActive = false;
+    bCanPlaceBuilding = false;
     BuildProgressRatio = 0.f;
 
     OnBuildDisabledDelegate.Broadcast();
