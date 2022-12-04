@@ -195,6 +195,7 @@ private:
         meta=(AllowPrivateAccess="true"))
     bool bCanPlaceBuilding = false;
 
+    /// If the building actor can have a controller, it will be granted one through SpawnDefaultController function.
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Build Component",
         meta=(AllowPrivateAccess="true"))
     bool bTryCreateDefaultControllersOnSpawn = true;
@@ -203,6 +204,7 @@ private:
         meta=(AllowPrivateAccess="true"))
     FSBS_BuildingData ActiveBuildingData;
 
+    /// Build Ghost Actor class used by the Build Component.
     UPROPERTY(EditDefaultsOnly, Category="Build Component")
     TSubclassOf<ASBS_BuildGhostActor> BuildGhostActorClass = nullptr;
 
@@ -222,6 +224,7 @@ private:
     UPROPERTY(EditDefaultsOnly, Category="Build Component")
     TObjectPtr<const UInputMappingContext> BuildModeMappingContext = nullptr;
 
+    /// Priority the BuildModeMappingContext will be assigned with.
     UPROPERTY(EditDefaultsOnly, Category="Build Component")
     int32 MappingContextPriority = 0;
 

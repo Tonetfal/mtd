@@ -9,7 +9,7 @@ class UArrowComponent;
 
 DECLARE_MULTICAST_DELEGATE(FMulticastDelegateSignature);
 
-UCLASS()
+UCLASS(meta=(ToolTip="The used static meshes must stand right on the grid."))
 class SIMPLEBUILDSYSTEMRUNTIME_API ASBS_BuildGhostActor : public AActor
 {
     GENERATED_BODY()
@@ -20,10 +20,7 @@ public:
     void SetStaticMesh(UStaticMesh *Mesh);
     void SetMaterial(UMaterialInterface *MaterialInterface);
 
-    float GetOffsetZ() const
-    {
-        return OffsetZ;
-    }
+    float GetOffsetZ() const;
 
 protected:
     virtual void BeginPlay() override;
@@ -53,18 +50,17 @@ private:
     UPROPERTY(VisibleAnywhere, Category="Components")
     TObjectPtr<USceneComponent> SceneRoot = nullptr;
 
+    /// The direction the object should be facing.
     UPROPERTY(VisibleAnywhere, Category="Components")
     TObjectPtr<UArrowComponent> Arrow = nullptr;
 
+    /// The static mesh used to visualize the ghost.
     UPROPERTY(VisibleAnywhere, Category="Components")
     TObjectPtr<UStaticMeshComponent> StaticMesh = nullptr;
 
     /// The actors the Build Ghost Actor is overlapping with.
     UPROPERTY()
     TArray<TObjectPtr<AActor>> OverlappingActors;
-
-    /// Units the Build Ghost Actor is moved by Z axis.
-    float OffsetZ = 0.f;
 
     /// Units the Build Ghost Actor will be howering above the ground.
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Build Ghost Actor",
