@@ -27,13 +27,19 @@ void ASBS_BuildGhostActor::SetStaticMesh(UStaticMesh *Mesh)
         return;
     }
 
+    // Fix floating point error, otherwise the object will likely overlap with the ground it's standing on
+    StaticMesh->AddLocalOffset(FVector(0.f, 0.f, BaseOffsetZ));
+
+    const UStaticMesh *OldMesh = StaticMesh->GetStaticMesh();
     StaticMesh->SetStaticMesh(Mesh);
 
-    const FBox Box = Mesh->GetBoundingBox();
-    OffsetZ = Box.Max.Z + BaseOffsetZ;
-
-    // Fix floating point error, otherwise the object will likely overlap with the ground it's standing on
-    StaticMesh->AddLocalOffset(FVector(0.f, 0.f, OffsetZ));
+    // After a mesh has been set up it may call begin/end overlap events depending if there was a mesh and if the new
+    // one is overlapping with something. In case of absence of any mesh previous mesh and no overlapping actor at the
+    // frame the mesh has been set, broadcast the possibility to build
+    if ((!OldMesh) && (OverlappingActors.IsEmpty()))
+    {
+        OnBuildAllowedDelegate.Broadcast();
+    }
 }
 
 void ASBS_BuildGhostActor::SetMaterial(UMaterialInterface *MaterialInterface)
@@ -44,6 +50,19 @@ void ASBS_BuildGhostActor::SetMaterial(UMaterialInterface *MaterialInterface)
     }
 
     StaticMesh->SetMaterial(0, MaterialInterface);
+}
+
+float ASBS_BuildGhostActor::GetOffsetZ() const
+{
+    if (!IsValid(StaticMesh))
+    {
+        return 0.f;
+    }
+    
+    const FBox Box = StaticMesh->GetStaticMesh()->GetBoundingBox();
+    const float HalfHeight = Box.Max.Z / 2.f;
+    
+    return HalfHeight + BaseOffsetZ;
 }
 
 void ASBS_BuildGhostActor::BeginPlay()

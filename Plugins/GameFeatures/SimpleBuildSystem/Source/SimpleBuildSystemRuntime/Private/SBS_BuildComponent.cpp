@@ -170,7 +170,7 @@ void USBS_BuildComponent::SetBuildState(ESBS_BuildState NewState)
 
 void USBS_BuildComponent::BindBuildDelegates()
 {
-    check(BuildGhostActor);
+    check(IsValid(BuildGhostActor));
 
     BuildGhostActor->OnBuildAllowedDelegate.AddUObject(this, &ThisClass::OnBuildAllowed);
     BuildGhostActor->OnBuildForbidDelegate.AddUObject(this, &ThisClass::OnBuildForbid);
@@ -181,12 +181,15 @@ void USBS_BuildComponent::CreateGhostBuildActor()
     FActorSpawnParameters SpawnParameters;
     SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    BuildGhostActor = Cast<ASBS_BuildGhostActor>(GetWorld()->SpawnActor(
-        BuildGhostActorClass, nullptr, nullptr, SpawnParameters));
+    UWorld *World = GetWorld();
+    AActor *Actor = World->SpawnActor(BuildGhostActorClass, nullptr, nullptr, SpawnParameters);
+    
+    BuildGhostActor = Cast<ASBS_BuildGhostActor>(Actor);
 
-    BuildGhostActor->SetStaticMesh(ActiveBuildingData.StaticMesh);
-
+    // Bind as soon as possible
     BindBuildDelegates();
+    
+    BuildGhostActor->SetStaticMesh(ActiveBuildingData.StaticMesh);
 }
 
 AActor *USBS_BuildComponent::SpawnBuilding() const
@@ -195,6 +198,8 @@ AActor *USBS_BuildComponent::SpawnBuilding() const
 
     const FVector Offset(0.f, 0.f, BuildGhostActor->GetOffsetZ());
     Transform.SetLocation(Transform.GetLocation() + Offset);
+
+    UE_LOG(LogTemp, Warning, TEXT("Spawn at [%s]"), *Transform.GetLocation().ToString());
 
     const auto HdlMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
@@ -218,7 +223,6 @@ AActor *USBS_BuildComponent::SpawnBuilding() const
 void USBS_BuildComponent::OnBuildAllowed()
 {
     check(BuildGhostActor);
-    ensure(!bCanPlaceBuilding);
 
     bCanPlaceBuilding = true;
     BuildGhostActor->SetMaterial(ActiveBuildingData.AllowMaterial);
