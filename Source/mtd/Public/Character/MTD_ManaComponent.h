@@ -25,26 +25,29 @@ class MTD_API UMTD_ManaComponent : public UMTD_PawnComponent
 public:
     UMTD_ManaComponent();
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, Category="MTD|Mana Component")
     static UMTD_ManaComponent *FindManaComponent(const AActor *Actor)
     {
         return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_ManaComponent>()) : (nullptr);
     }
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, Category="MTD|Mana Component")
     void InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc);
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, Category="MTD|Mana Component")
     void UninitializeFromAbilitySystem();
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Mana Component")
     float GetMana() const;
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Mana Component")
     float GetMaxMana() const;
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Mana")
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Mana Component")
     float GetManaNormilized() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Mana Component")
+    bool IsManaFull() const;
 
 protected:
     virtual void OnUnregister() override;

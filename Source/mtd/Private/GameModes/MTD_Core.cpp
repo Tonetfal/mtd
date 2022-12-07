@@ -12,15 +12,15 @@ AMTD_Core::AMTD_Core()
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
-    SetRootComponent(CollisionSphere);
-    CollisionSphere->SetCollisionProfileName(AllyCollisionProfileName);
-    CollisionSphere->SetCanEverAffectNavigation(false);
+    CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
+    SetRootComponent(CollisionComponent);
+    CollisionComponent->SetCollisionProfileName(TowerCollisionProfileName);
+    CollisionComponent->SetCanEverAffectNavigation(false);
 
-    Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh Component");
-    Mesh->SetupAttachment(CollisionSphere);
-    Mesh->SetCollisionProfileName("NoCollision");
-    Mesh->SetCanEverAffectNavigation(false);
+    MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("Mesh Component");
+    MeshComponent->SetupAttachment(CollisionComponent);
+    MeshComponent->SetCollisionProfileName("NoCollision");
+    MeshComponent->SetCanEverAffectNavigation(false);
 
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("Health Component"));
 }

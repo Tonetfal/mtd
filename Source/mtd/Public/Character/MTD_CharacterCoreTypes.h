@@ -2,6 +2,7 @@
 
 #include "mtd.h"
 #include "Projectile/MTD_ProjectileCoreTypes.h"
+
 #include "MTD_CharacterCoreTypes.generated.h"
 
 class UMTD_GameplayEffect;
@@ -36,7 +37,7 @@ public:
     /// Projectile class the tower will be spawning on fire.
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TSubclassOf<AMTD_Projectile> ProjectileClass = nullptr;
-
+    
     /// Projectile parameters the spawned projectiles will be granted.
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     FMTD_ProjectileParameters ProjectileParameters;

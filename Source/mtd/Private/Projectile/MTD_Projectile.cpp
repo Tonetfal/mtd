@@ -11,38 +11,30 @@ AMTD_Projectile::AMTD_Projectile()
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision Capsule Component"));
-    SetRootComponent(CollisionCapsule);
-    CollisionCapsule->InitCapsuleSize(50.f, 50.f);
-    CollisionCapsule->SetCollisionProfileName("NoCollision");
-    CollisionCapsule->SetSimulatePhysics(false);
-    CollisionCapsule->SetEnableGravity(false);
+    CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision Component"));
+    SetRootComponent(CollisionComponent);
 
-    ProjectileMovement = CreateDefaultSubobject<UMTD_ProjectileMovementComponent>(
-        TEXT("MTD Projectile Movement Component"));
-    ProjectileMovement->SetUpdatedComponent(CollisionCapsule);
+    CollisionComponent->InitCapsuleSize(50.f, 50.f);
+    CollisionComponent->SetCollisionProfileName("NoCollision");
+    CollisionComponent->SetSimulatePhysics(false);
+    CollisionComponent->SetEnableGravity(false);
+    CollisionComponent->SetCanEverAffectNavigation(false);
+
+    MovementComponent = CreateDefaultSubobject<UMTD_ProjectileMovementComponent>(TEXT("Movement Component"));
+    MovementComponent->SetUpdatedComponent(GetRootComponent());
 }
 
 void AMTD_Projectile::BeginPlay()
 {
     Super::BeginPlay();
 
-    check(ProjectileMovement);
-    check(CollisionCapsule);
+    check(MovementComponent);
+    check(CollisionComponent);
 
-    CollisionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMTD_Projectile::OnBeginOverlap);
-}
-
-void AMTD_Projectile::SetupProjectile(FMTD_ProjectileParameters Params)
-{
-    ProjectileParameters = Params;
-
-    CollisionCapsule->SetCollisionProfileName(Params.CollisionProfileName.Name);
+    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AMTD_Projectile::OnBeginOverlap);
 
     GetWorldTimerManager().SetTimer(
         SelfDestroyTimerHandle, this, &AMTD_Projectile::OnSelfDestroy, SecondsToSelfDestroy);
-
-    ProjectileMovement->SetMovementParameters(Params.MovementParameters);
 }
 
 void AMTD_Projectile::OnBeginOverlap(
@@ -75,19 +67,19 @@ void AMTD_Projectile::ApplyGameplayEffectToTarget(AActor *Target)
         return;
     }
 
-    for (const FGameplayEffectSpecHandle &SpecHandle :ProjectileParameters.GameplayEffectsToGrantOnHit)
+    for (const FGameplayEffectSpecHandle &SpecHandle : GameplayEffectsToGrantOnHit)
     {
         if ((!SpecHandle.IsValid()) || (!SpecHandle.Data))
         {
             continue;
         }
-
+        
         // TODO: Check if it's a radial projectile, apply GEs around if so
 
         FActiveGameplayEffectHandle ActiveGeHandle = TargetAsc->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
         if (!ActiveGeHandle.WasSuccessfullyApplied())
         {
-            MTDS_WARN("Gameplay effect handle [%s] was not successfully applied to [%s]",
+            MTDS_WARN("Failed to apply gameplay effect handle [%s] to [%s]",
                 *ActiveGeHandle.ToString(), *Target->GetName());
         }
     }

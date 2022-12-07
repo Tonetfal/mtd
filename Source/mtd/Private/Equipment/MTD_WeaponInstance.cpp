@@ -38,7 +38,7 @@ TArray<FGameplayEffectSpecHandle> UMTD_WeaponInstance::GetGameplayEffectSpecHand
 
     const FGameplayEffectContextHandle GeContextHandle = Asc->MakeEffectContext();
 
-    for (const TSubclassOf<UGameplayEffect> GeClass :GameplayEffectsToGrantOnHit)
+    for (const TSubclassOf<UGameplayEffect> GeClass : GameplayEffectsToGrantOnHit)
     {
         if (!GeClass)
         {

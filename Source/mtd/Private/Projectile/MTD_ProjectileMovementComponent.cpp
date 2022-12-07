@@ -1,7 +1,20 @@
 #include "Projectile/MTD_ProjectileMovementComponent.h"
 
-void UMTD_ProjectileMovementComponent::TickComponent(
-    float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
+#include "Kismet/KismetMathLibrary.h"
+
+UMTD_ProjectileMovementComponent::UMTD_ProjectileMovementComponent()
+{
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bStartWithTickEnabled = true;
+
+    bUpdateOnlyIfRendered = false;
+
+    bWantsInitializeComponent = true;
+    bComponentShouldUpdatePhysicsVolume = false;
+}
+
+void UMTD_ProjectileMovementComponent::TickComponent(float DeltaSeconds, ELevelTick TickType,
+    FActorComponentTickFunction *ThisTickFunction)
 {
     Super::TickComponent(DeltaSeconds, TickType, ThisTickFunction);
 
@@ -11,7 +24,7 @@ void UMTD_ProjectileMovementComponent::TickComponent(
     }
 
     const AActor *ActorOwner = UpdatedComponent->GetOwner();
-    if (!ActorOwner || !CheckStillInWorld())
+    if ((!ActorOwner) || (!CheckStillInWorld()))
     {
         return;
     }
@@ -21,45 +34,106 @@ void UMTD_ProjectileMovementComponent::TickComponent(
         return;
     }
 
-    // Should be homing
-    const bool bHome = ((MovementParameters.bIsHoming) && (IsValid(MovementParameters.HomingTarget.Get())));
+    const FVector MoveDelta = ComputeMoveDelta(DeltaSeconds);
+    const FQuat DesiredRotation = Direction.ToOrientationQuat();
+
+    FHitResult Hit;
+    SafeMoveUpdatedComponent(MoveDelta, DesiredRotation, false, Hit);
+    UpdateComponentVelocity();
+}
+
+void UMTD_ProjectileMovementComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+
+    CurrentSpeed = InitialSpeed;
+}
+
+FVector UMTD_ProjectileMovementComponent::ComputeMoveDelta(float DeltaSeconds)
+{
+    const bool bHome = ((bIsHoming) && (HomingTarget.IsValid()));
 
     // Exit if our state won't change if we will do the rest of the function
-    if ((Direction.IsZero()) && (bHome))
+    if ((Direction.IsZero()) && (!bHome))
     {
-        return;
+        return FVector::ZeroVector;
     }
 
-    // Accelerate if didn't hit the max speed
-    const float AccelDelta = MovementParameters.Acceleration * DeltaSeconds;
-    CurrentSpeed =
-        FMath::Clamp(CurrentSpeed + AccelDelta, MovementParameters.InitialSpeed, MovementParameters.MaxSpeed);
+    Accelerate(DeltaSeconds);
 
     if (bHome)
     {
-        // Perform the smooth rotation
-        if (MovementParameters.RotationRate != 0.f)
-        {
-            const FVector DirectionToTarget = ComputeHomingDirection();
-
-            // Old
-            // const FRotator Rotator = ComputeRotator(DirectionToTarget);
-            // const FVector RotatedDirectionToTarget = Rotator.RotateVector(DirectionToTarget);
-
-            // New
-            const FVector RotatedDirectionToTarget = GetRotatedDirection(DirectionToTarget, DeltaSeconds);
-            
-            Direction = RotatedDirectionToTarget;
-        }
+        RotateTowardsHoming(DeltaSeconds);
     }
     
-    Velocity = ComputeVelocity(Direction);
+    ComputeVelocity();
     const FVector MoveDelta = Velocity * DeltaSeconds;
 
-    UpdatedComponent->SetWorldLocation(UpdatedComponent->GetComponentLocation() + MoveDelta);
+    return MoveDelta;
 }
 
-bool UMTD_ProjectileMovementComponent::CheckStillInWorld()
+void UMTD_ProjectileMovementComponent::Accelerate(float DeltaSeconds)
+{
+    const float AccelDelta = Acceleration * DeltaSeconds;
+    const float NewSpeed = CurrentSpeed + AccelDelta;
+    
+    SetSpeed(NewSpeed);
+}
+
+void UMTD_ProjectileMovementComponent::RotateTowardsHoming(float DeltaSeconds)
+{
+    if (RotationRate == 0.f)
+    {
+        return;
+    }
+    
+    const FVector DirectionToTarget = GetHomingDirection();
+    
+    // TODO: Tmp
+    Direction = DirectionToTarget;
+
+    return;
+
+    // If the projectile is not moving, then make it face the target
+    if (Direction.IsZero())
+    {
+        Direction = DirectionToTarget;
+    }
+    else
+    {
+        const FVector V0 = Direction;
+        const FVector V1 = GetHomingDirection();
+
+        const float DR = RotationRate * DeltaSeconds;
+        const FRotator R0 = V0.Rotation();
+        const FRotator R1 = V1.Rotation();
+
+        FRotator R = R1 - R0;
+        R.Yaw = FMath::Sign(R.Yaw) * FMath::Min(DR, FMath::Abs(R.Yaw));
+        R.Pitch = FMath::Sign(R.Pitch) * FMath::Min(DR, FMath::Abs(R.Pitch));
+
+        Direction = R.RotateVector(V0);
+    }
+}
+
+FVector UMTD_ProjectileMovementComponent::GetHomingDistanceVector() const
+{
+    const FVector TargetPos = HomingTarget->GetActorLocation();
+    const FVector OurPos = UpdatedComponent->GetComponentLocation();
+    const FVector DistanceVector = TargetPos - OurPos;
+
+    return DistanceVector;
+}
+
+FVector UMTD_ProjectileMovementComponent::GetHomingDirection() const
+{
+    const FVector DistanceVector = GetHomingDistanceVector();
+    const FVector HomingDirection = DistanceVector.GetSafeNormal();
+
+    return HomingDirection;
+}
+
+bool UMTD_ProjectileMovementComponent::CheckStillInWorld() const
 {
     if (!IsValid(UpdatedComponent))
     {
@@ -87,24 +161,25 @@ bool UMTD_ProjectileMovementComponent::CheckStillInWorld()
 
     if (ActorOwner->GetActorLocation().Z < WorldSettings->KillZ)
     {
-        const UDamageType *DmgType = (WorldSettings->KillZDamageType)
-                                         ? (WorldSettings->KillZDamageType->GetDefaultObject<UDamageType>())
-                                         : (GetDefault<UDamageType>());
+        const UDamageType *DmgType = (WorldSettings->KillZDamageType) ?
+            (WorldSettings->KillZDamageType->GetDefaultObject<UDamageType>()) : (GetDefault<UDamageType>());
+
         ActorOwner->FellOutOfWorld(*DmgType);
         return false;
     }
+
     // Check if box has poked outside the world
-    if ((UpdatedComponent) && (UpdatedComponent->IsRegistered()))
+    else if (UpdatedComponent->IsRegistered())
     {
         const FBox &Box = UpdatedComponent->Bounds.GetBox();
-        if (Box.Min.X < -HALF_WORLD_MAX || Box.Max.X > HALF_WORLD_MAX ||
-            Box.Min.Y < -HALF_WORLD_MAX || Box.Max.Y > HALF_WORLD_MAX ||
-            Box.Min.Z < -HALF_WORLD_MAX || Box.Max.Z > HALF_WORLD_MAX)
+        if ((Box.Min.X < -HALF_WORLD_MAX) || (Box.Max.X > HALF_WORLD_MAX) ||
+            (Box.Min.Y < -HALF_WORLD_MAX) || (Box.Max.Y > HALF_WORLD_MAX) ||
+            (Box.Min.Z < -HALF_WORLD_MAX) || (Box.Max.Z > HALF_WORLD_MAX))
         {
-            MTDS_WARN("[%s] is outside the world bounds!", *ActorOwner->GetName());
+            MTDS_WARN("[%s] is outside the world bounds.", *ActorOwner->GetName());
             ActorOwner->OutsideWorldBounds();
 
-            // It is not safe to use physics or collision at this point
+            // It's unsafe to use physics or collision at this point
             ActorOwner->SetActorEnableCollision(false);
             return false;
         }
@@ -112,83 +187,3 @@ bool UMTD_ProjectileMovementComponent::CheckStillInWorld()
     return true;
 }
 
-FVector UMTD_ProjectileMovementComponent::ComputeHomingDirection() const
-{
-    const FVector TargetLoc = MovementParameters.HomingTarget->GetActorLocation();
-    const FVector OurLoc = UpdatedComponent->GetComponentLocation();
-    const FVector Dist = TargetLoc - OurLoc;
-
-    return Dist.GetSafeNormal();
-}
-
-FVector UMTD_ProjectileMovementComponent::ComputeVelocity(FVector MovementDirection) const
-{
-    return MovementDirection * CurrentSpeed;
-}
-
-FRotator UMTD_ProjectileMovementComponent::ComputeRotator(FVector DirectionToTarget) const
-{
-    // Shorthand the expressions
-    const FVector P0 = Direction;
-    const FVector P1 = DirectionToTarget;
-    const float RotAngle = MovementParameters.RotationRate;
-
-    const FVector2D P0XY(P0.X, P0.Y);
-    const FVector2D P0XZ(P0.X, P0.Z);
-    const FVector2D P0YZ(P0.Y, P0.Z);
-
-    const FVector2D P1XY(P1.X, P1.Y);
-    const FVector2D P1XZ(P1.X, P1.Z);
-    const FVector2D P1YZ(P1.Y, P1.Z);
-
-    const float DotXY = FVector2D::DotProduct(P0XY, P1XY);
-    const float DotXZ = FVector2D::DotProduct(P0XZ, P1XZ);
-    const float DotYZ = FVector2D::DotProduct(P0YZ, P1YZ);
-
-    // Compute angles between each invidual axis
-    const float AngleXY = FMath::Acos(DotXY);
-    const float AngleXZ = FMath::Acos(DotXZ);
-    const float AngleYZ = FMath::Acos(DotYZ);
-
-    // Cache signs to apply them to make angles abs, and then apply the sign on the gotten value
-    const float SignAngleXY = FMath::Sign(AngleXY);
-    const float SignAngleXZ = FMath::Sign(AngleXZ);
-    const float SignAngleYZ = FMath::Sign(AngleYZ);
-    
-    // Make sure to don't over rotate to the other side
-    const float RotAngleXY = SignAngleXY * FMath::Min(AngleXY * SignAngleXY, RotAngle);
-    const float RotAngleXZ = SignAngleXZ * FMath::Min(AngleXZ * SignAngleXZ, RotAngle);
-    const float RotAngleYZ = SignAngleYZ * FMath::Min(AngleYZ * SignAngleYZ, RotAngle);
-
-    return FRotator(RotAngleXY, RotAngleXZ, RotAngleYZ);
-}
-
-FVector UMTD_ProjectileMovementComponent::GetRotatedDirection(FVector DirectionToTarget, float DeltaSeconds) const
-{
-    // Shorthand the expressions
-    const FVector P0 = Direction;
-    const FVector P1 = DirectionToTarget;
-    const float RotAngle = MovementParameters.RotationRate * DeltaSeconds;
-
-    const FVector Dist = Direction - DirectionToTarget;
-    const FVector DistOppSigns = Dist.GetSignVector();
-    
-    const FVector RotTowards(DistOppSigns * RotAngle);
-    const FRotator Rotator = RotTowards.Rotation();
-
-    const FVector P2 = Rotator.RotateVector(P0);
-    const FVector Result
-    (
-        (DistOppSigns.X == 1) ? (FMath::Min(P1.X, P2.X)) : (FMath::Max(P1.X, P2.X)),
-        (DistOppSigns.Y == 1) ? (FMath::Min(P1.Y, P2.Y)) : (FMath::Max(P1.Y, P2.Y)),
-        (DistOppSigns.Z == 1) ? (FMath::Min(P1.Z, P2.Z)) : (FMath::Max(P1.Z, P2.Z))
-    );
-
-    return Result;
-}
-
-void UMTD_ProjectileMovementComponent::SetMovementParameters(FMTD_ProjectileMovementParameters Parms)
-{
-    MovementParameters = Parms;
-    Direction = Parms.Direction;
-}

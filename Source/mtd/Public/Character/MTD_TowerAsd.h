@@ -5,10 +5,10 @@
 #include "GameFramework/Pawn.h"
 #include "mtd.h"
 #include "MTD_GameResultInterface.h"
-#include "Projectile/MTD_ProjectileCoreTypes.h"
 
 #include "MTD_TowerAsd.generated.h"
 
+struct FGameplayEffectSpecHandle;
 class AMTD_PlayerState;
 class AMTD_Projectile;
 class UBoxComponent;
@@ -23,12 +23,12 @@ class USphereComponent;
 UCLASS()
 class MTD_API AMTD_TowerAsd : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AMTD_TowerAsd();
-	virtual void Tick(float DeltaTime) override;
-    
+    AMTD_TowerAsd();
+    virtual void Tick(float DeltaTime) override;
+
     //~AActor interface
     virtual void PreInitializeComponents() override;
     virtual void PostInitProperties() override;
@@ -40,7 +40,7 @@ public:
     //~APawn interface
     virtual void NotifyControllerChanged() override;
     //~End of APawn interface
-    
+
     FMTD_AbilityAnimations GetAbilityAnimMontages(FGameplayTag AbilityTag) const;
 
 protected:
@@ -80,7 +80,7 @@ protected:
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
     float GetScaledProjectileSpeed();
     float GetScaledProjectileSpeed_Implementation();
-    
+
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
     float GetReloadTime();
     float GetReloadTime_Implementation();
@@ -88,18 +88,18 @@ protected:
 private:
     void OnFire(AActor *FireTarget);
     AMTD_Projectile *SpawnProjectile();
-    FMTD_ProjectileParameters GetProjectileParameters(AMTD_Projectile *Projectile, AActor *FireTarget);
-    FMTD_ProjectileMovementParameters SetupProjectileMovement(AMTD_Projectile *Projectile, AActor *FireTarget);
-    TArray<FGameplayEffectSpecHandle> GetProjectileEffects();
-    
+
+    void SetupProjectile(AMTD_Projectile *Projectile, AActor *FireTarget);
+    void SetupProjectileCollision(AMTD_Projectile *Projectile) const;
+    void SetupProjectileMovement(AMTD_Projectile *Projectile, AActor *FireTarget);
+    void SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles);
+
     void StartReloading();
     void OnReloadFinished();
 
 public:
-    UMTD_HealthComponent *GetHealthComponent() const
-    {
-        return HealthComponent;
-    }
+    UMTD_HealthComponent *GetHealthComponent();
+    const UMTD_HealthComponent *GetHealthComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Tower")
     AMTD_PlayerState *GetMtdPlayerState() const;
@@ -114,16 +114,16 @@ public:
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
-    TObjectPtr<USkeletalMeshComponent> MeshComponent = nullptr;
-    
+    TObjectPtr<UBoxComponent> CollisionComponent = nullptr;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UBoxComponent> BoxComponent = nullptr;
-    
+    TObjectPtr<USkeletalMeshComponent> MeshComponent = nullptr;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> ProjectileSpawnPosition = nullptr;
-    
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_PawnExtensionComponent> PawnExtentionComponent = nullptr;
@@ -139,7 +139,7 @@ private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<const UMTD_AbilityAnimationSet> AnimationSet = nullptr;
-    
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_TowerData> TowerData = nullptr;
@@ -147,28 +147,38 @@ private:
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float Level = 0.f;
-    
+
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseDamage = -1.f;
-    
+
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseFirerate = -1.f;
-    
+
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseVisionRange = -1.f;
-    
+
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseVisionHalfDegrees = -1.f;
-    
+
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseProjectileSpeed = -1.f;
-    
+
     bool bIsReloading = false;
 
     FTimerHandle ReloadTimerHandle;
 };
+
+inline UMTD_HealthComponent *AMTD_TowerAsd::GetHealthComponent()
+{
+    return HealthComponent;
+}
+
+inline const UMTD_HealthComponent *AMTD_TowerAsd::GetHealthComponent() const
+{
+    return HealthComponent;
+}

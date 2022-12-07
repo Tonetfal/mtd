@@ -7,8 +7,7 @@ AlignOperands: true
 AllowShortFunctionsOnASignleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 BrekBeforeBraces: Allman
-UseTab: never
-SpaceAfterCommaInMethodCall: true
-TabWidth: '4'
-ColumnLimit: '120'
 QualifierAlignment: QAS_Right
+SpaceAfterCommaInMethodCall: true
+UseTab: never
+...

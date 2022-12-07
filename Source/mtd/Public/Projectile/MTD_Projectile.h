@@ -3,7 +3,6 @@
 #include "GameplayEffect.h"
 #include "GameFramework/Actor.h"
 #include "mtd.h"
-#include "Projectile/MTD_ProjectileCoreTypes.h"
 
 #include "MTD_Projectile.generated.h"
 
@@ -19,12 +18,14 @@ class MTD_API AMTD_Projectile : public AActor
 public:
     AMTD_Projectile();
 
+    const UCapsuleComponent *GetCollisionComponent() const;
+    UCapsuleComponent *GetCollisionComponent();
+
+    const UMTD_ProjectileMovementComponent *GetMovementComponent() const;
+    UMTD_ProjectileMovementComponent *GetMovementComponent();
+
 protected:
     virtual void BeginPlay() override;
-
-public:
-    UFUNCTION(BlueprintCallable, Category="MTD|Projectile")
-    virtual void SetupProjectile(FMTD_ProjectileParameters Params);
 
 protected:
     UFUNCTION()
@@ -36,28 +37,30 @@ protected:
         bool bFromSweep,
         const FHitResult &SweepResult);
 
-    UFUNCTION(BlueprintImplementableEvent, Category="MTD|Projectile")
+    UFUNCTION(BlueprintNativeEvent, Category="MTD|Projectile")
     void OnSelfDestroy();
     virtual void OnSelfDestroy_Implementation();
 
     virtual void ApplyGameplayEffectToTarget(AActor *Target);
 
-private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UStaticMeshComponent> Mesh = nullptr;
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+    TArray<FGameplayEffectSpecHandle> GameplayEffectsToGrantOnHit;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UCapsuleComponent> CollisionCapsule = nullptr;
+    // TODO: Add radial damage
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components")
-    TObjectPtr<UMTD_ProjectileMovementComponent> ProjectileMovement = nullptr;
+    TObjectPtr<UMTD_ProjectileMovementComponent> MovementComponent = nullptr;
 
 private:
-    UPROPERTY()
-    FMTD_ProjectileParameters ProjectileParameters;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UCapsuleComponent> CollisionComponent = nullptr;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile",
         meta=(AllowPrivateAccess="true"))
@@ -65,3 +68,23 @@ private:
 
     FTimerHandle SelfDestroyTimerHandle;
 };
+
+inline const UCapsuleComponent *AMTD_Projectile::GetCollisionComponent() const
+{
+    return CollisionComponent;
+}
+
+inline UCapsuleComponent *AMTD_Projectile::GetCollisionComponent()
+{
+    return CollisionComponent;
+}
+
+inline const UMTD_ProjectileMovementComponent *AMTD_Projectile::GetMovementComponent() const
+{
+    return MovementComponent;
+}
+
+inline UMTD_ProjectileMovementComponent *AMTD_Projectile::GetMovementComponent()
+{
+    return MovementComponent;
+}

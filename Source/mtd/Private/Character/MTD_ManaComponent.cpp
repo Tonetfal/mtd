@@ -73,6 +73,11 @@ float UMTD_ManaComponent::GetManaNormilized() const
     return 0.f;
 }
 
+bool UMTD_ManaComponent::IsManaFull() const
+{
+    return (IsValid(ManaSet)) ? (ManaSet->GetMana() == ManaSet->GetMaxMana()) : (false);
+}
+
 void UMTD_ManaComponent::OnUnregister()
 {
     UninitializeFromAbilitySystem();
