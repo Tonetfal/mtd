@@ -455,20 +455,20 @@ FVector UMTD_TokenMovementComponent::RotateTowards(FVector InVelocity, const USc
     const FRotator R0 = V0.Rotation();
     const FRotator R1 = V1.Rotation();
 
-    MTD_WARN("V0 [%s] V1 [%s]", *V0.ToString(), *V1.ToString());
+    // MTD_WARN("V0 [%s] V1 [%s]", *V0.ToString(), *V1.ToString());
 
     FRotator R = R1 - R0;
-    MTD_WARN("R0 [%s] R1 [%s]", *R0.ToString(), *R1.ToString());
-    MTD_WARN("R [%s]", *R.ToString());
+    // MTD_WARN("R0 [%s] R1 [%s]", *R0.ToString(), *R1.ToString());
+    // MTD_WARN("R [%s]", *R.ToString());
 
     R.Yaw = FMath::Sign(R.Yaw) * FMath::Min(DR, FMath::Abs(R.Yaw));
     R.Pitch = FMath::Sign(R.Pitch) * FMath::Min(DR, FMath::Abs(R.Pitch));
 
-    MTD_WARN("R' [%s]", *R.ToString());
+    // MTD_WARN("R' [%s]", *R.ToString());
 
     const FVector RotatedVector = R.RotateVector(V0);
 
-    MTD_WARN("Rotated vector [%s]", *RotatedVector.ToString());
+    // MTD_WARN("Rotated vector [%s]", *RotatedVector.ToString());
 
     const UWorld *World = GetWorld();
     const FVector Base = UpdatedComponent->GetOwner()->GetActorLocation();

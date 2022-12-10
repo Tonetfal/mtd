@@ -55,10 +55,6 @@ private:
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> CollisionComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Core",
-        meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
-
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MTD|Core",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;

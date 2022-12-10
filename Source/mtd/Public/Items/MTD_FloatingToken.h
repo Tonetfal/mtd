@@ -36,7 +36,7 @@ protected:
 
 private:
     UFUNCTION()
-    void OnCollisionBeginOverlap(
+    void OnActivationTriggerBeginOverlap(
         UPrimitiveComponent *OverlappedComponent,
         AActor *OtherActor,
         UPrimitiveComponent *OtherComp,
@@ -45,7 +45,7 @@ private:
         const FHitResult &SweepResult);
     
     UFUNCTION()
-    void OnTriggerBeginOverlap(
+    void OnDetectTriggerBeginOverlap(
         UPrimitiveComponent *OverlappedComponent,
         AActor *OtherActor,
         UPrimitiveComponent *OtherComp,
@@ -54,7 +54,7 @@ private:
         const FHitResult &SweepResult);
 
     UFUNCTION()
-    void OnTriggerEndOverlap(
+    void OnDetectTriggerEndOverlap(
         UPrimitiveComponent *OverlappedComponent,
         AActor *OtherActor,
         UPrimitiveComponent *OtherComp,
@@ -79,4 +79,8 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> DetectTriggerComponent = nullptr;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Trigger",
+        meta=(AllowPrivateAccess="true"))
+    float MinimalForceTowardsTarget = 25.f;
 };

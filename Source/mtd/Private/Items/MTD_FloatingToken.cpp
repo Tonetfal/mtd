@@ -60,10 +60,10 @@ void AMTD_FloatingToken::BeginPlay()
 {
     Super::BeginPlay();
 
-    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnCollisionBeginOverlap);
+    ActivationTriggerComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnActivationTriggerBeginOverlap);
 
-    DetectTriggerComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnTriggerBeginOverlap);
-    DetectTriggerComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnTriggerEndOverlap);
+    DetectTriggerComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnDetectTriggerBeginOverlap);
+    DetectTriggerComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnDetectTriggerEndOverlap);
 }
 
 bool AMTD_FloatingToken::CanBeActivatedOn(APawn *Pawn) const
@@ -97,7 +97,7 @@ void AMTD_FloatingToken::OnPawnAdded(APawn *Pawn)
         Displacement.ToDirectionAndLength(Direction, Distance);
         
         MovementComponent->SetUpdatedComponent(GetRootComponent());
-        MovementComponent->AddForce(Direction * (FMath::Min(Distance * 0.1f, 10.f)));
+        MovementComponent->AddForce(Direction * MinimalForceTowardsTarget);
         MovementComponent->HomingTargetComponent = Pawn->GetRootComponent();
     }
 }
@@ -113,7 +113,7 @@ void AMTD_FloatingToken::OnPawnRemoved(APawn *Pawn)
     }
 }
 
-void AMTD_FloatingToken::OnCollisionBeginOverlap(
+void AMTD_FloatingToken::OnActivationTriggerBeginOverlap(
     UPrimitiveComponent *OverlappedComponent,
     AActor *OtherActor,
     UPrimitiveComponent *OtherComp,
@@ -128,7 +128,7 @@ void AMTD_FloatingToken::OnCollisionBeginOverlap(
     }
 }
 
-void AMTD_FloatingToken::OnTriggerBeginOverlap(
+void AMTD_FloatingToken::OnDetectTriggerBeginOverlap(
     UPrimitiveComponent *OverlappedComponent,
     AActor *OtherActor,
     UPrimitiveComponent *OtherComp,
@@ -146,7 +146,7 @@ void AMTD_FloatingToken::OnTriggerBeginOverlap(
     OnPawnAdded(Pawn);
 }
 
-void AMTD_FloatingToken::OnTriggerEndOverlap(
+void AMTD_FloatingToken::OnDetectTriggerEndOverlap(
     UPrimitiveComponent *OverlappedComponent,
     AActor *OtherActor,
     UPrimitiveComponent *OtherComp,

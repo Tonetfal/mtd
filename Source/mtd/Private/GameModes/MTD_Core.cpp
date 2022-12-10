@@ -17,11 +17,6 @@ AMTD_Core::AMTD_Core()
     CollisionComponent->SetCollisionProfileName(TowerCollisionProfileName);
     CollisionComponent->SetCanEverAffectNavigation(false);
 
-    MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("Mesh Component");
-    MeshComponent->SetupAttachment(CollisionComponent);
-    MeshComponent->SetCollisionProfileName("NoCollision");
-    MeshComponent->SetCanEverAffectNavigation(false);
-
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("Health Component"));
 }
 

@@ -194,12 +194,8 @@ void USBS_BuildComponent::CreateGhostBuildActor()
 
 AActor *USBS_BuildComponent::SpawnBuilding() const
 {
-    FTransform Transform = BuildGhostActor->GetTransform();
-
     const FVector Offset(0.f, 0.f, BuildGhostActor->GetOffsetZ());
-    Transform.SetLocation(Transform.GetLocation() + Offset);
-
-    UE_LOG(LogTemp, Warning, TEXT("Spawn at [%s]"), *Transform.GetLocation().ToString());
+    const FTransform Transform = BuildGhostActor->GetTransform() + FTransform(Offset);
 
     const auto HdlMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 

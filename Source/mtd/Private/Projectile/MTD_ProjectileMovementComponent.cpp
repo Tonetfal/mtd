@@ -34,6 +34,9 @@ void UMTD_ProjectileMovementComponent::TickComponent(float DeltaSeconds, ELevelT
         return;
     }
 
+    PendingAccelerationThisUpdate = PendingAcceleration;
+    ClearAcceleration();
+
     const FVector MoveDelta = ComputeMoveDelta(DeltaSeconds);
     const FQuat DesiredRotation = Direction.ToOrientationQuat();
 
@@ -75,7 +78,7 @@ FVector UMTD_ProjectileMovementComponent::ComputeMoveDelta(float DeltaSeconds)
 void UMTD_ProjectileMovementComponent::Accelerate(float DeltaSeconds)
 {
     const float AccelDelta = Acceleration * DeltaSeconds;
-    const float NewSpeed = CurrentSpeed + AccelDelta;
+    const float NewSpeed = CurrentSpeed + AccelDelta + PendingAccelerationThisUpdate;
     
     SetSpeed(NewSpeed);
 }

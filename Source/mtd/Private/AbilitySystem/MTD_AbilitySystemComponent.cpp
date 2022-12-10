@@ -11,7 +11,7 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
     AbilitiesToActivate.Reset();
 
     // Process held input
-    for (const FGameplayAbilitySpecHandle &SpecHandle :InputHeldSpecHandles)
+    for (const FGameplayAbilitySpecHandle &SpecHandle : InputHeldSpecHandles)
     {
         const FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
         if ((!Spec) || (!Spec->Ability) || (Spec->IsActive()))
@@ -28,7 +28,7 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
     }
 
     // Process triggered input
-    for (const FGameplayAbilitySpecHandle &SpecHandle :InputPressedSpecHandles)
+    for (const FGameplayAbilitySpecHandle &SpecHandle : InputPressedSpecHandles)
     {
         FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
         if ((!Spec) || (!Spec->Ability))
@@ -57,12 +57,12 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
         check(Ability);
     }
 
-    for (const FGameplayAbilitySpecHandle &SpecHandle :AbilitiesToActivate)
+    for (const FGameplayAbilitySpecHandle &SpecHandle : AbilitiesToActivate)
     {
         TryActivateAbility(SpecHandle);
     }
 
-    for (const FGameplayAbilitySpecHandle &SpecHandle :InputReleasedSpecHandles)
+    for (const FGameplayAbilitySpecHandle &SpecHandle : InputReleasedSpecHandles)
     {
         FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
         if ((!Spec) || (!Spec->Ability))
@@ -150,7 +150,7 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagPressed(const FGameplayTag &I
         return;
     }
 
-    for (const FGameplayAbilitySpec &AbilitySpec :ActivatableAbilities.Items)
+    for (const FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
     {
         if ((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag)))
         {
@@ -167,7 +167,7 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagReleased(const FGameplayTag &
         return;
     }
 
-    for (const FGameplayAbilitySpec &AbilitySpec :ActivatableAbilities.Items)
+    for (const FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
     {
         if ((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag)))
         {

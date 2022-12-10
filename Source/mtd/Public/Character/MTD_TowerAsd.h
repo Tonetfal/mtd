@@ -97,9 +97,11 @@ private:
     void StartReloading();
     void OnReloadFinished();
 
+    FVector GetTargetDistanceVector(const USceneComponent *Projectile, const USceneComponent *Target) const;
+    FVector GetTargetDirection(const USceneComponent *Projectile, const USceneComponent *Target) const;
+
 public:
-    UMTD_HealthComponent *GetHealthComponent();
-    const UMTD_HealthComponent *GetHealthComponent() const;
+    UMTD_HealthComponent *GetHealthComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Tower")
     AMTD_PlayerState *GetMtdPlayerState() const;
@@ -115,6 +117,10 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UBoxComponent> CollisionComponent = nullptr;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UBoxComponent> NavVolumeComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
@@ -173,12 +179,7 @@ private:
     FTimerHandle ReloadTimerHandle;
 };
 
-inline UMTD_HealthComponent *AMTD_TowerAsd::GetHealthComponent()
-{
-    return HealthComponent;
-}
-
-inline const UMTD_HealthComponent *AMTD_TowerAsd::GetHealthComponent() const
+inline UMTD_HealthComponent *AMTD_TowerAsd::GetHealthComponent() const
 {
     return HealthComponent;
 }

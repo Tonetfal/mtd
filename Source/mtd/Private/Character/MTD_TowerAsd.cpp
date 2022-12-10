@@ -30,13 +30,24 @@ AMTD_TowerAsd::AMTD_TowerAsd()
     CollisionComponent->SetCollisionProfileName(TowerCollisionProfileName);
     CollisionComponent->SetSimulatePhysics(false);
     CollisionComponent->SetEnableGravity(false);
-    CollisionComponent->SetCanEverAffectNavigation(true);
-    CollisionComponent->bDynamicObstacle = true;
+    CollisionComponent->SetCanEverAffectNavigation(false);
+
+    NavVolumeComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Navigation Volume Component"));
+    NavVolumeComponent->SetupAttachment(GetRootComponent());
+
+    NavVolumeComponent->SetCollisionProfileName("NoCollision");
+    NavVolumeComponent->SetSimulatePhysics(false);
+    NavVolumeComponent->SetEnableGravity(false);
+    NavVolumeComponent->SetCanEverAffectNavigation(true);
+    NavVolumeComponent->bDynamicObstacle = true;
 
     ProjectileSpawnPosition = CreateDefaultSubobject<USphereComponent>(TEXT("Projectile Spawn Position"));
     ProjectileSpawnPosition->SetupAttachment(GetRootComponent());
 
     ProjectileSpawnPosition->SetCollisionProfileName("NoCollision");
+    ProjectileSpawnPosition->SetSimulatePhysics(false);
+    ProjectileSpawnPosition->SetEnableGravity(false);
+    ProjectileSpawnPosition->SetCanEverAffectNavigation(false);
 
     MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh Component"));
     MeshComponent->SetupAttachment(GetRootComponent());
@@ -44,7 +55,7 @@ AMTD_TowerAsd::AMTD_TowerAsd()
     MeshComponent->SetCollisionProfileName("NoCollision");
     MeshComponent->SetSimulatePhysics(false);
     MeshComponent->SetEnableGravity(false);
-    MeshComponent->SetCanEverAffectNavigation(true);
+    MeshComponent->SetCanEverAffectNavigation(false);
 
     PawnExtentionComponent = CreateDefaultSubobject<UMTD_PawnExtensionComponent>(TEXT("MTD Pawn Extension Component"));
 
@@ -57,9 +68,6 @@ AMTD_TowerAsd::AMTD_TowerAsd()
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("MTD Health Component"));
 
     bCanAffectNavigationGeneration = false;
-    CollisionComponent->SetCanEverAffectNavigation(false);
-    ProjectileSpawnPosition->SetCanEverAffectNavigation(false);
-    MeshComponent->SetCanEverAffectNavigation(false);
 }
 
 void AMTD_TowerAsd::Tick(float DeltaTime)
@@ -185,7 +193,8 @@ float AMTD_TowerAsd::GetScaledProjectileSpeed_Implementation()
 float AMTD_TowerAsd::GetReloadTime_Implementation()
 {
     // Fire 'BaseFirerate' times per second
-    return (BaseFirerate == 0.f) ? (60.f) : (60.f / BaseFirerate);
+    const float Firerate = GetScaledFirerate();
+    return (Firerate == 0.f) ? (60.f) : (60.f / Firerate);
 }
 
 void AMTD_TowerAsd::OnFire(AActor *FireTarget)
@@ -220,6 +229,23 @@ void AMTD_TowerAsd::OnReloadFinished()
     check(bIsReloading);
 
     bIsReloading = false;
+}
+
+FVector AMTD_TowerAsd::GetTargetDistanceVector(const USceneComponent *Projectile, const USceneComponent *Target) const
+{
+    const FVector P0 = Projectile->GetComponentLocation();
+    const FVector P1 = Target->GetComponentLocation();
+    const FVector DistanceVector = P1 - P0;
+
+    return DistanceVector;
+}
+
+FVector AMTD_TowerAsd::GetTargetDirection(const USceneComponent *Projectile, const USceneComponent *Target) const
+{
+    const FVector DistanceVector = GetTargetDistanceVector(Projectile, Target);
+    const FVector Direction = DistanceVector.GetSafeNormal();
+
+    return Direction;
 }
 
 AMTD_Projectile *AMTD_TowerAsd::SpawnProjectile()
@@ -262,14 +288,13 @@ void AMTD_TowerAsd::SetupProjectileMovement(AMTD_Projectile *Projectile, AActor 
 {
     UMTD_ProjectileMovementComponent *MovementComponent = Projectile->GetMovementComponent();
 
-    const FVector P0 = Projectile->GetActorLocation();
-    const FVector P1 = FireTarget->GetActorLocation();
-    const FVector Dist = P1 - P0;
-    const FVector Dir = Dist.GetSafeNormal();
+    const FVector Direction = GetTargetDirection(Projectile->GetRootComponent(), FireTarget->GetRootComponent());
+    const float Speed = GetScaledProjectileSpeed();
 
     MovementComponent->HomingTarget = FireTarget;
-    MovementComponent->Direction = Dir;
-    MovementComponent->InitialSpeed = MovementComponent->MaxSpeed = GetScaledProjectileSpeed();
+    MovementComponent->Direction = Direction;
+    MovementComponent->MaxSpeed = Speed;
+    MovementComponent->AddAcceleration(Speed);
 }
 
 void AMTD_TowerAsd::SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles)
