@@ -91,10 +91,12 @@ public:
     void BuildModeDisable();
 
     /// Procede to the next building stage. For example, moving, rotating, building.
-    UFUNCTION(BlueprintCallable, Category="Build Component")
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Build Component")
     void BuildConfirm();
-
+    
 protected:
+    virtual void BuildConfirm_Implementation();
+
     //~AActor interface
     virtual void BeginPlay() override;
     //~End of AActor interface
@@ -158,7 +160,7 @@ private:
     void AddInputContext(const UInputMappingContext *InputMappingContext);
     void RemoveInputContext(const UInputMappingContext *InputMappingContext);
 
-    FVector FindObservedPoint(float TraceLength) const;
+    FVector FindObservedPoint(float TraceLength, FHitResult *OutHit = nullptr) const;
     FVector FindGround(FVector LineStart) const;
 
 public:

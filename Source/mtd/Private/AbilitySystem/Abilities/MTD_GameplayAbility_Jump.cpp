@@ -38,7 +38,7 @@ void UMTD_GameplayAbility_Jump::ActivateAbility(
     // Start jumping; End ability on landed
     Character->Jump();
 
-    auto Delegate = Character->LandedDelegate;
+    auto &Delegate = Character->LandedDelegate;
     if (!Delegate.IsAlreadyBound(this, &ThisClass::OnAnimMontageEnded))
     {
         Delegate.AddDynamic(this, &ThisClass::OnAnimMontageEnded);

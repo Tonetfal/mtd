@@ -22,7 +22,7 @@ void FSBS_BuildingData::Invalidate()
 }
 
 USBS_BuildComponent::USBS_BuildComponent(const FObjectInitializer &ObjectInitializer)
-    : UPawnComponent(ObjectInitializer)
+: UPawnComponent(ObjectInitializer)
 {
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bStartWithTickEnabled = false;
@@ -77,11 +77,12 @@ void USBS_BuildComponent::MoveBuildGhostActor_Implementation()
 {
     ensure(BuildState == ESBS_BuildState::Moving);
 
-    // The object should be above the ground to make further traces work properly regardless the floating point
-    // imprecision
-    const FVector GroundOffset(0.f, 0.f, 1.f);
+    FHitResult Hit;
+    const FVector ObservedPoint = FindObservedPoint(MoveTraceLength, &Hit);
 
-    const FVector ObservedPoint = FindObservedPoint(MoveTraceLength);
+    // Fix some issues with ground placing by adding an offset
+    const FVector GroundOffset = FVector::UpVector + Hit.ImpactNormal;
+    
     const FVector SurfaceLocation = ObservedPoint + GroundOffset;
     const FVector GroundLocation = FindGround(SurfaceLocation);
 
@@ -195,7 +196,9 @@ void USBS_BuildComponent::CreateGhostBuildActor()
 AActor *USBS_BuildComponent::SpawnBuilding() const
 {
     const FVector Offset(0.f, 0.f, BuildGhostActor->GetOffsetZ());
-    const FTransform Transform = BuildGhostActor->GetTransform() + FTransform(Offset);
+    
+    FTransform Transform = BuildGhostActor->GetTransform();
+    Transform.AddToTranslation(Offset);
 
     const auto HdlMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
@@ -257,7 +260,7 @@ void USBS_BuildComponent::RemoveInputContext(const UInputMappingContext *InputMa
     EiSubsystem->RemoveMappingContext(InputMappingContext, ContextOptions);
 }
 
-FVector USBS_BuildComponent::FindObservedPoint(float TraceLength) const
+FVector USBS_BuildComponent::FindObservedPoint(float TraceLength, FHitResult *OutHit) const
 {
     const FVector CameraLocation = OwnerCamera->GetComponentLocation();
     const FVector CameraForward = OwnerCamera->GetForwardVector();
@@ -277,6 +280,11 @@ FVector USBS_BuildComponent::FindObservedPoint(float TraceLength) const
 
     FHitResult Hit;
     GetWorld()->LineTraceSingleByObjectType(Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
+
+    if (OutHit)
+    {
+        *OutHit = Hit;
+    }
 
     return Hit.bBlockingHit ? Hit.ImpactPoint : LineEnd;
 }
@@ -377,7 +385,7 @@ void USBS_BuildComponent::BuildModeDisable()
     OnBuildDisabledDelegate.Broadcast();
 }
 
-void USBS_BuildComponent::BuildConfirm()
+void USBS_BuildComponent::BuildConfirm_Implementation()
 {
     if (!bCanPlaceBuilding)
     {
