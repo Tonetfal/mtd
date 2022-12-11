@@ -8,5 +8,5 @@ FMTD_AbilityAnimations UMTD_AbilityAnimationSet::GetAbilityAnimMontages(FGamepla
     }
 
     const FMTD_AbilityAnimations *Found = AbilityAnimations.Find(AbilityTag);
-    return Found ? *Found : FMTD_AbilityAnimations();
+    return (Found) ? (*Found) : (FMTD_AbilityAnimations());
 }

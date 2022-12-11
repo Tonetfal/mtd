@@ -28,11 +28,12 @@ const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(AActor *Av
         return nullptr;
     }
 
-    return nullptr;
-
-    // TODO: Fix. Towers don't inherit from AMTD_BaseCharacter, hence the cast will fail
-
-    const auto Character = CastChecked<AMTD_BaseCharacter>(AvatarActor);
+    const auto Character = Cast<AMTD_BaseCharacter>(AvatarActor);
+    if (!IsValid(Character))
+    {
+        return nullptr;
+    }
+    
     TArray<UAnimMontage *> Animations = Character->GetAbilityAnimMontages(MainAbilityTag).Animations;
 
     const int32 Size = Animations.Num();
