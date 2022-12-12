@@ -8,12 +8,13 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Player/MTD_PlayerState.h"
 
 AMTD_BaseCharacter::AMTD_BaseCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
-    PrimaryActorTick.bStartWithTickEnabled = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     GetMesh()->SetCollisionProfileName("NoCollision");
 
@@ -58,6 +59,8 @@ void AMTD_BaseCharacter::BeginPlay()
         auto MtdGm = CastChecked<AMTD_GameModeBase>(Gm);
         MtdGm->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
     }
+
+    ConstructHitboxMap();
 }
 
 void AMTD_BaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -68,6 +71,13 @@ void AMTD_BaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AMTD_BaseCharacter::Reset()
 {
     Super::Reset();
+}
+
+void AMTD_BaseCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    PerformHitboxTrace();
 }
 
 void AMTD_BaseCharacter::NotifyControllerChanged()
@@ -82,11 +92,135 @@ FMTD_AbilityAnimations AMTD_BaseCharacter::GetAbilityAnimMontages(FGameplayTag A
     return (IsValid(AnimationSet)) ? (AnimationSet->GetAbilityAnimMontages(AbilityTag)) : (FMTD_AbilityAnimations());
 }
 
+void AMTD_BaseCharacter::AddMeleeHitboxes(const TArray<FName> &HitboxNicknames)
+{
+    for (const FName &Name : HitboxNicknames)
+    {
+        const auto Found = HitboxMap.Find(Name);
+        if (!Found)
+        {
+            continue;
+        }
+        
+        ActiveHitboxes.Add(Found->HitboxInfo);
+    }
+
+    bIsMeleeInProgress = !ActiveHitboxes.IsEmpty();
+}
+
+void AMTD_BaseCharacter::RemoveMeleeHitboxes(const TArray<FName> &HitboxNicknames)
+{
+    for (const FName &Name : HitboxNicknames)
+    {
+        const auto Found = HitboxMap.Find(Name);
+        if (!Found)
+        {
+            continue;
+        }
+
+        ActiveHitboxes.Remove(Found->HitboxInfo);
+    }
+
+    bIsMeleeInProgress = !ActiveHitboxes.IsEmpty();
+    if (!bIsMeleeInProgress)
+    {
+        ResetMeleeHitTargets();
+    }
+}
+
+void AMTD_BaseCharacter::DisableMeleeHitboxes()
+{
+    ActiveHitboxes.Empty();
+    ResetMeleeHitTargets();
+    bIsMeleeInProgress = false;
+}
+
+void AMTD_BaseCharacter::ResetMeleeHitTargets()
+{
+    MeleeHitTargets.Empty();
+}
+
+void AMTD_BaseCharacter::PerformHitboxTrace()
+{
+    if (!bIsMeleeInProgress)
+    {
+        return;
+    }
+
+    const UWorld *World = GetWorld();
+    const FVector ActorLocation = GetActorLocation();
+    const FVector Forward = GetActorForwardVector();
+    const FRotator ForwardRot = Forward.Rotation();
+
+    const EDrawDebugTrace::Type DrawDebugTrace =
+        (bDebugMelee) ? (EDrawDebugTrace::ForDuration) : (EDrawDebugTrace::None);
+
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+
+    for (const FMTD_MeleeHitSphereDefinition &HitboxEntry : ActiveHitboxes)
+    {
+        const FVector Offset = ForwardRot.RotateVector(HitboxEntry.Offset);
+        const FVector TraceLocation = ActorLocation + Offset;
+
+        TArray<FHitResult> OutHits;
+        UKismetSystemLibrary::SphereTraceMultiForObjects(
+            World,
+            TraceLocation,
+            TraceLocation,
+            HitboxEntry.Radius,
+            ObjectTypesToHit,
+            false,
+            MeleeHitTargets,
+            DrawDebugTrace,
+            OutHits,
+            false,
+            FLinearColor::Red,
+            FLinearColor::Green,
+            DrawTime);
+
+        for (const FHitResult &Hit : OutHits)
+        {
+            AActor *HitActor = Hit.GetActor();
+            MeleeHitTargets.Add(HitActor);
+
+            FGameplayEventData EventData;
+            EventData.ContextHandle = Asc->MakeEffectContext();
+            EventData.Instigator = GetPlayerState();
+            EventData.Target = HitActor;
+            EventData.TargetData.Data.Add(
+                TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(Hit)));
+
+			Asc->HandleGameplayEvent(TagToFireOnHit, &EventData);
+        }
+    }
+}
+
 void AMTD_BaseCharacter::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     PawnExtentionComponent->SetupPlayerInputComponent();
+}
+
+void AMTD_BaseCharacter::ConstructHitboxMap()
+{
+    HitboxMap.Empty();
+    
+    for (const UMTD_MeleeHitboxData *Data : HitboxData)
+    {
+        if (!IsValid(Data))
+        {
+            continue;
+        }
+
+        for (const FMTD_MeleeHitSphereDefinition &HitDefinition : Data->MeleeHitSpheres)
+        {
+            FMTD_ActiveHitboxEntry HitboxEntry;
+            HitboxEntry.HitboxInfo = HitDefinition;
+            
+            HitboxMap.Add(HitDefinition.Nickname, HitboxEntry);
+        }
+    }
 }
 
 void AMTD_BaseCharacter::FellOutOfWorld(const UDamageType &DamageType)
