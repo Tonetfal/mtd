@@ -21,12 +21,9 @@ void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorI
     TryActivateAbilityOnSpawn(ActorInfo, Spec);
 }
 
-const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage(AActor *AvatarActor) const
+const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
 {
-    if (!IsValid(AvatarActor))
-    {
-        return nullptr;
-    }
+    const AActor *AvatarActor = GetActorInfo().AvatarActor.Get();
 
     const auto Character = Cast<AMTD_BaseCharacter>(AvatarActor);
     if (!IsValid(Character))
@@ -64,6 +61,9 @@ void UMTD_GameplayAbility::ActivateAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     const FGameplayEventData *TriggerEventData)
 {
+    // Always save given event data
+    GameplayEventData = (TriggerEventData) ? (*TriggerEventData) : (FGameplayEventData());
+    
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
     OnAbilityActivatedDelegate.Broadcast(this);

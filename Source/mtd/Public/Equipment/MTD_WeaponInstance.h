@@ -25,6 +25,6 @@ private:
     FMTD_EquipmentWeaponStats WeaponStats;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
-        meta=(AllowPrivateAccess="true", ShortTooltip="Gameplay effects to grant on melee attack hit"))
+        meta=(AllowPrivateAccess="true", ShortTooltip="Gameplay effects to grant on melee attack hit."))
     TArray<TSubclassOf<UGameplayEffect>> GameplayEffectsToGrantOnHit;
 };

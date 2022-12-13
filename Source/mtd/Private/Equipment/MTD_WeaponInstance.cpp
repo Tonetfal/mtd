@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "AbilitySystem/Attributes/MTD_BalanceSet.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 
 void UMTD_WeaponInstance::ModStats(float Multiplier)
@@ -15,9 +16,12 @@ void UMTD_WeaponInstance::ModStats(float Multiplier)
     }
 
     check(Asc->GetAttributeSet(UMTD_CombatSet::StaticClass()));
+    check(Asc->GetAttributeSet(UMTD_BalanceSet::StaticClass()));
 
     Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(),
         EGameplayModOp::Additive, WeaponStats.BaseDamage * Multiplier);
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(),
+        EGameplayModOp::Override, WeaponStats.BalanceDamage);
 }
 
 TArray<FGameplayEffectSpecHandle> UMTD_WeaponInstance::GetGameplayEffectSpecHandlesToGrantOnHit() const

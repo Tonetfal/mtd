@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Projectile/MTD_ProjectileMovementComponent.h"
@@ -24,6 +25,12 @@ AMTD_Projectile::AMTD_Projectile()
     MovementComponent->SetUpdatedComponent(GetRootComponent());
 }
 
+void AMTD_Projectile::InitializeAbilitySystem(UAbilitySystemComponent *InAbilitySystemComponent)
+{
+    check(InAbilitySystemComponent);
+    AbilitySystemComponent = InAbilitySystemComponent;
+}
+
 void AMTD_Projectile::BeginPlay()
 {
     Super::BeginPlay();
@@ -31,10 +38,10 @@ void AMTD_Projectile::BeginPlay()
     check(MovementComponent);
     check(CollisionComponent);
 
-    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AMTD_Projectile::OnBeginOverlap);
+    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
 
-    GetWorldTimerManager().SetTimer(
-        SelfDestroyTimerHandle, this, &AMTD_Projectile::OnSelfDestroy, SecondsToSelfDestroy);
+    FTimerHandle SelfDestroyTimerHandle;
+    GetWorldTimerManager().SetTimer(SelfDestroyTimerHandle, this, &ThisClass::OnSelfDestroy, SecondsToSelfDestroy);
 }
 
 void AMTD_Projectile::OnBeginOverlap(
@@ -45,17 +52,21 @@ void AMTD_Projectile::OnBeginOverlap(
     bool bFromSweep,
     const FHitResult &SweepResult)
 {
+    const FGameplayEventData EventData = PrepareGameplayEventData(SweepResult);
+    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
+    
+    OnProjectilePreHit(EventData);
+    
     ApplyGameplayEffectToTarget(OtherActor);
+    
+    AbilitySystemComponent->HandleGameplayEvent(GameplayTags.Gameplay_Event_RangeHit, &EventData);
+    OnProjectilePostHit(EventData);
+    
     Destroy();
 }
 
 void AMTD_Projectile::OnSelfDestroy_Implementation()
 {
-    if (SelfDestroyTimerHandle.IsValid())
-    {
-        GetWorldTimerManager().ClearTimer(SelfDestroyTimerHandle);
-    }
-
     Destroy();
 }
 
@@ -83,4 +94,34 @@ void AMTD_Projectile::ApplyGameplayEffectToTarget(AActor *Target)
                 *ActiveGeHandle.ToString(), *Target->GetName());
         }
     }
+}
+
+void AMTD_Projectile::OnProjectilePreHit_Implementation(const FGameplayEventData &EventData)
+{
+}
+
+void AMTD_Projectile::OnProjectilePostHit_Implementation(const FGameplayEventData &EventData)
+{
+}
+
+FGameplayEventData AMTD_Projectile::PrepareGameplayEventData(FHitResult HitResult) const
+{
+    // For some reason sweep given by on overlap event doesn't contain crutial information about the transforms, hence
+    // I fill some required information in here which is a bit inaccurate, but does the job
+    
+    const FVector ProjLocation = GetActorLocation();
+    const FVector OtherLocation = HitResult.GetActor()->GetActorLocation();
+    
+    HitResult.Location = ProjLocation;
+    HitResult.ImpactPoint = ProjLocation - OtherLocation;
+    HitResult.ImpactNormal = FVector_NetQuantizeNormal(HitResult.ImpactPoint.GetUnsafeNormal());
+    
+    FGameplayEventData EventData;
+    EventData.ContextHandle = AbilitySystemComponent->MakeEffectContext();
+    EventData.Instigator = GetOwner(); // Should be PlayerState
+    EventData.Target = HitResult.GetActor();
+    EventData.TargetData.Data.Add(
+        TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(HitResult)));
+
+    return EventData;
 }

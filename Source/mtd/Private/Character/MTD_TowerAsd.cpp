@@ -1,5 +1,6 @@
 #include "Character/MTD_TowerAsd.h"
 
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
@@ -165,32 +166,32 @@ void AMTD_TowerAsd::FellOutOfWorld(const UDamageType &DamageType)
     HealthComponent->SelfDestruct(true);
 }
 
-float AMTD_TowerAsd::GetScaledDamage_Implementation()
+float AMTD_TowerAsd::GetScaledDamage_Implementation() const
 {
     return BaseDamage;
 }
 
-float AMTD_TowerAsd::GetScaledFirerate_Implementation()
+float AMTD_TowerAsd::GetScaledFirerate_Implementation() const
 {
     return BaseFirerate;
 }
 
-float AMTD_TowerAsd::GetScaledVisionRange_Implementation()
+float AMTD_TowerAsd::GetScaledVisionRange_Implementation() const
 {
     return BaseVisionRange;
 }
 
-float AMTD_TowerAsd::GetScaledVisionHalfDegrees_Implementation()
+float AMTD_TowerAsd::GetScaledVisionHalfDegrees_Implementation() const
 {
     return BaseVisionHalfDegrees;
 }
 
-float AMTD_TowerAsd::GetScaledProjectileSpeed_Implementation()
+float AMTD_TowerAsd::GetScaledProjectileSpeed_Implementation() const
 {
     return BaseProjectileSpeed;
 }
 
-float AMTD_TowerAsd::GetReloadTime_Implementation()
+float AMTD_TowerAsd::GetReloadTime_Implementation() const
 {
     // Fire 'BaseFirerate' times per second
     const float Firerate = GetScaledFirerate();
@@ -271,9 +272,14 @@ AMTD_Projectile *AMTD_TowerAsd::SpawnProjectile()
 
 void AMTD_TowerAsd::SetupProjectile(AMTD_Projectile *Projectile, AActor *FireTarget)
 {
+    Projectile->InitializeAbilitySystem(GetAbilitySystemComponent());
+    
     SetupProjectileCollision(Projectile);
     SetupProjectileMovement(Projectile, FireTarget);
+    SetupProjectileHitCallback();
     SetupProjectileEffectHandles(Projectile->GameplayEffectsToGrantOnHit);
+
+    Projectile->BalanceDamage = BalanceDamage;
 }
 
 void AMTD_TowerAsd::SetupProjectileCollision(AMTD_Projectile *Projectile) const
@@ -297,17 +303,29 @@ void AMTD_TowerAsd::SetupProjectileMovement(AMTD_Projectile *Projectile, AActor 
     MovementComponent->AddAcceleration(Speed);
 }
 
+void AMTD_TowerAsd::SetupProjectileHitCallback()
+{
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
+    
+    FGameplayEventMulticastDelegate Delegate;
+    Delegate.AddUObject(this, &ThisClass::OnProjectileHit);
+    
+    Asc->GenericGameplayEventCallbacks.Add(GameplayTags.Gameplay_Event_RangeHit, Delegate);
+}
+
+void AMTD_TowerAsd::OnProjectileHit(const FGameplayEventData *EventData)
+{
+    check(EventData);
+    K2_OnProjectileHit(*EventData);
+}
+
 void AMTD_TowerAsd::SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles)
 {
     // TODO: Maybe cache it instead of computing it every time. Cons are that GEs may vary depending on something, hence
     // some recalculation will be required, so a way of comunicating this request has to be created. It will increase
     // the performance since this method may be called hundred times per second.
-
-    if (!TowerData->DamageGameplayEffectClass)
-    {
-        return;
-    }
-
+    
     UMTD_AbilitySystemComponent *Asc = GetMtdAbilitySystemComponent();
     FGameplayEffectContextHandle GeContext = Asc->MakeEffectContext();
     FGameplayEffectSpecHandle GeDmgSpec = Asc->MakeOutgoingSpec(TowerData->DamageGameplayEffectClass, 1.f, GeContext);

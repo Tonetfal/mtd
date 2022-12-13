@@ -163,7 +163,6 @@ void UMTD_HealthComponent::OnOutOfHealth(
     const FGameplayEffectSpec &DamageEffectSpec,
     float DamageMagnitude)
 {
-#if WITH_SERVER_CODE
     if (!IsValid(AbilitySystemComponent))
     {
         return;
@@ -177,18 +176,9 @@ void UMTD_HealthComponent::OnOutOfHealth(
     Payload.Target = AbilitySystemComponent->GetAvatarActor();
     Payload.OptionalObject = DamageEffectSpec.Def;
     Payload.ContextHandle = DamageEffectSpec.GetEffectContext();
-    Payload.InstigatorTags =
-        *DamageEffectSpec.CapturedSourceTags.GetAggregatedTags();
-    Payload.TargetTags =
-        *DamageEffectSpec.CapturedTargetTags.GetAggregatedTags();
+    Payload.InstigatorTags = *DamageEffectSpec.CapturedSourceTags.GetAggregatedTags();
+    Payload.TargetTags = *DamageEffectSpec.CapturedTargetTags.GetAggregatedTags();
     Payload.EventMagnitude = DamageMagnitude;
 
-    // FScopedPredictionWindow NewScopedWindow(AbilitySystemComponent, true);
     AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-
-    // TODO: Send an event about death. This can be used to keep track of some
-    // game statistics
-    // ...
-
-#endif // #if WITH_SERVER_CODE
 }

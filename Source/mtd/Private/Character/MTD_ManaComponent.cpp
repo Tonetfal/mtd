@@ -85,15 +85,13 @@ void UMTD_ManaComponent::OnUnregister()
     Super::OnUnregister();
 }
 
-void UMTD_ManaComponent::OnManaChanged(
-    const FOnAttributeChangeData &ChangeData)
+void UMTD_ManaComponent::OnManaChanged(const FOnAttributeChangeData &ChangeData)
 {
     OnManaChangedDelegate.Broadcast(
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));
 }
 
-void UMTD_ManaComponent::OnMaxManaChanged(
-    const FOnAttributeChangeData &ChangeData)
+void UMTD_ManaComponent::OnMaxManaChanged(const FOnAttributeChangeData &ChangeData)
 {
     OnMaxManaChangedDelegate.Broadcast(
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));

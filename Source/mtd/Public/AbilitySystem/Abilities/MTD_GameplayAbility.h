@@ -19,13 +19,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 UENUM(BlueprintType)
 enum class EMTD_AbilityActivationPolicy : uint8
 {
-    /// Try to activate the ability when the input is triggered.
+    /** Try to activate the ability when the input is triggered. */
     OnInputTriggered,
 
-    /// Continually try to activate the ability while the input is active.
+    /** Initially try to activate the ability while the input is active. */
     WhileInputActive,
 
-    /// Try to activate the ability when an avatar is assigned.
+    /** Try to activate the ability when an avatar is assigned. */
     OnSpawn
 };
 
@@ -39,18 +39,11 @@ public:
 
     virtual void OnGiveAbility(const FGameplayAbilityActorInfo *ActorInfo, const FGameplayAbilitySpec &Spec) override;
 
-    FGameplayTag GetMainAbilityTag() const
-    {
-        return MainAbilityTag;
-    }
-
-    EMTD_AbilityActivationPolicy GetActivationPolicy() const
-    {
-        return ActivationPolicy;
-    }
+    FGameplayTag GetMainAbilityTag() const;
+    EMTD_AbilityActivationPolicy GetActivationPolicy() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Ability Animation")
-    const UAnimMontage *GetRandomAbilityAnimMontage(AActor *AvatarActor) const;
+    const UAnimMontage *GetRandomAbilityAnimMontage() const;
 
     virtual void GetOwnedGameplayTags(FGameplayTagContainer &TagContainer) const override;
 
@@ -85,23 +78,31 @@ private:
     void TryActivateAbilityOnSpawn(const FGameplayAbilityActorInfo *ActorInfo, const FGameplayAbilitySpec &Spec) const;
 
 public:
-    /// Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn' t
-    /// foresees ability instantiating for each ability use.
+    /**
+     * Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn' t
+     * foresees ability instantiating for each ability use.
+     */
     UPROPERTY(BlueprintAssignable)
     FMtdAbilitySignature OnAbilityActivatedDelegate;
 
-    /// Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn't
-    /// foresees ability instantiating for each ability use.
+    /**
+     * Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn' t
+     * foresees ability instantiating for each ability use.
+     */
     UPROPERTY(BlueprintAssignable)
     FMtdAbilitySignature OnAbilityEndedDelegate;
 
-    /// Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn't
-    /// foresees ability instantiating  for each ability use.
+    /**
+     * Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn' t
+     * foresees ability instantiating for each ability use.
+     */
     UPROPERTY(BlueprintAssignable)
     FOnApplyCooldownSignature OnApplyCooldownDelegate;
 
-    /// Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn't
-    /// foresees ability instantiating for each ability use.
+    /**
+     * Note: A delegate on GameplayAbility can be used properly only if the ability instantiating policy doesn' t
+     * foresees ability instantiating for each ability use.
+     */
     UPROPERTY(BlueprintAssignable)
     FMtdAbilitySignature OnInputPressedDelegate;
 
@@ -132,6 +133,20 @@ private:
         meta=(AllowPrivateAccess="true"))
     FGameplayTagContainer CooldownTags;
 
+    UPROPERTY(BlueprintReadOnly, Category="MTD|Event Data", meta=(AllowPrivateAccess="true"))
+    FGameplayEventData GameplayEventData;
+
     UPROPERTY(Transient)
     FGameplayTagContainer TempCooldownTags;
 };
+
+inline FGameplayTag UMTD_GameplayAbility::GetMainAbilityTag() const
+{
+    return MainAbilityTag;
+}
+
+inline EMTD_AbilityActivationPolicy UMTD_GameplayAbility::GetActivationPolicy() const
+{
+    return ActivationPolicy;
+}
+

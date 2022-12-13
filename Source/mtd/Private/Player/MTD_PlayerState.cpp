@@ -1,6 +1,7 @@
 #include "Player/MTD_PlayerState.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/MTD_BalanceSet.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
@@ -13,10 +14,10 @@ AMTD_PlayerState::AMTD_PlayerState()
 
     AbilitySystemComponent = CreateDefaultSubobject<UMTD_AbilitySystemComponent>(TEXT("MTD Ability System Component"));
 
-    // Everything has health to lose, mana to use/drop, damage to deal
     CreateDefaultSubobject<UMTD_HealthSet>(TEXT("HealthSet"));
     CreateDefaultSubobject<UMTD_ManaSet>(TEXT("ManaSet"));
     CreateDefaultSubobject<UMTD_CombatSet>(TEXT("CombatSet"));
+    CreateDefaultSubobject<UMTD_BalanceSet>(TEXT("BalanceSet"));
 }
 
 AMTD_PlayerController *AMTD_PlayerState::GetMtdPlayerController() const

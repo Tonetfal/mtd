@@ -79,7 +79,7 @@ struct FRangedDamageStatics
     }
 };
 
-static FDamageStatics &DamageStatics()
+static FDamageStatics &BalanceDamageStatics()
 {
     static FDamageStatics Statics;
     return Statics;
@@ -93,11 +93,11 @@ static FRangedDamageStatics &RangedDamageStatics()
 
 UMTD_DamageExecution::UMTD_DamageExecution()
 {
-    RelevantAttributesToCapture.Add(DamageStatics().HealthDef);
-    RelevantAttributesToCapture.Add(DamageStatics().DamageBaseDef);
-    RelevantAttributesToCapture.Add(DamageStatics().DamageAdditiveDef);
-    RelevantAttributesToCapture.Add(DamageStatics().DamageMultiplierDef);
-    RelevantAttributesToCapture.Add(DamageStatics().DamageStatDef);
+    RelevantAttributesToCapture.Add(BalanceDamageStatics().HealthDef);
+    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageBaseDef);
+    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageAdditiveDef);
+    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageMultiplierDef);
+    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageStatDef);
 }
 
 static void Execute_Implementation(
@@ -109,7 +109,7 @@ void UMTD_DamageExecution::Execute_Implementation(
     const FGameplayEffectCustomExecutionParameters &ExecutionParams,
     FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const
 {
-    ::Execute_Implementation(ExecutionParams, OutExecutionOutput, DamageStatics().DamageBaseDef);
+    ::Execute_Implementation(ExecutionParams, OutExecutionOutput, BalanceDamageStatics().DamageBaseDef);
 }
 
 UMTD_RangedDamageExecution::UMTD_RangedDamageExecution()
@@ -160,7 +160,7 @@ static void Execute_Implementation(
 
     float DamageStat = 0.f;
     const bool bDamageStatFound = ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-        DamageStatics().DamageStatDef, EvaluationParams, DamageStat);
+        BalanceDamageStatics().DamageStatDef, EvaluationParams, DamageStat);
 
     // TODO: const float DamageMultiplier = SomeSmartMathFunction(DamageStat);
     const float DamageDone =
@@ -168,7 +168,7 @@ static void Execute_Implementation(
         (bDamageStatFound ? 1.f /* the math function(DamageStat) */ : 1.f);
 
     OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        DamageStatics().HealthDef.AttributeToCapture,
+        BalanceDamageStatics().HealthDef.AttributeToCapture,
         EGameplayModOp::Additive,
         -DamageDone));
 }

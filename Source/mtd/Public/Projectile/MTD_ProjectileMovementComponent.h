@@ -24,6 +24,7 @@ public:
     //~End of UMovementComponent Interface
 
     /** Add acceleration towards the direction the projectile is following the next tick. */
+    UFUNCTION(BlueprintCallable, Category="MTD|Projectile Movement Component")
     void AddAcceleration(float InAcceleration);
 
     /** Clear the acceleration added by AddAcceleration. */
@@ -34,7 +35,7 @@ private:
     void Accelerate(float DeltaSeconds);
     void RotateTowardsHoming(float DeltaSeconds);
     void ComputeVelocity();
-    
+
     void SetSpeed(float Speed);
     
     FVector GetHomingDistanceVector() const;

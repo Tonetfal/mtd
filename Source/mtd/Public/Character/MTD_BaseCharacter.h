@@ -12,6 +12,7 @@
 
 class AMTD_PlayerState;
 class UMTD_AbilitySystemComponent;
+class UMTD_BalanceComponent;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_ManaComponent;
@@ -74,12 +75,14 @@ protected:
 
     void ConstructHitboxMap();
     void PerformHitboxTrace();
+    void PerformHit(const FHitResult &Hit);
 
     virtual void FellOutOfWorld(const UDamageType &DamageType) override;
 
 public:
     UMTD_HealthComponent *GetHealthComponent() const;
     UMTD_ManaComponent *GetManaComponent() const;
+    UMTD_BalanceComponent *GetBalanceComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Character")
     AMTD_PlayerState *GetMtdPlayerState() const;
@@ -107,6 +110,10 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_ManaComponent> ManaComponent = nullptr;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_BalanceComponent> BalanceComponent = nullptr;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
         meta=(AllowPrivateAccess="true"))
@@ -119,10 +126,6 @@ private:
     /** Array that stores all object types that will be used as trace channels in Combat System. */
     UPROPERTY(EditAnywhere, Category="MTD|Combat System")
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesToHit;
-
-    /** Gameplay tag that will be used to identify the hit event. */
-    UPROPERTY(EditAnywhere, Category="MTD|Combat System")
-    FGameplayTag TagToFireOnHit = FGameplayTag::EmptyTag;
 
     /** Draw hitboxes? */
     UPROPERTY(EditAnywhere, Category="MTD|Combat System|Debug")
@@ -153,4 +156,9 @@ inline UMTD_HealthComponent *AMTD_BaseCharacter::GetHealthComponent() const
 inline UMTD_ManaComponent *AMTD_BaseCharacter::GetManaComponent() const
 {
     return ManaComponent;
+}
+
+inline UMTD_BalanceComponent *AMTD_BaseCharacter::GetBalanceComponent() const
+{
+    return BalanceComponent;
 }

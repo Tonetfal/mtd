@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Abilities/GameplayAbility.h"
 #include "GameplayEffect.h"
 #include "GameFramework/Actor.h"
 #include "mtd.h"
@@ -18,16 +19,15 @@ class MTD_API AMTD_Projectile : public AActor
 public:
     AMTD_Projectile();
 
-    const UCapsuleComponent *GetCollisionComponent() const;
-    UCapsuleComponent *GetCollisionComponent();
+    UFUNCTION(BlueprintCallable, Category="MTD|Projectile")
+    void InitializeAbilitySystem(UAbilitySystemComponent *InAbilitySystemComponent);
 
-    const UMTD_ProjectileMovementComponent *GetMovementComponent() const;
-    UMTD_ProjectileMovementComponent *GetMovementComponent();
+    UCapsuleComponent *GetCollisionComponent() const;
+    UMTD_ProjectileMovementComponent *GetMovementComponent() const;
 
 protected:
     virtual void BeginPlay() override;
 
-protected:
     UFUNCTION()
     void OnBeginOverlap(
         UPrimitiveComponent *HitComponent,
@@ -42,10 +42,24 @@ protected:
     virtual void OnSelfDestroy_Implementation();
 
     virtual void ApplyGameplayEffectToTarget(AActor *Target);
+    
+    UFUNCTION(BlueprintNativeEvent)
+    void OnProjectilePostHit(const FGameplayEventData &EventData);
+    virtual void OnProjectilePostHit_Implementation(const FGameplayEventData &EventData);
+
+    UFUNCTION(BlueprintNativeEvent)
+    void OnProjectilePreHit(const FGameplayEventData &EventData);
+    virtual void OnProjectilePreHit_Implementation(const FGameplayEventData &EventData);
+
+private:
+    FGameplayEventData PrepareGameplayEventData(FHitResult HitResult) const;
 
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     TArray<FGameplayEffectSpecHandle> GameplayEffectsToGrantOnHit;
+
+    UPROPERTY(BlueprintReadWrite)
+    float BalanceDamage = 7.5f;
 
     // TODO: Add radial damage
 
@@ -63,28 +77,19 @@ private:
     TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile",
-        meta=(AllowPrivateAccess="true"))
-    float SecondsToSelfDestroy = 120.f;
+        meta=(AllowPrivateAccess="true", ClampMin="0.1"))
+    float SecondsToSelfDestroy = 15.f;
 
-    FTimerHandle SelfDestroyTimerHandle;
+    UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
 };
 
-inline const UCapsuleComponent *AMTD_Projectile::GetCollisionComponent() const
+inline UCapsuleComponent *AMTD_Projectile::GetCollisionComponent() const
 {
     return CollisionComponent;
 }
 
-inline UCapsuleComponent *AMTD_Projectile::GetCollisionComponent()
-{
-    return CollisionComponent;
-}
-
-inline const UMTD_ProjectileMovementComponent *AMTD_Projectile::GetMovementComponent() const
-{
-    return MovementComponent;
-}
-
-inline UMTD_ProjectileMovementComponent *AMTD_Projectile::GetMovementComponent()
+inline UMTD_ProjectileMovementComponent *AMTD_Projectile::GetMovementComponent() const
 {
     return MovementComponent;
 }

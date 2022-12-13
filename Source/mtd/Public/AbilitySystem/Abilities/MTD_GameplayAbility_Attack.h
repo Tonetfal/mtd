@@ -12,7 +12,7 @@ class UMTD_AbilitySystemComponent;
  * Note: C++ implementation is only about triggering new/continuing previous GE attacks for combos, animation and end
  * ability condition. Damage related code has to be handled inside BPs instead. To know if someone was hit, fire events
  * from collision handling code, and listen for them.
-**/
+ */
 
 UCLASS()
 class MTD_API UMTD_GameplayAbility_Attack : public UMTD_GameplayAbility

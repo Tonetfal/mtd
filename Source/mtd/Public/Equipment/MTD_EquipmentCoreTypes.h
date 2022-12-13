@@ -26,6 +26,9 @@ struct FMTD_EquipmentWeaponStats
 public:
     UPROPERTY(EditDefaultsOnly)
     float BaseDamage = 0.f;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    float BalanceDamage = 7.5f;
 };
 
 USTRUCT(BlueprintType)
@@ -38,5 +41,8 @@ public:
     float BaseDamage = 0.f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float ProjectileSpeed = 1000.f;
+    float ProjectileSpeed = 5000.f;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    float BalanceDamage = 7.5f;
 };

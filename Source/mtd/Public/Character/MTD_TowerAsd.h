@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Abilities/GameplayAbility.h"
 #include "AbilitySystem/MTD_AbilityAnimationSet.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
@@ -8,7 +9,6 @@
 
 #include "MTD_TowerAsd.generated.h"
 
-struct FGameplayEffectSpecHandle;
 class AMTD_PlayerState;
 class AMTD_Projectile;
 class UBoxComponent;
@@ -19,6 +19,7 @@ class UMTD_HeroComponent;
 class UMTD_PawnExtensionComponent;
 class UMTD_TowerData;
 class USphereComponent;
+struct FGameplayEffectSpecHandle;
 
 UCLASS()
 class MTD_API AMTD_TowerAsd : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
@@ -62,28 +63,28 @@ protected:
     virtual void FellOutOfWorld(const UDamageType &DamageType) override;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetScaledDamage();
-    float GetScaledDamage_Implementation();
+    float GetScaledDamage() const;
+    float GetScaledDamage_Implementation() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetScaledFirerate();
-    float GetScaledFirerate_Implementation();
+    float GetScaledFirerate() const;
+    float GetScaledFirerate_Implementation() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetScaledVisionRange();
-    float GetScaledVisionRange_Implementation();
+    float GetScaledVisionRange() const;
+    float GetScaledVisionRange_Implementation() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetScaledVisionHalfDegrees();
-    float GetScaledVisionHalfDegrees_Implementation();
+    float GetScaledVisionHalfDegrees() const;
+    float GetScaledVisionHalfDegrees_Implementation() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetScaledProjectileSpeed();
-    float GetScaledProjectileSpeed_Implementation();
+    float GetScaledProjectileSpeed() const;
+    float GetScaledProjectileSpeed_Implementation() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintNativeEvent, Category="MTD|Tower Stats")
-    float GetReloadTime();
-    float GetReloadTime_Implementation();
+    float GetReloadTime() const;
+    float GetReloadTime_Implementation() const;
 
 private:
     void OnFire(AActor *FireTarget);
@@ -93,7 +94,15 @@ private:
     void SetupProjectileCollision(AMTD_Projectile *Projectile) const;
     void SetupProjectileMovement(AMTD_Projectile *Projectile, AActor *FireTarget);
     void SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles);
+    void SetupProjectileHitCallback();
 
+    virtual void OnProjectileHit(const FGameplayEventData *EventData);
+
+protected:
+    UFUNCTION(BlueprintImplementableEvent, DisplayName="OnProjectileHit")
+    void K2_OnProjectileHit(const FGameplayEventData &EventData);
+
+private:
     void StartReloading();
     void OnReloadFinished();
 
@@ -173,6 +182,10 @@ private:
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
         meta=(AllowPrivateAccess="true"))
     float BaseProjectileSpeed = -1.f;
+    
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
+        meta=(AllowPrivateAccess="true"))
+    float BalanceDamage = -1.f;
 
     bool bIsReloading = false;
 

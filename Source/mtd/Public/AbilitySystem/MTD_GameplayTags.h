@@ -32,6 +32,7 @@ public:
     FGameplayTag Gameplay_Ability_Attack_Melee;
     FGameplayTag Gameplay_Ability_Attack_Ranged;
     FGameplayTag Gameplay_Ability_Death;
+    FGameplayTag Gameplay_Ability_Knockback;
 
     FGameplayTag InputTag_Attack;
     FGameplayTag InputTag_AlternativeAttack;
@@ -41,6 +42,9 @@ public:
     FGameplayTag InputTag_AutoRun;
 
     FGameplayTag Gameplay_Event_Death;
+    FGameplayTag Gameplay_Event_Knockback;
+    FGameplayTag Gameplay_Event_RangeHit;
+    FGameplayTag Gameplay_Event_MeleeHit;
     FGameplayTag Gameplay_Event_Reset;
     FGameplayTag Gameplay_Event_RequestReset;
 
@@ -59,8 +63,8 @@ public:
     FGameplayTag Movement_Mode_Flying;
     FGameplayTag Movement_Mode_Custom;
 
-    TMap<uint8,FGameplayTag> MovementModeTagMap;
-    TMap<uint8,FGameplayTag> CustomMovementModeTagMap;
+    TMap<uint8, FGameplayTag> MovementModeTagMap;
+    TMap<uint8, FGameplayTag> CustomMovementModeTagMap;
 
 public:
     static void AddTag(FGameplayTag &OutTag, const ANSICHAR *TagName, const ANSICHAR *TagComment);

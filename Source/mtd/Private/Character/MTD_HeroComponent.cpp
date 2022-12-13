@@ -3,7 +3,6 @@
 #include "AbilitySystem/MTD_AbilitySet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
-#include "Character/MTD_BaseCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
 #include "Character/MTD_PawnData.h"
 #include "Character/MTD_PawnExtensionComponent.h"

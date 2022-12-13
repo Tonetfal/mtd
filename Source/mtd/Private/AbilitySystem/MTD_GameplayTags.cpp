@@ -33,8 +33,9 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
         "An ability with this type tag should not be canceled due to death.");
 
     AddTag(Gameplay_Ability_Attack_Melee, "Gameplay.Ability.Attack.Melee", "Melee attack ability.");
-    AddTag(Gameplay_Ability_Attack_Ranged, "Gameplay.Ability.Attack.Fire", "Ranged attack ability.");
+    AddTag(Gameplay_Ability_Attack_Ranged, "Gameplay.Ability.Attack.Ranged", "Ranged attack ability.");
     AddTag(Gameplay_Ability_Death, "Gameplay.Ability.Death", "Melee attack ability.");
+    AddTag(Gameplay_Ability_Knockback, "Gameplay.Ability.Knockback", "Knockback ability.");
 
     AddTag(InputTag_Attack, "InputTag.Attack", "Attack input.");
     AddTag(InputTag_AlternativeAttack, "InputTag.AlternativeAttack", "Alternative attack input.");
@@ -43,8 +44,10 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
     AddTag(InputTag_Look_Stick, "InputTag.Look.Stick", "Look (stick) input.");
     AddTag(InputTag_AutoRun, "InputTag.AutoRun", "Auto-run input.");
 
-    AddTag(Gameplay_Event_Death, "Gameplay.Event.Death",
-        "Event that fires on death. This event only fires on the server.");
+    AddTag(Gameplay_Event_Death, "Gameplay.Event.Death", "Event that fires on death.");
+    AddTag(Gameplay_Event_Knockback, "Gameplay.Event.Knockback", "Event that fires on knockback.");
+    AddTag(Gameplay_Event_RangeHit, "Gameplay.Event.RangeHit", "Event that fires on ranged weapon hit.");
+    AddTag(Gameplay_Event_MeleeHit, "Gameplay.Event.MeleeHit", "Event that fires on melee weapon hit.");
     AddTag(Gameplay_Event_Reset, "Gameplay.Event.Reset", "Event that fires once a player reset is executed.");
     AddTag(Gameplay_Event_RequestReset, "Gameplay.Event.RequestReset",
         "Event to request a player's pawn to be instantly replaced with a new one at a valid spawn location.");

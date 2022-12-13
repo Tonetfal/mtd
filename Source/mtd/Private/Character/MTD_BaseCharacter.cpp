@@ -1,6 +1,8 @@
 #include "Character/MTD_BaseCharacter.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
+#include "Character/MTD_BalanceComponent.h"
 #include "Character/MTD_HealthComponent.h"
 #include "Character/MTD_HeroComponent.h"
 #include "Character/MTD_ManaComponent.h"
@@ -27,10 +29,9 @@ AMTD_BaseCharacter::AMTD_BaseCharacter()
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemUninitialized));
 
     HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>(TEXT("MTD Hero Component"));
-
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("MTD Health Component"));
-
     ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>(TEXT("MTD Mana Component"));
+    BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>(TEXT("MTD Balance Component"));
 }
 
 void AMTD_BaseCharacter::PreInitializeComponents()
@@ -77,7 +78,10 @@ void AMTD_BaseCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    PerformHitboxTrace();
+    if (bIsMeleeInProgress)
+    {
+        PerformHitboxTrace();
+    }
 }
 
 void AMTD_BaseCharacter::NotifyControllerChanged()
@@ -142,11 +146,8 @@ void AMTD_BaseCharacter::ResetMeleeHitTargets()
 
 void AMTD_BaseCharacter::PerformHitboxTrace()
 {
-    if (!bIsMeleeInProgress)
-    {
-        return;
-    }
-
+    ensure(bIsMeleeInProgress);
+    
     const UWorld *World = GetWorld();
     const FVector ActorLocation = GetActorLocation();
     const FVector Forward = GetActorForwardVector();
@@ -155,8 +156,6 @@ void AMTD_BaseCharacter::PerformHitboxTrace()
     const EDrawDebugTrace::Type DrawDebugTrace =
         (bDebugMelee) ? (EDrawDebugTrace::ForDuration) : (EDrawDebugTrace::None);
 
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-
     for (const FMTD_MeleeHitSphereDefinition &HitboxEntry : ActiveHitboxes)
     {
         const FVector Offset = ForwardRot.RotateVector(HitboxEntry.Offset);
@@ -164,35 +163,32 @@ void AMTD_BaseCharacter::PerformHitboxTrace()
 
         TArray<FHitResult> OutHits;
         UKismetSystemLibrary::SphereTraceMultiForObjects(
-            World,
-            TraceLocation,
-            TraceLocation,
-            HitboxEntry.Radius,
-            ObjectTypesToHit,
-            false,
-            MeleeHitTargets,
-            DrawDebugTrace,
-            OutHits,
-            false,
-            FLinearColor::Red,
-            FLinearColor::Green,
-            DrawTime);
+            World, TraceLocation, TraceLocation, HitboxEntry.Radius, ObjectTypesToHit, false, MeleeHitTargets,
+            DrawDebugTrace, OutHits, false, FLinearColor::Red, FLinearColor::Green, DrawTime);
 
         for (const FHitResult &Hit : OutHits)
         {
-            AActor *HitActor = Hit.GetActor();
-            MeleeHitTargets.Add(HitActor);
-
-            FGameplayEventData EventData;
-            EventData.ContextHandle = Asc->MakeEffectContext();
-            EventData.Instigator = GetPlayerState();
-            EventData.Target = HitActor;
-            EventData.TargetData.Data.Add(
-                TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(Hit)));
-
-			Asc->HandleGameplayEvent(TagToFireOnHit, &EventData);
+            PerformHit(Hit);
         }
     }
+}
+
+void AMTD_BaseCharacter::PerformHit(const FHitResult &Hit)
+{
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    
+    AActor *HitActor = Hit.GetActor();
+    MeleeHitTargets.Add(HitActor);
+
+    FGameplayEventData EventData;
+    EventData.ContextHandle = Asc->MakeEffectContext();
+    EventData.Instigator = GetPlayerState();
+    EventData.Target = HitActor;
+    EventData.TargetData.Data.Add(
+        TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(Hit)));
+
+    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
+    Asc->HandleGameplayEvent(GameplayTags.Gameplay_Event_MeleeHit, &EventData);
 }
 
 void AMTD_BaseCharacter::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
@@ -235,12 +231,14 @@ void AMTD_BaseCharacter::OnAbilitySystemInitialized()
 
     HealthComponent->InitializeWithAbilitySystem(MtdAsc);
     ManaComponent->InitializeWithAbilitySystem(MtdAsc);
+    BalanceComponent->InitializeWithAbilitySystem(MtdAsc);
 }
 
 void AMTD_BaseCharacter::OnAbilitySystemUninitialized()
 {
     HealthComponent->UninitializeFromAbilitySystem();
     ManaComponent->UninitializeFromAbilitySystem();
+    BalanceComponent->UninitializeFromAbilitySystem();
 }
 
 void AMTD_BaseCharacter::DestroyDueToDeath()
