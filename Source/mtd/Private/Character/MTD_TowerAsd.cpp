@@ -211,7 +211,7 @@ void AMTD_TowerAsd::OnFire(AActor *FireTarget)
         return;
     }
 
-    SetupProjectile(Projectile, FireTarget);
+    SetupProjectile(*Projectile, FireTarget);
     StartReloading();
 }
 
@@ -270,37 +270,49 @@ AMTD_Projectile *AMTD_TowerAsd::SpawnProjectile()
     return Projectile;
 }
 
-void AMTD_TowerAsd::SetupProjectile(AMTD_Projectile *Projectile, AActor *FireTarget)
+void AMTD_TowerAsd::SetupProjectile(AMTD_Projectile &Projectile, AActor *FireTarget)
 {
-    Projectile->InitializeAbilitySystem(GetAbilitySystemComponent());
+    Projectile.InitializeAbilitySystem(GetAbilitySystemComponent());
     
     SetupProjectileCollision(Projectile);
     SetupProjectileMovement(Projectile, FireTarget);
     SetupProjectileHitCallback();
-    SetupProjectileEffectHandles(Projectile->GameplayEffectsToGrantOnHit);
+    SetupProjectileGameplayEffectClasses(Projectile);
 
-    Projectile->BalanceDamage = BalanceDamage;
+    Projectile.BalanceDamage = BalanceDamage;
 }
 
-void AMTD_TowerAsd::SetupProjectileCollision(AMTD_Projectile *Projectile) const
+void AMTD_TowerAsd::SetupProjectileCollision(AMTD_Projectile &Projectile) const
 {
-    auto Collision = Projectile->GetCollisionComponent();
+    auto Collision = Projectile.GetCollisionComponent();
 
     // At the moment it's hardcoded since only player can have towers
     Collision->SetCollisionProfileName(AllyProjectileCollisionProfileName);
 }
 
-void AMTD_TowerAsd::SetupProjectileMovement(AMTD_Projectile *Projectile, AActor *FireTarget)
+void AMTD_TowerAsd::SetupProjectileMovement(AMTD_Projectile &Projectile, AActor *FireTarget) const
 {
-    UMTD_ProjectileMovementComponent *MovementComponent = Projectile->GetMovementComponent();
+    UMTD_ProjectileMovementComponent *MovementComponent = Projectile.GetMovementComponent();
 
-    const FVector Direction = GetTargetDirection(Projectile->GetRootComponent(), FireTarget->GetRootComponent());
+    const FVector Direction = GetTargetDirection(Projectile.GetRootComponent(), FireTarget->GetRootComponent());
     const float Speed = GetScaledProjectileSpeed();
 
     MovementComponent->HomingTarget = FireTarget;
     MovementComponent->Direction = Direction;
     MovementComponent->MaxSpeed = Speed;
     MovementComponent->AddAcceleration(Speed);
+}
+
+void AMTD_TowerAsd::SetupProjectileGameplayEffectClasses(AMTD_Projectile &Projectile) const
+{
+    Projectile.Damage = GetScaledDamage();
+    Projectile.DamageMultiplier = 1.f;
+
+    Projectile.SetGameplayEffectDamageClass(TowerData->DamageGameplayEffectClass);
+    for (const TSubclassOf<UMTD_GameplayEffect> &Ge : TowerData->GameplayEffectsToGrantClasses)
+    {
+        Projectile.AddGameplayEffectClassToGrantOnHit(Ge);
+    }
 }
 
 void AMTD_TowerAsd::SetupProjectileHitCallback()
@@ -318,28 +330,6 @@ void AMTD_TowerAsd::OnProjectileHit(const FGameplayEventData *EventData)
 {
     check(EventData);
     K2_OnProjectileHit(*EventData);
-}
-
-void AMTD_TowerAsd::SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles)
-{
-    // TODO: Maybe cache it instead of computing it every time. Cons are that GEs may vary depending on something, hence
-    // some recalculation will be required, so a way of comunicating this request has to be created. It will increase
-    // the performance since this method may be called hundred times per second.
-    
-    UMTD_AbilitySystemComponent *Asc = GetMtdAbilitySystemComponent();
-    FGameplayEffectContextHandle GeContext = Asc->MakeEffectContext();
-    FGameplayEffectSpecHandle GeDmgSpec = Asc->MakeOutgoingSpec(TowerData->DamageGameplayEffectClass, 1.f, GeContext);
-    EffectHandles.Add(GeDmgSpec);
-
-    const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
-    GeDmgSpec.Data->SetByCallerTagMagnitudes.Add(GameplayTags.SetByCaller_Damage_Additive, GetScaledDamage());
-    GeDmgSpec.Data->SetByCallerTagMagnitudes.Add(GameplayTags.SetByCaller_Damage_Multiplier, 1.f);
-
-    const TArray<TSubclassOf<UMTD_GameplayEffect>> &Ges = TowerData->GameplayEffectsToGrantClasses;
-    for (const TSubclassOf<UMTD_GameplayEffect> &Ge : Ges)
-    {
-        EffectHandles.Add(Asc->MakeOutgoingSpec(Ge, 1.f, GeContext));
-    }
 }
 
 void AMTD_TowerAsd::OnAbilitySystemInitialized()

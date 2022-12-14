@@ -7,6 +7,7 @@
 
 #include "MTD_Projectile.generated.h"
 
+class UMTD_GameplayEffect;
 class UMTD_ProjectileMovementComponent;
 class UMTD_TeamComponent;
 class UCapsuleComponent;
@@ -21,6 +22,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="MTD|Projectile")
     void InitializeAbilitySystem(UAbilitySystemComponent *InAbilitySystemComponent);
+    
+    void AddGameplayEffectClassToGrantOnHit(const TSubclassOf<UMTD_GameplayEffect> &GeClass);
+    void SetGameplayEffectDamageClass(const TSubclassOf<UMTD_GameplayEffect> &GeClass);
 
     UCapsuleComponent *GetCollisionComponent() const;
     UMTD_ProjectileMovementComponent *GetMovementComponent() const;
@@ -41,7 +45,7 @@ protected:
     void OnSelfDestroy();
     virtual void OnSelfDestroy_Implementation();
 
-    virtual void ApplyGameplayEffectToTarget(AActor *Target);
+    virtual void ApplyGameplayEffectsToTarget(AActor *Target);
     
     UFUNCTION(BlueprintNativeEvent)
     void OnProjectilePostHit(const FGameplayEventData &EventData);
@@ -55,9 +59,12 @@ private:
     FGameplayEventData PrepareGameplayEventData(FHitResult HitResult) const;
 
 public:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-    TArray<FGameplayEffectSpecHandle> GameplayEffectsToGrantOnHit;
-
+    UPROPERTY(BlueprintReadWrite)
+    float Damage = 0.f;
+    
+    UPROPERTY(BlueprintReadWrite)
+    float DamageMultiplier = 1.f;
+    
     UPROPERTY(BlueprintReadWrite)
     float BalanceDamage = 7.5f;
 
@@ -79,9 +86,19 @@ private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile",
         meta=(AllowPrivateAccess="true", ClampMin="0.1"))
     float SecondsToSelfDestroy = 15.f;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Projectile",
+        meta=(AllowPrivateAccess="true"))
+    TArray<TSubclassOf<UMTD_GameplayEffect>> GameplayEffectClassesToGrantOnHit;
 
     UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
     TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+    
+    UPROPERTY(BlueprintReadWrite, meta=(AllowPrivateAccess="true"))
+    TSubclassOf<UMTD_GameplayEffect> GameplayEffectDamageClass = nullptr;
+
+    UPROPERTY(BlueprintReadWrite, meta=(AllowPrivateAccess="true"))
+    TArray<FGameplayEffectSpecHandle> GameplayEffectsToGrantOnHit;
 };
 
 inline UCapsuleComponent *AMTD_Projectile::GetCollisionComponent() const

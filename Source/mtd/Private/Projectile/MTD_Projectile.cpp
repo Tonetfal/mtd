@@ -31,6 +31,16 @@ void AMTD_Projectile::InitializeAbilitySystem(UAbilitySystemComponent *InAbility
     AbilitySystemComponent = InAbilitySystemComponent;
 }
 
+void AMTD_Projectile::AddGameplayEffectClassToGrantOnHit(const TSubclassOf<UMTD_GameplayEffect> &GeClass)
+{
+    GameplayEffectClassesToGrantOnHit.Add(GeClass);
+}
+
+void AMTD_Projectile::SetGameplayEffectDamageClass(const TSubclassOf<UMTD_GameplayEffect> &GeClass)
+{
+    GameplayEffectDamageClass = GeClass;
+}
+
 void AMTD_Projectile::BeginPlay()
 {
     Super::BeginPlay();
@@ -57,7 +67,7 @@ void AMTD_Projectile::OnBeginOverlap(
     
     OnProjectilePreHit(EventData);
     
-    ApplyGameplayEffectToTarget(OtherActor);
+    ApplyGameplayEffectsToTarget(OtherActor);
     
     AbilitySystemComponent->HandleGameplayEvent(GameplayTags.Gameplay_Event_RangeHit, &EventData);
     OnProjectilePostHit(EventData);
@@ -70,7 +80,7 @@ void AMTD_Projectile::OnSelfDestroy_Implementation()
     Destroy();
 }
 
-void AMTD_Projectile::ApplyGameplayEffectToTarget(AActor *Target)
+void AMTD_Projectile::ApplyGameplayEffectsToTarget(AActor *Target)
 {
     UAbilitySystemComponent *TargetAsc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
     if (!IsValid(TargetAsc))

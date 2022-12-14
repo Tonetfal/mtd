@@ -90,10 +90,10 @@ private:
     void OnFire(AActor *FireTarget);
     AMTD_Projectile *SpawnProjectile();
 
-    void SetupProjectile(AMTD_Projectile *Projectile, AActor *FireTarget);
-    void SetupProjectileCollision(AMTD_Projectile *Projectile) const;
-    void SetupProjectileMovement(AMTD_Projectile *Projectile, AActor *FireTarget);
-    void SetupProjectileEffectHandles(TArray<FGameplayEffectSpecHandle> &EffectHandles);
+    void SetupProjectile(AMTD_Projectile &Projectile, AActor *FireTarget);
+    void SetupProjectileCollision(AMTD_Projectile &Projectile) const;
+    void SetupProjectileMovement(AMTD_Projectile &Projectile, AActor *FireTarget) const;
+    void SetupProjectileGameplayEffectClasses(AMTD_Projectile &Projectile) const;
     void SetupProjectileHitCallback();
 
     virtual void OnProjectileHit(const FGameplayEventData *EventData);
