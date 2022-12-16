@@ -26,10 +26,7 @@ public:
     UMTD_ManaComponent();
 
     UFUNCTION(BlueprintCallable, Category="MTD|Mana Component")
-    static UMTD_ManaComponent *FindManaComponent(const AActor *Actor)
-    {
-        return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_ManaComponent>()) : (nullptr);
-    }
+    static UMTD_ManaComponent *FindManaComponent(const AActor *Actor);
 
     UFUNCTION(BlueprintCallable, Category="MTD|Mana Component")
     void InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc);
@@ -69,3 +66,8 @@ private:
     UPROPERTY()
     TObjectPtr<const UMTD_ManaSet> ManaSet = nullptr;
 };
+
+inline UMTD_ManaComponent *UMTD_ManaComponent::FindManaComponent(const AActor *Actor)
+{
+    return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_ManaComponent>()) : (nullptr);
+}

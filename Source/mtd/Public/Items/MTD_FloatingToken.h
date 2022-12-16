@@ -68,19 +68,15 @@ protected:
     TArray<TObjectPtr<APawn>> DetectedPawns;
 
 private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> CollisionComponent = nullptr;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> ActivationTriggerComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> DetectTriggerComponent = nullptr;
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Trigger",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Trigger", meta=(AllowPrivateAccess="true"))
     float MinimalForceTowardsTarget = 25.f;
 };

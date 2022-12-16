@@ -40,8 +40,7 @@ public:
 
 private:
     // TODO: Move in an appropriate place instead. Temporary solution.
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Level",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Level", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_LevelDefinition> LevelDefinition = nullptr;
 
     bool bGameOver = false;

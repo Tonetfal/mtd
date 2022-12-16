@@ -22,6 +22,8 @@ DECLARE_MULTICAST_DELEGATE_FourParams(
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+#define CAPTURE_ATTRIBUTE
+
 /**
  * Default attribute set used in this project.
  */

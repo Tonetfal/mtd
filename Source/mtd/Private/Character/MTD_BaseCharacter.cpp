@@ -8,6 +8,7 @@
 #include "Character/MTD_ManaComponent.h"
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -21,17 +22,20 @@ AMTD_BaseCharacter::AMTD_BaseCharacter()
     GetMesh()->SetCollisionProfileName("NoCollision");
 
     PawnExtentionComponent = CreateDefaultSubobject<UMTD_PawnExtensionComponent>(TEXT("MTD Pawn Extension Component"));
-
+    HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>(TEXT("MTD Hero Component"));
+    EquipmentManagerComponent = CreateDefaultSubobject<UMTD_EquipmentManagerComponent>(TEXT("MTD Equipment Component"));
+    HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("MTD Health Component"));
+    ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>(TEXT("MTD Mana Component"));
+    BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>(TEXT("MTD Balance Component"));
+    
     PawnExtentionComponent->OnAbilitySystemInitialized_RegisterAndCall(
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
 
     PawnExtentionComponent->OnAbilitySystemUninitialized_Register(
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemUninitialized));
 
-    HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>(TEXT("MTD Hero Component"));
-    HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("MTD Health Component"));
-    ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>(TEXT("MTD Mana Component"));
-    BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>(TEXT("MTD Balance Component"));
+    HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
+    HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
 }
 
 void AMTD_BaseCharacter::PreInitializeComponents()
@@ -47,11 +51,6 @@ void AMTD_BaseCharacter::PostInitProperties()
 void AMTD_BaseCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
-    check(HealthComponent);
-
-    HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
-    HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
     
     UWorld *World = GetWorld();
     AGameModeBase *Gm = World->GetAuthGameMode();
@@ -89,11 +88,6 @@ void AMTD_BaseCharacter::NotifyControllerChanged()
     Super::NotifyControllerChanged();
 
     PawnExtentionComponent->HandleControllerChanged();
-}
-
-FMTD_AbilityAnimations AMTD_BaseCharacter::GetAbilityAnimMontages(FGameplayTag AbilityTag) const
-{
-    return (IsValid(AnimationSet)) ? (AnimationSet->GetAbilityAnimMontages(AbilityTag)) : (FMTD_AbilityAnimations());
 }
 
 void AMTD_BaseCharacter::AddMeleeHitboxes(const TArray<FName> &HitboxNicknames)
@@ -144,6 +138,24 @@ void AMTD_BaseCharacter::ResetMeleeHitTargets()
     MeleeHitTargets.Empty();
 }
 
+float AMTD_BaseCharacter::GetMovementDirectionAngle() const
+{
+    const FVector Velocity = GetVelocity();
+    if (Velocity.IsZero())
+    {
+        return 0.f;
+    }
+
+    const FVector Forward = GetActorForwardVector();
+    const FVector Direction = Velocity.GetUnsafeNormal();
+    
+    const float Dot = Forward | Direction;
+    const FVector Cross = Forward ^ Direction;
+    
+    const float Degrees = FMath::RadiansToDegrees(FMath::Acos(Dot));
+    return (Cross.IsZero()) ? (Degrees) : (Degrees * FMath::Sign(Cross.Z));
+}
+
 void AMTD_BaseCharacter::PerformHitboxTrace()
 {
     ensure(bIsMeleeInProgress);
@@ -191,6 +203,11 @@ void AMTD_BaseCharacter::PerformHit(const FHitResult &Hit)
     Asc->HandleGameplayEvent(GameplayTags.Gameplay_Event_MeleeHit, &EventData);
 }
 
+void AMTD_BaseCharacter::InitializeAttributes()
+{
+    // Empty
+}
+
 void AMTD_BaseCharacter::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -201,11 +218,27 @@ void AMTD_BaseCharacter::SetupPlayerInputComponent(UInputComponent *PlayerInputC
 void AMTD_BaseCharacter::ConstructHitboxMap()
 {
     HitboxMap.Empty();
-    
+
+    if (HitboxData.IsEmpty())
+    {
+        MTD_WARN("Hitbox Data is empty.");
+        return;
+    }
+
+    int32 Index = 0;
     for (const UMTD_MeleeHitboxData *Data : HitboxData)
     {
         if (!IsValid(Data))
         {
+            MTD_WARN("Melee Hitbox Data (%d) is invalid.", Index);
+            Index++;
+            continue;
+        }
+        
+        if (Data->MeleeHitSpheres.IsEmpty())
+        {
+            MTD_WARN("Melee Hitbox Data [%s]'s Melee Hit Sphere array is empty.", *Data->GetName());
+            Index++;
             continue;
         }
 
@@ -216,6 +249,7 @@ void AMTD_BaseCharacter::ConstructHitboxMap()
             
             HitboxMap.Add(HitDefinition.Nickname, HitboxEntry);
         }
+        Index++;
     }
 }
 
@@ -266,42 +300,13 @@ void AMTD_BaseCharacter::Uninit()
 
 void AMTD_BaseCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
 {
-    DisableControllerInput();
-    DisableMovement();
-    DisableCollision();
+    // Empty
 }
 
 void AMTD_BaseCharacter::OnDeathFinished_Implementation(AActor *OwningActor)
 {
     GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::DestroyDueToDeath);
-}
-
-void AMTD_BaseCharacter::DisableControllerInput()
-{
-    if (!IsValid(Controller))
-    {
-        return;
-    }
-
-    Controller->SetIgnoreMoveInput(true);
-    Controller->SetIgnoreLookInput(true);
-}
-
-void AMTD_BaseCharacter::DisableMovement()
-{
-    UCharacterMovementComponent *MoveComp = GetCharacterMovement();
-    check(MoveComp);
-
-    MoveComp->StopMovementImmediately();
-}
-
-void AMTD_BaseCharacter::DisableCollision()
-{
-    UCapsuleComponent *CapsuleComp = GetCapsuleComponent();
-    check(CapsuleComp);
-
-    CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    CapsuleComp->SetCollisionResponseToChannels(ECR_Ignore);
+    EquipmentManagerComponent->UnequipItem();
 }
 
 AMTD_PlayerState *AMTD_BaseCharacter::GetMtdPlayerState() const

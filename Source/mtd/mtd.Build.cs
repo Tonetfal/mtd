@@ -20,12 +20,14 @@ public class mtd : ModuleRules
 			"ModularGameplay",
 			// "ModularGameplayActors",
 			"NetCore",
-			"EnhancedInput",
             "CommonUI",
             "CommonUIEditor",
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] 
+        {  
+            "EnhancedInput",
+        });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

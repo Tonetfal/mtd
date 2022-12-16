@@ -22,12 +22,11 @@ public:
     AMTD_PlayerController *GetMtdPlayerController() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|PlayerState")
-    UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const
-    {
-        return AbilitySystemComponent;
-    }
+    UMTD_AbilitySystemComponent *GetMtdAbilitySystemComponent() const;
 
+    //~IAbilitySystemInterface Interface
     virtual UAbilitySystemComponent *GetAbilitySystemComponent() const override;
+    //~End of IAbilitySystemInterface Interface
 
     UFUNCTION(BlueprintCallable, Category="MTD|Ability")
     virtual void GrantAbility(TSubclassOf<UGameplayAbility> AbilityClass, int32 Level, int32 InputCode);
@@ -44,3 +43,8 @@ protected:
     UPROPERTY(VisibleAnywhere, Category="MTD|Components")
     TObjectPtr<UMTD_AbilitySystemComponent> AbilitySystemComponent = nullptr;
 };
+
+inline UMTD_AbilitySystemComponent *AMTD_PlayerState::GetMtdAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
+}

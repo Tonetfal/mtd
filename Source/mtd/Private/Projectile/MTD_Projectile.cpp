@@ -108,10 +108,12 @@ void AMTD_Projectile::ApplyGameplayEffectsToTarget(AActor *Target)
 
 void AMTD_Projectile::OnProjectilePreHit_Implementation(const FGameplayEventData &EventData)
 {
+    // Empty
 }
 
 void AMTD_Projectile::OnProjectilePostHit_Implementation(const FGameplayEventData &EventData)
 {
+    // Empty
 }
 
 FGameplayEventData AMTD_Projectile::PrepareGameplayEventData(FHitResult HitResult) const

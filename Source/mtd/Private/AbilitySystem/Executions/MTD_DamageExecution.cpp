@@ -102,7 +102,7 @@ UMTD_DamageExecution::UMTD_DamageExecution()
 
 static void Execute_Implementation(
     const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &OutExecutionOutput,
+    FGameplayEffectCustomExecutionOutput &ExecOutput,
     FGameplayEffectAttributeCaptureDefinition DamageDef);
 
 void UMTD_DamageExecution::Execute_Implementation(
@@ -130,7 +130,7 @@ void UMTD_RangedDamageExecution::Execute_Implementation(
 
 static void Execute_Implementation(
     const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &OutExecutionOutput,
+    FGameplayEffectCustomExecutionOutput &ExecOutput,
     FGameplayEffectAttributeCaptureDefinition DamageDef)
 {
     const FMTD_GameplayTags Tags = FMTD_GameplayTags::Get();
@@ -167,7 +167,7 @@ static void Execute_Implementation(
         (DamageBase + DamageAdditive) * DamageMultiplier *
         (bDamageStatFound ? 1.f /* the math function(DamageStat) */ : 1.f);
 
-    OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+    ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
         BalanceDamageStatics().HealthDef.AttributeToCapture,
         EGameplayModOp::Additive,
         -DamageDone));

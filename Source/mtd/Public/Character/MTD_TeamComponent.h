@@ -17,10 +17,11 @@ public:
     void SetMtdTeamId(EMTD_TeamId Id);
     EMTD_TeamId GetMtdTeamId() const;
 
+    //~IGenericTeamAgentInterface Interface
     virtual FGenericTeamId GetGenericTeamId() const override;
     virtual void SetGenericTeamId(const FGenericTeamId &Id) override;
-
     virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor &Other) const override;
+    //~End of IGenericTeamAgentInterface Interface
 
 protected:
     //~UActorComponent interface

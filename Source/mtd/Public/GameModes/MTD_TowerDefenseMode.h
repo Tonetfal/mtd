@@ -95,11 +95,6 @@ private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Tower Defense Mode",
         meta=(AllowPrivateAccess="true"))
     TArray<TObjectPtr<UMTD_AbilitySet>> AbilitySets;
-
-    /** Base class of the character that will receive the abilities. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Tower Defense Mode",
-        meta=(AllowPrivateAccess="true"))
-    TSubclassOf<AMTD_BaseCharacter> PlayerClass = nullptr;
     
     /** All the cores placed on map. */
     UPROPERTY()

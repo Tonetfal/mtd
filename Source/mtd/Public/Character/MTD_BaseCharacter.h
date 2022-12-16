@@ -1,15 +1,16 @@
 #pragma once
 
-#include "AbilitySystem/MTD_AbilityAnimationSet.h"
 #include "AbilitySystemInterface.h"
 #include "Character/MTD_GameResultInterface.h"
 #include "CombatSystem/MTD_MeleeEventsInterface.h"
 #include "CombatSystem/MTD_MeleeHitboxData.h"
 #include "GameFramework/Character.h"
 #include "mtd.h"
+#include "Equipment/MTD_EquipmentDefinition.h"
 
 #include "MTD_BaseCharacter.generated.h"
 
+class UMTD_EquipmentManagerComponent;
 class AMTD_PlayerState;
 class UMTD_AbilitySystemComponent;
 class UMTD_BalanceComponent;
@@ -19,7 +20,10 @@ class UMTD_ManaComponent;
 class UMTD_PawnExtensionComponent;
 
 UCLASS()
-class MTD_API AMTD_BaseCharacter : public ACharacter, public IAbilitySystemInterface, public IMTD_GameResultInterface,
+class MTD_API AMTD_BaseCharacter :
+    public ACharacter, 
+    public IAbilitySystemInterface,
+    public IMTD_GameResultInterface,
     public IMTD_MeleeCharacterInterface
 {
     GENERATED_BODY()
@@ -41,8 +45,6 @@ public:
     virtual void NotifyControllerChanged() override;
     //~End of APawn interface
 
-    FMTD_AbilityAnimations GetAbilityAnimMontages(FGameplayTag AbilityTag) const;
-
     //~IMTD_MeleeCharacterInterface
     virtual void AddMeleeHitboxes(const TArray<FName> &HitboxNicknames) override;
     virtual void RemoveMeleeHitboxes(const TArray<FName> &HitboxNicknames) override;
@@ -51,31 +53,32 @@ public:
     virtual void ResetMeleeHitTargets() override;
     //~End of IMTD_MeleeCharacterInterface
 
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Character")
+    float GetMovementDirectionAngle() const;
+
 protected:
     virtual void OnAbilitySystemInitialized();
     virtual void OnAbilitySystemUninitialized();
     virtual void DestroyDueToDeath();
     virtual void Uninit();
 
-    UFUNCTION(BlueprintNativeEvent, Category="Character")
+    UFUNCTION(BlueprintNativeEvent, Category="MTD|Character")
     void OnDeathStarted(AActor *OwningActor);
     virtual void OnDeathStarted_Implementation(AActor *OwningActor);
 
-    UFUNCTION(BlueprintNativeEvent, Category="Character")
+    UFUNCTION(BlueprintNativeEvent, Category="MTD|Character")
     void OnDeathFinished(AActor *OwningActor);
     virtual void OnDeathFinished_Implementation(AActor *OwningActor);
 
-    virtual void DisableControllerInput();
-    virtual void DisableMovement();
-    virtual void DisableCollision();
-
-    //~APlayer interface
+    //~ACharacter interface
     virtual void SetupPlayerInputComponent(UInputComponent *PlayerInputComponent) override;
-    //~End of APlayer interface
+    //~End of ACharacter interface
 
     void ConstructHitboxMap();
     void PerformHitboxTrace();
     void PerformHit(const FHitResult &Hit);
+
+    virtual void InitializeAttributes();
 
     virtual void FellOutOfWorld(const UDamageType &DamageType) override;
 
@@ -83,6 +86,7 @@ public:
     UMTD_HealthComponent *GetHealthComponent() const;
     UMTD_ManaComponent *GetManaComponent() const;
     UMTD_BalanceComponent *GetBalanceComponent() const;
+    UMTD_EquipmentManagerComponent *GetEquipmentManagerComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Character")
     AMTD_PlayerState *GetMtdPlayerState() const;
@@ -95,29 +99,23 @@ public:
     //~End IAbilitySystemInterface interface
 
 private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_PawnExtensionComponent> PawnExtentionComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HeroComponent> HeroComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_EquipmentManagerComponent> EquipmentManagerComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_ManaComponent> ManaComponent = nullptr;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_BalanceComponent> BalanceComponent = nullptr;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability System",
-        meta=(AllowPrivateAccess="true"))
-    TObjectPtr<const UMTD_AbilityAnimationSet> AnimationSet = nullptr;
 
     /** Data Asset defining all hitbox data. */
     UPROPERTY(EditAnywhere, Category="MTD|Combat System")
@@ -130,7 +128,8 @@ private:
     /** Draw hitboxes? */
     UPROPERTY(EditAnywhere, Category="MTD|Combat System|Debug")
     bool bDebugMelee = false;
-    
+
+    /** Seconds the hitboxes will be drawn for. */
     UPROPERTY(EditAnywhere, Category="MTD|Combat System|Debug")
     float DrawTime = 0.1f;
 
@@ -161,4 +160,9 @@ inline UMTD_ManaComponent *AMTD_BaseCharacter::GetManaComponent() const
 inline UMTD_BalanceComponent *AMTD_BaseCharacter::GetBalanceComponent() const
 {
     return BalanceComponent;
+}
+
+inline UMTD_EquipmentManagerComponent *AMTD_BaseCharacter::GetEquipmentManagerComponent() const
+{
+    return EquipmentManagerComponent;
 }

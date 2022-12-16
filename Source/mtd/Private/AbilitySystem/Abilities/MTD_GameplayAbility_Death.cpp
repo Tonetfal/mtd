@@ -8,8 +8,7 @@
 UMTD_GameplayAbility_Death::UMTD_GameplayAbility_Death()
 {
     UGameplayTagsManager::Get().CallOrRegister_OnDoneAddingNativeTagsDelegate(
-        FSimpleDelegate::CreateUObject(
-            this, &ThisClass::OnDoneAddingNativeTags));
+        FSimpleDelegate::CreateUObject(this, &ThisClass::OnDoneAddingNativeTags));
 }
 
 void UMTD_GameplayAbility_Death::OnDoneAddingNativeTags()
@@ -63,7 +62,7 @@ void UMTD_GameplayAbility_Death::EndAbility(
 void UMTD_GameplayAbility_Death::StartDeath()
 {
     const AActor *Actor = GetAvatarActorFromActorInfo();
-    auto *HealthComponent = UMTD_HealthComponent::FindHealthComponent(Actor);
+    auto HealthComponent = UMTD_HealthComponent::FindHealthComponent(Actor);
     if (!IsValid(HealthComponent))
     {
         return;
@@ -80,7 +79,7 @@ void UMTD_GameplayAbility_Death::StartDeath()
 void UMTD_GameplayAbility_Death::FinishDeath()
 {
     const AActor *Actor = GetAvatarActorFromActorInfo();
-    auto *HealthComponent = UMTD_HealthComponent::FindHealthComponent(Actor);
+    auto HealthComponent = UMTD_HealthComponent::FindHealthComponent(Actor);
     if (!IsValid(HealthComponent))
     {
         return;

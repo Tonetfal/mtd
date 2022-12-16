@@ -75,20 +75,16 @@ protected:
     TObjectPtr<UMTD_ProjectileMovementComponent> MovementComponent = nullptr;
 
 private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UCapsuleComponent> CollisionComponent = nullptr;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UStaticMeshComponent> MeshComponent = nullptr;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile",
-        meta=(AllowPrivateAccess="true", ClampMin="0.1"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Projectile", meta=(AllowPrivateAccess="true", ClampMin="0.1"))
     float SecondsToSelfDestroy = 15.f;
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Projectile",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Projectile", meta=(AllowPrivateAccess="true"))
     TArray<TSubclassOf<UMTD_GameplayEffect>> GameplayEffectClassesToGrantOnHit;
 
     UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))

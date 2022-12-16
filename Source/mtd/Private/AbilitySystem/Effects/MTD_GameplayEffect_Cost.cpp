@@ -1,7 +1,7 @@
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cost.h"
 
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
-#include "AbilitySystem/ModMagnitudeCalcutions/MTD_MmcManaCost.h"
+#include "AbilitySystem/ModMagnitudeCalculations/MTD_MmcManaCost.h"
 
 UMTD_GameplayEffect_Cost::UMTD_GameplayEffect_Cost()
 {

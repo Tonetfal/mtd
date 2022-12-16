@@ -4,8 +4,8 @@
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "Character/MTD_CharacterCoreTypes.h"
-#include "Character/MTD_PawnData.h"
 #include "Character/MTD_PawnExtensionComponent.h"
+#include "Character/MTD_PlayerExtensionComponent.h"
 #include "GameFramework/Character.h"
 #include "Input/MTD_InputComponent.h"
 #include "Player/MTD_PlayerController.h"
@@ -137,7 +137,6 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
     if (IsValid(PawnExtComp))
     {
         PawnData = PawnExtComp->GetPawnData<UMTD_PawnData>();
-        PlayerData = PawnExtComp->GetPlayerData<UMTD_PlayerData>();
 
         PawnExtComp->InitializeAbilitySystem(MtdAsc, MtdPs);
     }
@@ -166,16 +165,22 @@ void UMTD_HeroComponent::OnPawnReadyToInitialize()
 void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
 {
     check(InputComponent);
-    check(PlayerData);
 
     auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
+    
+    const auto Player = GetPawnChecked<APawn>();
+    const auto PlayerExtComp = UMTD_PlayerExtensionComponent::FindPlayerExtensionComponent(Player);
+    PlayerData = PlayerExtComp->GetPlayerData<UMTD_PlayerData>();
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player Data on Player [%s] is invalid.", *Player->GetName());
+    }
 
     const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
     UMTD_InputConfig *InputConfig = PlayerData->InputConfig;
-
     if (!IsValid(InputConfig))
     {
-        MTDS_WARN("Input Config on Player Data [%s] is invalid", *PawnData->GetName());
+        MTDS_WARN("Input Config on Player Data [%s] is invalid.", *PawnData->GetName());
         return;
     }
 

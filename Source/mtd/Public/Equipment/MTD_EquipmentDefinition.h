@@ -14,13 +14,13 @@ struct FMTD_EquipmentActorToSpawn
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere, Category="MTD|Equipment")
+    UPROPERTY(EditAnywhere)
     TSubclassOf<AActor> ActorToSpawn = nullptr;
 
-    UPROPERTY(EditAnywhere, Category="MTD|Equipment")
+    UPROPERTY(EditAnywhere)
     FName AttachToSocket{TEXT("None")};
 
-    UPROPERTY(EditAnywhere, Category="MTD|Equipment")
+    UPROPERTY(EditAnywhere)
     FTransform AttachTransform = FTransform::Identity;
 };
 

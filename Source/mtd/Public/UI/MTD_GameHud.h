@@ -20,8 +20,7 @@ public:
     }
 
 private:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD UI",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD UI", meta=(AllowPrivateAccess="true"))
     TSubclassOf<UUserWidget> PlayerWidgetClass = nullptr;
 
     UPROPERTY()

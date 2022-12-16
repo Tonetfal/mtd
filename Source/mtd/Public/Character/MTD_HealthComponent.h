@@ -11,17 +11,6 @@ class UMTD_HealthComponent;
 struct FGameplayEffectSpec;
 struct FOnAttributeChangeData;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-    FDeathEventSignature,
-    AActor*, OwningActor);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
-    FHealthAttributeChangedSignature,
-    UMTD_HealthComponent*, HealthComponent,
-    float, OldValue,
-    float, NewValue,
-    AActor*, Instigator);
-
 UENUM(BlueprintType)
 enum class EMTD_DeathState : uint8
 {
@@ -36,13 +25,20 @@ class MTD_API UMTD_HealthComponent : public UActorComponent
     GENERATED_BODY()
 
 public:
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeathEventSignature, AActor*, OwningActor);
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+        FHealthAttributeChangedSignature,
+        UMTD_HealthComponent*, HealthComponent,
+        float, OldValue,
+        float, NewValue,
+        AActor*, Instigator);
+
+public:
     UMTD_HealthComponent();
 
     UFUNCTION(BlueprintCallable, Category="MTD|Health")
-    static UMTD_HealthComponent *FindHealthComponent(const AActor *Actor)
-    {
-        return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_HealthComponent>()) : (nullptr);
-    }
+    static UMTD_HealthComponent *FindHealthComponent(const AActor *Actor);
 
     UFUNCTION(BlueprintCallable, Category="MTD|Health")
     void InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc);
@@ -60,17 +56,11 @@ public:
     float GetHealthNormilized() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Health")
-    EMTD_DeathState GetDeathState() const
-    {
-        return DeathState;
-    }
+    EMTD_DeathState GetDeathState() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure=false, Category="MTD|Health",
         meta=(ExpandBoolAsExecs="ReturnValue"))
-    bool IsDeadOrDying() const
-    {
-        return (DeathState > EMTD_DeathState::NotDead);
-    }
+    bool IsDeadOrDying() const;
 
     virtual void StartDeath();
     virtual void FinishDeath();
@@ -113,3 +103,18 @@ private:
     UPROPERTY()
     EMTD_DeathState DeathState = EMTD_DeathState::NotDead;
 };
+
+inline UMTD_HealthComponent *UMTD_HealthComponent::FindHealthComponent(const AActor *Actor)
+{
+    return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_HealthComponent>()) : (nullptr);
+}
+
+inline EMTD_DeathState UMTD_HealthComponent::GetDeathState() const
+{
+    return DeathState;
+}
+
+inline bool UMTD_HealthComponent::IsDeadOrDying() const
+{
+    return (DeathState > EMTD_DeathState::NotDead);
+}

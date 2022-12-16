@@ -15,6 +15,9 @@ class UMTD_EquipmentManagerComponent : public UPawnComponent
 public:
     UMTD_EquipmentManagerComponent(const FObjectInitializer &ObjectInitializer);
 
+    UFUNCTION(BlueprintPure, Category="MTD|Pawn")
+    static UMTD_EquipmentManagerComponent *FindEquipmentManagerComponent(const AActor *Actor);
+
     //~UActorComponent interface
     virtual void InitializeComponent() override;
     virtual void UninitializeComponent() override;
@@ -27,12 +30,20 @@ public:
     void UnequipItem();
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
-    const UMTD_EquipmentInstance *GetEquipmentInstance() const
-    {
-        return EquipmentInstance;
-    }
+    const UMTD_EquipmentInstance *GetEquipmentInstance() const;
 
 private:
     UPROPERTY()
     TObjectPtr<UMTD_EquipmentInstance> EquipmentInstance;
 };
+
+inline UMTD_EquipmentManagerComponent *UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(
+    const AActor *Actor)
+{
+    return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_EquipmentManagerComponent>()) : (nullptr);
+}
+
+inline const UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::GetEquipmentInstance() const
+{
+    return EquipmentInstance;
+}

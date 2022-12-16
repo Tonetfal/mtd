@@ -19,34 +19,37 @@ public:
     AMTD_TowerController();
 
 protected:
+    //~AActor Interface
     virtual void BeginPlay() override;
+    //~End of AActor Interface
+
+    //~AAIController Interface
     virtual void OnPossess(APawn *InPawn) override;
+    //~End of AAIController Interface
 
 public:
     UFUNCTION(BlueprintCallable, Category="MTD|Vision")
     virtual AActor *GetFireTarget();
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Vision")
-    virtual void SetVisionRange(float Range);
+    //~IGenericTeamAgentInterface Interface
+    virtual FGenericTeamId GetGenericTeamId() const override;
+    //~End of IGenericTeamAgentInterface Interface
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Vision")
-    virtual void SetPeripheralVisionHalfAngleDegrees(float Degrees);
-
-    virtual FGenericTeamId GetGenericTeamId() const override
-    {
-        return TeamComponent->GetGenericTeamId();
-    }
-
-    UMTD_TeamComponent *GetTeamComponent() const
-    {
-        return TeamComponent;
-    }
+    UMTD_TeamComponent *GetTeamComponent() const;
 
 protected:
     virtual bool IsFireTargetStillVisible() const;
     virtual AActor *SearchForFireTarget();
     virtual AActor *FindClosestActor(const TArray<AActor *> &Actors) const;
     virtual void InitConfig();
+    
+private:
+    void SetVisionRange(float Range);
+    void SetPeripheralVisionHalfAngleDegrees(float Degrees);
+
+    UFUNCTION()
+    void UpdateSightAttributes();
+    void CacheTowerAttributes();
 
 private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
@@ -93,3 +96,13 @@ private:
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<AActor> FireTarget = nullptr;
 };
+
+inline FGenericTeamId AMTD_TowerController::GetGenericTeamId() const
+{
+    return TeamComponent->GetGenericTeamId();
+}
+
+inline UMTD_TeamComponent *AMTD_TowerController::GetTeamComponent() const
+{
+    return TeamComponent;
+}

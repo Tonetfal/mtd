@@ -14,7 +14,7 @@ public:
     UMTD_GameplayAbility_Death();
     
 protected:
-    void OnDoneAddingNativeTags();
+    virtual void OnDoneAddingNativeTags() override;
     
 	virtual void ActivateAbility(
         const FGameplayAbilitySpecHandle Handle, 

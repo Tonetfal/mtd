@@ -2,7 +2,6 @@
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_CharacterCoreTypes.h"
-#include "Character/MTD_PawnData.h"
 
 UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 {
@@ -23,7 +22,7 @@ void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
 
     if (IsValid(PawnData))
     {
-        MTDS_ERROR("Trying to set PawnData [%s] that already has valid PawnData [%s]",
+        MTDS_ERROR("Trying to set PawnData [%s] that already has valid PawnData [%s].",
             *GetNameSafe(InPawnData), *GetNameSafe(PawnData));
         return;
     }
@@ -31,27 +30,6 @@ void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
     PawnData = InPawnData;
 
     CheckPawnReadyToInitialize();
-}
-
-void UMTD_PawnExtensionComponent::SetPlayerData(const UMTD_PlayerData *InPlayerData)
-{
-    check(InPlayerData);
-
-    auto Pawn = GetPawnChecked<APawn>();
-
-    if (Pawn->GetLocalRole() != ROLE_Authority)
-    {
-        return;
-    }
-
-    if (PlayerData)
-    {
-        MTDS_ERROR("Trying to set PlayerData [%s] that already has valid PlayerData [%s]",
-            *GetNameSafe(InPlayerData), *GetNameSafe(PawnData));
-        return;
-    }
-
-    PlayerData = InPlayerData;
 }
 
 void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComponent *InAsc, AActor *InOwnerActor)
@@ -74,7 +52,7 @@ void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComp
     auto Pawn = GetPawnChecked<APawn>();
     const AActor *ExistingAvatar = InAsc->GetAvatarActor();
 
-    MTDS_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s]",
+    MTDS_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s].",
         *GetNameSafe(InAsc), *GetNameSafe(Pawn), *GetNameSafe(InOwnerActor), *GetNameSafe(ExistingAvatar));
 
     if ((IsValid(ExistingAvatar)) && (ExistingAvatar != Pawn))
@@ -220,21 +198,41 @@ void UMTD_PawnExtensionComponent::OnAbilitySystemUninitialized_Register(FSimpleM
     }
 }
 
+FMTD_AbilityAnimations UMTD_PawnExtensionComponent::GetAbilityAnimMontages(FGameplayTag AbilityTag) const
+{
+    return (IsValid(AnimationSet)) ? (AnimationSet->GetAbilityAnimMontages(AbilityTag)) : (FMTD_AbilityAnimations());
+}
+
+UAnimMontage *UMTD_PawnExtensionComponent::GetRandomAnimMontage(FGameplayTag AbilityTag) const
+{
+    const TArray<TObjectPtr<UAnimMontage>> Anims = GetAbilityAnimMontages(AbilityTag).Animations;
+    const int32 Size = Anims.Num();
+    if (Size == 0)
+    {
+        return nullptr;
+    }
+
+    const int32 Index = FMath::RandRange(0, Size - 1);
+    UAnimMontage *Anim = Anims[Index];
+
+    return Anim;
+}
+
 void UMTD_PawnExtensionComponent::OnRegister()
 {
     Super::OnRegister();
 
-    const auto Owner = GetPawn<APawn>();
-    if (!IsValid(Owner))
+    const auto Pawn = GetPawn<APawn>();
+    if (!IsValid(Pawn))
     {
-        MTDS_ERROR("MTD_PawnExtensionComponent on [%s] can only be added to Pawn actors", *GetNameSafe(GetOwner()));
+        MTDS_ERROR("MTD_PawnExtensionComponent on [%s] can only be added to Pawn actors.", *GetNameSafe(GetOwner()));
         return;
     }
 
     TArray<UActorComponent *> PawnExtensionComponents;
-    Owner->GetComponents(StaticClass(), PawnExtensionComponents);
+    Pawn->GetComponents(StaticClass(), PawnExtensionComponents);
     if (PawnExtensionComponents.Num() != 1)
     {
-        MTDS_ERROR("Only one MTD_PawnExtensionComponent should exist on [%s]", *GetNameSafe(GetOwner()));
+        MTDS_ERROR("Only one MTD_PawnExtensionComponent should exist on [%s].", *GetNameSafe(GetOwner()));
     }
 }

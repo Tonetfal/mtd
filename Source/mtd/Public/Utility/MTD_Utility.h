@@ -5,6 +5,12 @@
 
 #include "MTD_Utility.generated.h"
 
+class ANavigationData;
+class UNavigationSystemV1;
+class UNavigationQueryFilter;
+class AAIController;
+struct FMTD_PathFindingContext;
+
 USTRUCT()
 struct FMTD_Utility
 {
@@ -29,6 +35,40 @@ public:
     static FGenericTeamId GetMtdGenericTeamId(const AActor *InActor);
     static ETeamAttitude::Type GetMtdTeamAttitudeBetween(const AActor *Lhs, const AActor *Rhs);
     static EMTD_TeamId GenericToMtdTeamId(FGenericTeamId GenericId);
+
+    static ENavigationQueryResult::Type ComputePathTo(const AActor *Other, float &Cost,
+        const FMTD_PathFindingContext &Context);
+};
+
+USTRUCT()
+struct FMTD_PathFindingContext
+{
+    GENERATED_BODY()
+
+public:
+    static FMTD_PathFindingContext Create(const APawn *Pawn);
+    bool IsValid() const;
+
+public:
+    UPROPERTY()
+    TObjectPtr<UWorld> World = nullptr;
+    
+    UPROPERTY()
+    TObjectPtr<AAIController> AiController = nullptr;
+
+    UPROPERTY()
+    TSubclassOf<UNavigationQueryFilter> NavQueryFilter = nullptr;
+
+    FVector StartPosition = FVector::ZeroVector;
+
+    UPROPERTY()
+    TObjectPtr<UNavigationSystemV1> NavigationSystem = nullptr;
+
+    UPROPERTY()
+    TObjectPtr<ANavigationData> NavigationData = nullptr;
+
+private:
+    bool bIsValid = false;
 };
 
 template <class T>

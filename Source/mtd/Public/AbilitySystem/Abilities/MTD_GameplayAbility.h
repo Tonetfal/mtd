@@ -42,8 +42,8 @@ public:
     FGameplayTag GetMainAbilityTag() const;
     EMTD_AbilityActivationPolicy GetActivationPolicy() const;
 
-    UFUNCTION(BlueprintCallable, Category="MTD|Ability Animation")
-    const UAnimMontage *GetRandomAbilityAnimMontage() const;
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Ability Animation")
+    UAnimMontage *GetRandomAbilityAnimMontage() const;
 
     virtual void GetOwnedGameplayTags(FGameplayTagContainer &TagContainer) const override;
 
@@ -73,6 +73,9 @@ public:
         const FGameplayAbilitySpecHandle Handle,
         const FGameplayAbilityActorInfo *ActorInfo,
         const FGameplayAbilityActivationInfo ActivationInfo) override;
+
+protected:
+    virtual void OnDoneAddingNativeTags();
 
 private:
     void TryActivateAbilityOnSpawn(const FGameplayAbilityActorInfo *ActorInfo, const FGameplayAbilitySpec &Spec) const;
@@ -113,6 +116,9 @@ public:
     FScalableFloat ManaCost;
 
 private:
+    /**
+     * Gameplay Tag that is used to determine animation montage to play. The tag will be added to AbilityTags as well.
+     */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability",
         meta=(AllowPrivateAccess="true"))
     FGameplayTag MainAbilityTag = FGameplayTag::EmptyTag;

@@ -3,10 +3,11 @@
 #include "Equipment/MTD_WeaponInstance.h"
 #include "mtd.h"
 #include "Projectile/MTD_ProjectileCoreTypes.h"
+
 #include "MTD_RangedWeaponInstance.generated.h"
 
 class AMTD_Projectile;
-class UMTD_TowerData;
+class UMTD_ProjectileData;
 
 UCLASS()
 class MTD_API UMTD_RangedWeaponInstance : public UMTD_WeaponInstance
@@ -23,13 +24,11 @@ private:
     bool InitializeFirePoint() const;
 
 private:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Equipment|Stats|Weapon",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Equipment|Stats|Weapon", meta=(AllowPrivateAccess="true"))
     FMTD_EquipmentRangedWeaponStats RangedWeaponStats;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
-        meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_TowerData> ProjectileData = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_ProjectileData> ProjectileData = nullptr;
 
     const FName FirePointSocketName{TEXT("FirePoint")};
 

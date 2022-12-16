@@ -12,6 +12,7 @@ const FName AllyAttackCollisionProfileName = TEXT("AllyAttack");
 const FName EnemyAttackCollisionProfileName = TEXT("EnemyAttack");
 const FName AllyProjectileCollisionProfileName = TEXT("AllyProjectile");
 const FName EnemyProjectileCollisionProfileName = TEXT("EnemyProjectile");
+const FName SightSphereCollisionProfileName = TEXT("SightSphere");
 
 constexpr ECollisionChannel AllyProjectileCollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
 constexpr ECollisionChannel AttackCollisionChannel = ECollisionChannel::ECC_GameTraceChannel2;

@@ -23,19 +23,11 @@ public:
     UMTD_EquipmentInstance();
 
     //~UObject interface
-    virtual bool IsSupportedForNetworking() const override
-    {
-        return true;
-    }
-
     virtual UWorld *GetWorld() const override final;
     //~End of UObject interface
 
     UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-    AActor *GetOwner() const
-    {
-        return Owner;
-    }
+    AActor *GetOwner() const;
 
     UFUNCTION(BlueprintPure, Category="MTD|Equipment")
     APawn *GetPawn() const;
@@ -45,10 +37,7 @@ public:
     APawn *GetTypedPawn(TSubclassOf<APawn> PawnType) const;
 
     UFUNCTION(BlueprintPure, Category="MTD|Equipment")
-    AActor *GetSpawnedActor() const
-    {
-        return SpawnedActor;
-    }
+    AActor *GetSpawnedActor() const;
 
     UFUNCTION(BlueprintPure, Category="MTD|Equipment")
     UAbilitySystemComponent *GetAbilitySystemComponent() const;
@@ -76,10 +65,7 @@ protected:
     bool IsPlayer() const;
 
 private:
-    void SetOwner(AActor *InOwner)
-    {
-        Owner = InOwner;
-    }
+    void SetOwner(AActor *InOwner);
 
     void GrantStats();
     void TakeBackStats();
@@ -91,7 +77,21 @@ private:
     UPROPERTY()
     TObjectPtr<AActor> SpawnedActor = nullptr;
 
-    UPROPERTY(EditAnywhere, Category="MTD|Equipment|Stats",
-        meta=(AllowPrivateAccess="true"), DisplayName="Player")
+    UPROPERTY(EditAnywhere, Category="MTD|Equipment|Stats", meta=(AllowPrivateAccess="true"), DisplayName="Player")
     FMTD_EquipmentPlayerStats PlayerStats;
 };
+
+inline AActor *UMTD_EquipmentInstance::GetOwner() const
+{
+    return Owner;
+}
+
+inline AActor *UMTD_EquipmentInstance::GetSpawnedActor() const
+{
+    return SpawnedActor;
+}
+
+inline void UMTD_EquipmentInstance::SetOwner(AActor *InOwner)
+{
+    Owner = InOwner;
+}

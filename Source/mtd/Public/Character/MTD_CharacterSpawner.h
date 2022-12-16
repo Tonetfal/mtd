@@ -7,14 +7,17 @@
 
 class AMTD_BaseCharacter;
 
+/**
+ * TODO: Cache the closest core, and assign it to the spawned character instead of computing it every time they're spawned.
+ */
+
 UCLASS()
 class MTD_API AMTD_CharacterSpawner : public AActor
 {
 	GENERATED_BODY()
 
 public:
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-        FOnSpawnSignature, AActor*, Actor);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpawnSignature, AActor*, Actor);
 	
 public:	
 	AMTD_CharacterSpawner();

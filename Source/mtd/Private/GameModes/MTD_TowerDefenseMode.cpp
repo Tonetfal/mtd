@@ -2,13 +2,13 @@
 
 #include "AbilitySystem/MTD_AbilitySet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
-#include "AIController.h"
 #include "Character/MTD_BaseCharacter.h"
+#include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_CharacterSpawner.h"
 #include "Character/MTD_HealthComponent.h"
 #include "GameModes/MTD_Core.h"
 #include "Kismet/GameplayStatics.h"
-#include "NavigationSystem.h"
+#include "Utility/MTD_Utility.h"
 
 AMTD_TowerDefenseMode::AMTD_TowerDefenseMode()
 {
@@ -96,31 +96,21 @@ AActor *AMTD_TowerDefenseMode::GetGameTarget(APawn *Client) const
 {
     check(IsValid(Client));
     
+    const FMTD_PathFindingContext Context = FMTD_PathFindingContext::Create(Client);
+    if (!Context.IsValid())
+    {
+        MTDS_WARN("Path Finding Context on owner [%s] couldn't be created correctly.", *GetName());
+        return nullptr;
+    }
+    
     // Store final result in here
     AActor *Result = nullptr;
     float LowestCost = 0.f;
 
-    // Cache calculation data
-    UWorld *World = GetWorld();
-    const FVector ClientPosition = Client->GetNavAgentLocation();
-    const auto ClientController = CastChecked<AAIController>(Client->GetController());
-    const auto NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-    ANavigationData *NavData = NavSys->GetNavDataForProps(ClientController->GetNavAgentPropertiesRef(), ClientPosition);
-    const TSubclassOf<UNavigationQueryFilter> FilterClass = ClientController->GetDefaultNavigationFilterClass();
-
     for (AMTD_Core *Core : Cores)
     {
-        // Shorthand calculation data in variables
         float Cost;
-        const FVector CorePosition = Core->GetActorLocation();
-
-        // Check path cost a core
-        const ENavigationQueryResult::Type PathResult = NavSys->GetPathCost(
-            World, ClientPosition, CorePosition, Cost, NavData, FilterClass);
-
-        // Path result must always be valid in terms of passed data validness
-        check(PathResult != ENavigationQueryResult::Error);
-        check(PathResult != ENavigationQueryResult::Invalid);
+        const ENavigationQueryResult::Type PathResult = FMTD_Utility::ComputePathTo(Core, Cost, Context);
 
         // If the core is reachable check whether its the most optimal path cost wise
         if (PathResult == ENavigationQueryResult::Success)
@@ -131,10 +121,11 @@ AActor *AMTD_TowerDefenseMode::GetGameTarget(APawn *Client) const
                 Result = Core;
             }
         }
-        // Should never happen. The only reason must be a bad level design that doesn't allow an AI to get all the cores
+        // Should never happen
         else
         {
-            MTD_WARN("An actor on [%s] cannot get core [%s]", *ClientPosition.ToString(), *Core->GetName());
+            MTD_WARN("Actor [%s] at [%s] is unable to get to Core [%s].",
+                *Client->GetName(), *Client->GetActorLocation().ToString(), *Core->GetName());
         }
     }
 
@@ -172,12 +163,6 @@ void AMTD_TowerDefenseMode::CacheSpawners()
 
 void AMTD_TowerDefenseMode::DispatchAbilities()
 {
-    if (!PlayerClass)
-    {
-        MTD_WARN("Player class is not specified.");
-        return;
-    }
-
     if (AbilitySets.IsEmpty())
     {
         MTD_WARN("Ability set is empty.");
@@ -185,7 +170,7 @@ void AMTD_TowerDefenseMode::DispatchAbilities()
     }
     
     TArray<AActor *> OutActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), PlayerClass, OutActors);
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMTD_BasePlayerCharacter::StaticClass(), OutActors);
 
     for (AActor *Actor : OutActors)
     {

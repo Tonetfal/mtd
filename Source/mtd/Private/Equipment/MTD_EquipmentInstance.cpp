@@ -2,11 +2,11 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Sockets.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "Equipment/MTD_EquipmentDefinition.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PlayerState.h"
 
 UMTD_EquipmentInstance::UMTD_EquipmentInstance()
 {
@@ -117,8 +117,15 @@ bool UMTD_EquipmentInstance::IsPlayer() const
         return false;
     }
 
-    // Bots' equip must not have any stats, so we have nothing to mod
-    return (!Pawn->IsBotControlled());
+    APlayerState *Ps = Pawn->GetPlayerState();
+    if (!IsValid(Ps))
+    {
+        return false;
+    }
+
+    // Bots' equip must not have any stats, so there's nothing to modify
+    const bool bBot = Ps->IsABot();
+    return (!bBot);
 }
 
 void UMTD_EquipmentInstance::GrantStats()

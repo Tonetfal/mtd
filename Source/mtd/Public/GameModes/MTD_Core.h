@@ -11,17 +11,14 @@ class UMTD_AbilitySystemComponent;
 class UMTD_HealthComponent;
 class USphereComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-    FOnCoreHealthChangedSignature,
-    float, OldHealth,
-    float, NewHealth);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCoreDestroyedSignature);
-
 UCLASS()
 class MTD_API AMTD_Core : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
 {
     GENERATED_BODY()
+    
+public:
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoreHealthChangedSignature, float, OldHealth, float, NewHealth);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCoreDestroyedSignature);
 
 public:
     AMTD_Core();
@@ -51,11 +48,9 @@ public:
     FOnCoreDestroyedSignature OnCoreDestroyedDelegate;
 
 private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Core",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Core", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> CollisionComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MTD|Core",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MTD|Core", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
 };

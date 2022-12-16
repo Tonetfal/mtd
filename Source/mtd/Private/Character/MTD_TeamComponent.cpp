@@ -10,10 +10,10 @@ UMTD_TeamComponent::UMTD_TeamComponent()
 
 void UMTD_TeamComponent::SetMtdTeamId(EMTD_TeamId Id)
 {
-    uint8 IdInt = static_cast<int>(Id);
-    if (IdInt >= static_cast<int>(EMTD_TeamId::Count))
+    uint8 IdInt = static_cast<int8>(Id);
+    if (IdInt >= static_cast<int8>(EMTD_TeamId::Count))
     {
-        IdInt = static_cast<int>(EMTD_TeamId::Unknown);
+        IdInt = static_cast<int8>(EMTD_TeamId::Unknown);
     }
 
     TeamId = Id;

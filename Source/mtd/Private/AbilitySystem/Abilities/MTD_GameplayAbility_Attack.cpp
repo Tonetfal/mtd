@@ -32,15 +32,12 @@ void UMTD_GameplayAbility_Attack::ActivateAbility(
     CommitExecute(Handle, ActorInfo, ActivationInfo);
 
     const auto MtdAsc = CastChecked<UMTD_AbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
-    const auto Character = CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor);
 
     int32 AttackEffectLevel;
     HandleAttackGameplayEffect(MtdAsc, AttackEffectLevel);
 
-    const TArray<UAnimMontage *> Animations = Character->GetAbilityAnimMontages(GetMainAbilityTag()).Animations;
-    UAnimMontage *AbilityAnimMontage = GetAbilityAnimMontage(Animations, AttackEffectLevel);
-
-    PlayAttackAnimation(CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor.Get()), AbilityAnimMontage);
+    UAnimMontage *AnimMontage = GetRandomAbilityAnimMontage();
+    PlayAttackAnimation(CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor.Get()), AnimMontage);
 
     FTimerHandle EndAbilityTimerHandle;
     const float RemainingCooldownTime = GetCooldownTimeRemaining();
@@ -98,8 +95,8 @@ FActiveGameplayEffectHandle UMTD_GameplayAbility_Attack::GetFirstActiveAttackGam
 
     if (ActiveGeHandles.Num() > 1)
     {
-        MTDS_WARN("Ability system [%s] has more than one UMTD_GameplayEffect_Attack. Only the first will be considered",
-            *MtdAsc->GetName());
+        MTDS_WARN("Ability system [%s] has more than one UMTD_GameplayEffect_Attack. "
+            "Only the first will be considered.", *MtdAsc->GetName());
     }
 
     return !ActiveGeHandles.IsEmpty() ? ActiveGeHandles[0] : FActiveGameplayEffectHandle();
@@ -109,7 +106,7 @@ int32 UMTD_GameplayAbility_Attack::GetAttackMontageIndexToPlay(
     const TArray<UAnimMontage *> Animations, int32 AttackEffectLevel) const
 {
     const int32 Size = Animations.Num();
-    return Size != 0 ? (AttackEffectLevel % Size) : (-1);
+    return (Size != 0) ? (AttackEffectLevel % Size) : (-1);
 }
 
 UAnimMontage *UMTD_GameplayAbility_Attack::GetAbilityAnimMontage(
@@ -135,8 +132,7 @@ void UMTD_GameplayAbility_Attack::CreateAndApplyAttackGameplayEffectOnSelf(UMTD_
     MtdAsc->SetGameplayEffectDurationHandle(EffectHandle, AttackGeDuration);
 }
 
-void UMTD_GameplayAbility_Attack::PlayAttackAnimation(
-    const ACharacter *PlayOn, UAnimMontage *AbilityAnimMontage)
+void UMTD_GameplayAbility_Attack::PlayAttackAnimation(const ACharacter *PlayOn, UAnimMontage *AbilityAnimMontage)
 {
     UAnimInstance *AnimInstance = PlayOn->GetMesh()->GetAnimInstance();
     AnimInstance->Montage_Play(AbilityAnimMontage);

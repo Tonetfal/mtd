@@ -1,5 +1,6 @@
 #include "Player/MTD_TowerController.h"
 
+#include "Character/MTD_Tower.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISightTargetInterface.h"
@@ -32,11 +33,17 @@ void AMTD_TowerController::OnPossess(APawn *InPawn)
     check(SightConfig);
     check(PerceptionComponent);
 
-    InitConfig();
     Super::OnPossess(InPawn);
+    
+    // Cache before initing
+    CacheTowerAttributes();
+    InitConfig();
 
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->RequestStimuliListenerUpdate();
+
+    auto Tower = CastChecked<AMTD_Tower>(InPawn);
+    Tower->OnAttributesChanged.AddDynamic(this, &ThisClass::UpdateSightAttributes);
 }
 
 AActor *AMTD_TowerController::GetFireTarget()
@@ -63,6 +70,13 @@ void AMTD_TowerController::SetPeripheralVisionHalfAngleDegrees(float Degrees)
 
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->RequestStimuliListenerUpdate();
+}
+
+void AMTD_TowerController::UpdateSightAttributes()
+{
+    CacheTowerAttributes();
+    SetVisionRange(SightRadius);
+    SetPeripheralVisionHalfAngleDegrees(PeripheralVisionHalfAngleDegrees);
 }
 
 bool AMTD_TowerController::IsFireTargetStillVisible() const
@@ -156,4 +170,12 @@ void AMTD_TowerController::InitConfig()
     SightConfig->PointOfViewBackwardOffset = PointOfViewBackwardOffset;
     SightConfig->NearClippingRadius = NearClippingRadius;
     SightConfig->SetMaxAge(MaxAge);
+}
+
+void AMTD_TowerController::CacheTowerAttributes()
+{
+    auto Tower = CastChecked<AMTD_Tower>(GetPawn());
+
+    SightRadius = Tower->GetScaledVisionRange();
+    PeripheralVisionHalfAngleDegrees = Tower->GetScaledVisionHalfDegrees();
 }

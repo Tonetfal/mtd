@@ -20,11 +20,10 @@ protected:
     TArray<FGameplayEffectSpecHandle> GetGameplayEffectSpecHandlesToGrantOnHit() const;
 
 private:
-    UPROPERTY(EditDefaultsOnly, Category="MTD|Equipment|Stats|Weapon",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Equipment|Stats|Weapon", meta=(AllowPrivateAccess="true"))
     FMTD_EquipmentWeaponStats WeaponStats;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon",
-        meta=(AllowPrivateAccess="true", ShortTooltip="Gameplay effects to grant on melee attack hit."))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon", meta=(AllowPrivateAccess="true",
+        ShortTooltip="Gameplay effects to grant on melee attack hit."))
     TArray<TSubclassOf<UGameplayEffect>> GameplayEffectsToGrantOnHit;
 };

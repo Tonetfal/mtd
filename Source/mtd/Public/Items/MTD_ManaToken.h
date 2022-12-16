@@ -21,7 +21,7 @@ protected:
     virtual void OnPawnAdded(APawn *Pawn) override;
 
 private:
-    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token",
-        meta=(ClampMin="0.0", ShortTooltip="Amount of mana the pawn will be granted."))
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token", meta=(ClampMin="0.0",
+        ShortTooltip="Amount of mana the pawn will be granted."))
     int32 ManaAmount = 1;
 };

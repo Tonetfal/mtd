@@ -41,8 +41,7 @@ public:
     }
 
 private:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_TeamComponent> Team = nullptr;
 
     float LastYaw = 0.f;

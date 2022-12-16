@@ -1,10 +1,11 @@
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 
-#include "AbilitySystemComponent.h"
-#include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cooldown.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cost.h"
-#include "Character/MTD_BaseCharacter.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
+#include "AbilitySystemComponent.h"
+#include "Character/MTD_PawnExtensionComponent.h"
+#include "GameplayTagsManager.h"
 
 UMTD_GameplayAbility::UMTD_GameplayAbility()
 {
@@ -12,6 +13,14 @@ UMTD_GameplayAbility::UMTD_GameplayAbility()
     CooldownGameplayEffectClass = UMTD_GameplayEffect_Cooldown::StaticClass();
 
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+    
+    UGameplayTagsManager::Get().CallOrRegister_OnDoneAddingNativeTagsDelegate(
+        FSimpleDelegate::CreateUObject(this, &ThisClass::OnDoneAddingNativeTags));
+}
+
+void UMTD_GameplayAbility::OnDoneAddingNativeTags()
+{
+    AbilityTags.AddTag(MainAbilityTag);
 }
 
 void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorInfo, const FGameplayAbilitySpec &Spec)
@@ -21,27 +30,20 @@ void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorI
     TryActivateAbilityOnSpawn(ActorInfo, Spec);
 }
 
-const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
+UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
 {
     const AActor *AvatarActor = GetActorInfo().AvatarActor.Get();
+    const auto PawnExtComponent = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(AvatarActor);
+    check(PawnExtComponent);
 
-    const auto Character = Cast<AMTD_BaseCharacter>(AvatarActor);
-    if (!IsValid(Character))
+    UAnimMontage *AnimMontage = PawnExtComponent->GetRandomAnimMontage(MainAbilityTag);
+    if (!IsValid(AnimMontage))
     {
-        return nullptr;
-    }
-    
-    TArray<UAnimMontage *> Animations = Character->GetAbilityAnimMontages(MainAbilityTag).Animations;
-
-    const int32 Size = Animations.Num();
-    if (Size == 0)
-    {
-        MTDS_WARN("There are no animations to play with Gameplay Tag [%s]", *MainAbilityTag.ToString());
+        MTDS_WARN("Owner [%s] has no Anim Montage to play with Gameplay Tag [%s].", *MainAbilityTag.ToString());
         return nullptr;
     }
 
-    const int32 Index = FMath::Rand() % Size;
-    return Animations[Index];
+    return AnimMontage;
 }
 
 void UMTD_GameplayAbility::GetOwnedGameplayTags(FGameplayTagContainer &TagContainer) const
@@ -139,7 +141,7 @@ void UMTD_GameplayAbility::TryActivateAbilityOnSpawn(
 
     UAbilitySystemComponent *Asc = ActorInfo->AbilitySystemComponent.Get();
 
-    if (Spec.IsActive() || ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn || !Asc)
+    if ((Spec.IsActive()) || (ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn) || (!IsValid(Asc)))
     {
         return;
     }
