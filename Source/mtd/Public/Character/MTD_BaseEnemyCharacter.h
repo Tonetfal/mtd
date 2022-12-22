@@ -41,7 +41,11 @@ protected:
         UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
 
     virtual void OnDeathFinished_Implementation(AActor *OwningActor) override;
-
+    
+    //~IMTD_GameResultInterface Interface
+    virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;
+    //~End of IMTD_GameResultInterface Interface
+    
 private:
     void EquipDefaultWeapon();
 
@@ -92,10 +96,6 @@ private:
         AActor *OtherActor,
         UPrimitiveComponent *OtherComp,
         int32 OtherBodyIndex);
-
-    //~IMTD_GameResultInterface Interface
-    virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;
-    //~End of IMTD_GameResultInterface Interface
 
 public:
     UPROPERTY(BlueprintAssignable)

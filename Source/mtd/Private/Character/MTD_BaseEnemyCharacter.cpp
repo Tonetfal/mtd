@@ -128,12 +128,6 @@ void AMTD_BaseEnemyCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
     DisableCollisions();
 }
 
-void AMTD_BaseEnemyCharacter::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
-{
-    Super::OnGameTerminated_Implementation(GameResult);
-    DetachFromControllerPendingDestroy();
-}
-
 void AMTD_BaseEnemyCharacter::EquipDefaultWeapon()
 {
     if (!IsValid(DefaultWeaponDefinitionClass))
@@ -334,6 +328,12 @@ void AMTD_BaseEnemyCharacter::OnDeathFinished_Implementation(AActor *OwningActor
     // Don't call the default implementation
 
     GetEquipmentManagerComponent()->UnequipItem();
+}
+
+void AMTD_BaseEnemyCharacter::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
+{
+    Super::OnGameTerminated_Implementation(GameResult);
+    DetachFromControllerPendingDestroy();
 }
 
 void AMTD_BaseEnemyCharacter::DisableCollisions()

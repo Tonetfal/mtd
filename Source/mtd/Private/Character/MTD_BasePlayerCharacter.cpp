@@ -101,6 +101,11 @@ void AMTD_BasePlayerCharacter::OnDeathStarted_Implementation(AActor *OwningActor
     DisableCollision();
 }
 
+void AMTD_BasePlayerCharacter::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
+{
+    Super::OnGameTerminated_Implementation(GameResult);
+}
+
 void AMTD_BasePlayerCharacter::InitializeInput()
 {
     auto Pc = GetController<APlayerController>();

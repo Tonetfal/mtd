@@ -230,19 +230,13 @@ void AMTD_Tower::InitializeAttributes()
     // TowerData with its attribute table must be validated by BeginPlay
     const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
 
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
-    {
-        MTDS_WARN("Ability System Component on Tower [%s] is invalid.", *GetName());
-        return;
-    }
+    // Dispatch the Attribute Table regardless the ASC presence due SBS. The SBS may spawn a tower without a controller,
+    // hence the ASC will not be initialized. However, the reason SBS may spawn it is because it needs to retrieve
+    // vision related data along the owner player stats. The spawned tower will have PlayerCharacter as Owner and its
+    // PlayerState as Instigator.
 
     float Value;
 
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
-    Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
-    
     EVALUTE_ATTRIBUTE(TowerData->AttributeTable, DamageAttributeName, Level, Value);
     BaseDamage = Value;
     
@@ -259,11 +253,23 @@ void AMTD_Tower::InitializeAttributes()
     BaseProjectileSpeed = Value;
     
     EVALUTE_ATTRIBUTE(TowerData->AttributeTable, BalanceDamageAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(), EGameplayModOp::Type::Override, Value);
     BalanceDamage = Value;
+
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    if (!IsValid(Asc))
+    {
+        MTDS_WARN("Ability System Component on Tower [%s] is invalid.", *GetName());
+        return;
+    }
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, Level, Value);
+    Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(), EGameplayModOp::Type::Override, BalanceDamage);
 
     // Tower ignore any balance damage
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, 100.f);
+    
 
     OnAttributesChanged.Broadcast();
     MTDS_VERBOSE("Tower [%s]'s attributes have been initialized.", *GetName());

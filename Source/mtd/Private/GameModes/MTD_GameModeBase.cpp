@@ -26,10 +26,21 @@ AActor *AMTD_GameModeBase::GetGameTarget(APawn *Client) const
 
 void AMTD_GameModeBase::TerminateGame(EMTD_GameResult Reason)
 {
-    // Avoid dispatching if already did.
+    // Avoid dispatching if already did
     if (bGameOver)
+    {
         return;
+    }
         
+    if (Reason == EMTD_GameResult::Win)
+    {
+        MTD_LOG("Terminate game due victory.");
+    }
+    else
+    {
+        MTD_LOG("Terminate game due lose");
+    }
+    
     bGameOver = true;
     OnGameTerminatedDelegate.Broadcast(Reason);
 }

@@ -32,6 +32,12 @@ void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorI
 
 UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
 {
+    if (!MainAbilityTag.IsValid())
+    {
+        MTDS_WARN("Main Ability Tag is invalid.");
+        return nullptr;
+    }
+    
     const AActor *AvatarActor = GetActorInfo().AvatarActor.Get();
     const auto PawnExtComponent = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(AvatarActor);
     check(PawnExtComponent);

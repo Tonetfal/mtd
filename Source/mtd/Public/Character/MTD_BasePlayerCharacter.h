@@ -26,6 +26,10 @@ protected:
     virtual void InitializeAttributes() override;
     virtual void OnDeathStarted_Implementation(AActor *OwningActor) override;
     //~End of AMTD_BaseCharacter Interface
+
+    //~IMTD_GameResultInterface Interface
+    virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;
+    //~End of IMTD_GameResultInterface Interface
     
 private:
     void InitializeInput();

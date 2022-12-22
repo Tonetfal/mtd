@@ -137,70 +137,55 @@ public:
     FDynamicMulticastSignature OnAttributesChanged;
 
 private:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UBoxComponent> CollisionComponent = nullptr;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UBoxComponent> NavVolumeComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USkeletalMeshComponent> MeshComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<USphereComponent> ProjectileSpawnPosition = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_PawnExtensionComponent> PawnExtentionComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HeroComponent> HeroComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
     
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_TowerExtensionComponent> TowerExtensionComponent = nullptr;
 
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float Level = 1.f;
 
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BaseDamage = -1.f;
 
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BaseFirerate = -1.f;
 
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BaseVisionRange = -1.f;
 
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BaseVisionHalfDegrees = -1.f;
 
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BaseProjectileSpeed = -1.f;
     
     /** Cached value retrieved from a curve table. */
-    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower",
-        meta=(AllowPrivateAccess="true"))
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
     float BalanceDamage = -1.f;
 
     bool bIsReloading = false;
