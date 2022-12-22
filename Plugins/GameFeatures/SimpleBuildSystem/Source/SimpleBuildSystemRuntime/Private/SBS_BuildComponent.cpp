@@ -3,8 +3,8 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Character.h"
-#include "SBS_BuildGhostActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "SBS_BuildGhostActor.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogSimpleBuildSystem, All, All);
 
@@ -82,11 +82,19 @@ void USBS_BuildComponent::MoveBuildGhostActor_Implementation()
 
     // Fix some issues with ground placing by adding an offset
     const FVector GroundOffset = FVector::UpVector + Hit.ImpactNormal;
-    
     const FVector SurfaceLocation = ObservedPoint + GroundOffset;
-    const FVector GroundLocation = FindGround(SurfaceLocation);
+    
+    FHitResult GroundHitResult;
+    const FVector GroundLocation = FindGround(SurfaceLocation, &GroundHitResult);
+
+    const FQuat DefaultRot = FRotator(0.f, GhostActorYaw, 0.f).Quaternion();
+    const FRotator ImpactRot = GroundHitResult.ImpactNormal.ToOrientationRotator();
+    const FRotator RotAlongSurface = ImpactRot + FRotator(-90.f, 0.f, 0.f);
+    const FQuat SurfaceRot = RotAlongSurface.Quaternion();
+    const FRotator FinalRot = FQuat(SurfaceRot * DefaultRot).Rotator();
 
     BuildGhostActor->SetActorLocation(GroundLocation);
+    BuildGhostActor->SetActorRotation(FinalRot);
 }
 
 void USBS_BuildComponent::RotateBuildGhostActor_Implementation()
@@ -110,8 +118,11 @@ void USBS_BuildComponent::RotateBuildGhostActor_Implementation()
     const float AngleMod = (FMath::Sign(Cross.Y) == 1) ? (180.f) : (0.f);
     const float AngleDeg = FMath::RadiansToDegrees(AngleRad) + AngleMod;
 
+    FRotator Rotation = BuildGhostActor->GetActorRotation();
+    Rotation.Yaw = AngleDeg;
+
     // Rotate by Y
-    BuildGhostActor->SetActorRotation(FRotator(0.f, AngleDeg, 0.f), ETeleportType::TeleportPhysics);
+    BuildGhostActor->SetActorRotation(Rotation, ETeleportType::TeleportPhysics);
 }
 
 void USBS_BuildComponent::ProgressBuilding_Implementation(float DeltaSeconds)
@@ -189,8 +200,13 @@ void USBS_BuildComponent::CreateGhostBuildActor()
 
     // Bind as soon as possible
     BindBuildDelegates();
-    
+
+    GhostActorYaw = Owner->GetActorRotation().Yaw;
+
+    BuildGhostActor->SetActorRotation(FRotator(0.f, GhostActorYaw, 0.f));
     BuildGhostActor->SetStaticMesh(ActiveBuildingData.StaticMesh);
+    BuildGhostActor->SetDrawVision(ActiveBuildingData.bDrawVision);
+    BuildGhostActor->SetVision(ActiveBuildingData.VisionRange, ActiveBuildingData.VisionDegrees);
 }
 
 AActor *USBS_BuildComponent::SpawnBuilding() const
@@ -286,13 +302,12 @@ FVector USBS_BuildComponent::FindObservedPoint(float TraceLength, FHitResult *Ou
         *OutHit = Hit;
     }
 
-    return Hit.bBlockingHit ? Hit.ImpactPoint : LineEnd;
+    return (Hit.bBlockingHit) ? (Hit.ImpactPoint) : (LineEnd);
 }
 
-FVector USBS_BuildComponent::FindGround(FVector LineStart) const
+FVector USBS_BuildComponent::FindGround(FVector LineStart, FHitResult *OutHit) const
 {
-    const FVector LineEnd =
-        LineStart - FVector::ZAxisVector * MoveSurfaceTraceLength;
+    const FVector LineEnd = LineStart - FVector::ZAxisVector * MoveSurfaceTraceLength;
 
     FCollisionObjectQueryParams ObjectQueryParams;
     for (ECollisionChannel CollisionChannel : ObjectTypesToQueryOnTraces)
@@ -307,13 +322,18 @@ FVector USBS_BuildComponent::FindGround(FVector LineStart) const
 
     FHitResult Hit;
     GetWorld()->LineTraceSingleByObjectType(Hit, LineStart, LineEnd, ObjectQueryParams, QueryParams);
+    
+    if (OutHit)
+    {
+        *OutHit = Hit;
+    }
 
-    return Hit.bBlockingHit ? Hit.ImpactPoint : LineEnd;
+    return (Hit.bBlockingHit) ? (Hit.ImpactPoint) : (LineEnd);
 }
 
 bool USBS_BuildComponent::BuildModeEnable(FSBS_BuildingData Data)
 {
-    // ChangeBuildingData must be used if Build Mode is already enabled
+    // Change BuildingData must be used if Build Mode is already enabled
     if (bIsBuildModeActive)
     {
         return false;
@@ -321,7 +341,7 @@ bool USBS_BuildComponent::BuildModeEnable(FSBS_BuildingData Data)
 
     if (!Data.IsValid())
     {
-        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Data is invalid"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Building Data is invalid."));
         return false;
     }
 
@@ -340,13 +360,13 @@ void USBS_BuildComponent::ChangeBuildingData(FSBS_BuildingData Data)
     // BuildModeEnable must be used if it is not enabled
     if (!bIsBuildModeActive)
     {
-        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Build Mode is not active"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Build Mode is not active."));
         return;
     }
 
     if (!Data.IsValid())
     {
-        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Data is invalid"));
+        UE_LOG(LogSimpleBuildSystem, Warning, TEXT("Building Data is invalid."));
         return;
     }
 
