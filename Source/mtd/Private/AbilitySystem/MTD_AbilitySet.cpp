@@ -27,7 +27,7 @@ void FMTD_AbilitySet_GrantedHandles::AddGameplayEffectHandle(const FActiveGamepl
 
 void FMTD_AbilitySet_GrantedHandles::AddAttributeSet(UAttributeSet *Set)
 {
-    if (!Set || !Set->IsValidLowLevel())
+    if ((!Set) || (!Set->IsValidLowLevel()))
     {
         return;
     }
@@ -39,7 +39,7 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(UMTD_AbilitySystemCom
 {
     check(MtdAsc);
 
-    for (const FGameplayAbilitySpecHandle &Handle :AbilitySpecHandles)
+    for (const FGameplayAbilitySpecHandle &Handle : AbilitySpecHandles)
     {
         if (Handle.IsValid())
         {
@@ -47,7 +47,7 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(UMTD_AbilitySystemCom
         }
     }
 
-    for (const FActiveGameplayEffectHandle &Handle :GameplayEffectHandles)
+    for (const FActiveGameplayEffectHandle &Handle : GameplayEffectHandles)
     {
         if (Handle.IsValid())
         {
@@ -55,9 +55,9 @@ void FMTD_AbilitySet_GrantedHandles::TakeFromAbilitySystem(UMTD_AbilitySystemCom
         }
     }
 
-    for (UAttributeSet *Set :GrantedAttributeSets)
+    for (UAttributeSet *Set : GrantedAttributeSets)
     {
-        MtdAsc->GetSpawnedAttributes_Mutable().Remove(Set);
+        MtdAsc->RemoveSpawnedAttribute(Set);
     }
 
     AbilitySpecHandles.Reset();
@@ -92,7 +92,7 @@ void UMTD_AbilitySet::GrantAbilities(
 {
     int32 AbilityIndex = 0;
 
-    for (const FMTD_AbilitySet_GameplayAbility &AbilityToGrant :GrantedGameplayAbilities)
+    for (const FMTD_AbilitySet_GameplayAbility &AbilityToGrant : GrantedGameplayAbilities)
     {
         if (!IsValid(AbilityToGrant.Ability))
         {
@@ -125,7 +125,7 @@ void UMTD_AbilitySet::GrantEffects(
 {
     int32 EffectIndex = 0;
 
-    for (const FMTD_AbilitySet_GameplayEffect &EffectToGrant :GrantedGameplayEffects)
+    for (const FMTD_AbilitySet_GameplayEffect &EffectToGrant : GrantedGameplayEffects)
     {
         if (!IsValid(EffectToGrant.GameplayEffect))
         {
@@ -154,11 +154,11 @@ void UMTD_AbilitySet::GrantAttributes(
 {
     int32 SetIndex = 0;
 
-    for (const FMTD_AbilitySet_AttributeSet &SetToGrant :GrantedAttributes)
+    for (const FMTD_AbilitySet_AttributeSet &SetToGrant : GrantedAttributes)
     {
         if (!IsValid(SetToGrant.AttributeSet))
         {
-            MTDS_ERROR("Gameplay attributes [%d] are invalid", SetIndex);
+            MTDS_ERROR("Gameplay attribute set [%d] is invalid", SetIndex);
             SetIndex++;
             continue;
         }
