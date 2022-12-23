@@ -452,28 +452,39 @@ FVector UMTD_TokenMovementComponent::RotateTowards(FVector InVelocity, const USc
     const FVector V1 = ComputeDistanceVectorTowards(Target);
 
     const float DR = RotationRate * DeltaSeconds;
-    const FRotator R0 = V0.Rotation();
-    const FRotator R1 = V1.Rotation();
+    const FRotator R0 = V0.Rotation().Clamp();
+    const FRotator R1 = V1.Rotation().Clamp();
 
-    // MTD_WARN("V0 [%s] V1 [%s]", *V0.ToString(), *V1.ToString());
+    const float Len = V0.Length();
 
     FRotator R = R1 - R0;
-    // MTD_WARN("R0 [%s] R1 [%s]", *R0.ToString(), *R1.ToString());
-    // MTD_WARN("R [%s]", *R.ToString());
-
+    
+    if (FMath::Abs(R.Yaw) > 180.f)
+    {
+        const float Sign = FMath::Sign(R.Yaw);
+        R.Yaw -= Sign * 180.f;
+        R.Yaw *= -1.f;
+    }
+    
+    if (FMath::Abs(R.Pitch) > 180.f)
+    {
+        const float Sign = FMath::Sign(R.Pitch);
+        R.Pitch -= Sign * 180.f;
+        R.Pitch *= -1.f;
+    }
+    
     R.Yaw = FMath::Sign(R.Yaw) * FMath::Min(DR, FMath::Abs(R.Yaw));
     R.Pitch = FMath::Sign(R.Pitch) * FMath::Min(DR, FMath::Abs(R.Pitch));
 
-    // MTD_WARN("R' [%s]", *R.ToString());
+    const FRotator R2 = R0 + R;
 
-    const FVector RotatedVector = R.RotateVector(V0);
+    const FVector RotatedVector = Len * R2.Vector();
 
-    // MTD_WARN("Rotated vector [%s]", *RotatedVector.ToString());
-
-    const UWorld *World = GetWorld();
-    const FVector Base = UpdatedComponent->GetOwner()->GetActorLocation();
-    DrawGizmo(World, Base, RotatedVector, 4.f);
-    DrawGizmo(World, Base, V1, 2.f);
+    // Debug
+    // const UWorld *World = GetWorld();
+    // const FVector Base = UpdatedComponent->GetOwner()->GetActorLocation();
+    // DrawGizmo(World, Base, RotatedVector, 4.f);
+    // DrawGizmo(World, Base, V1, 2.f);
 
     return RotatedVector;
 }
