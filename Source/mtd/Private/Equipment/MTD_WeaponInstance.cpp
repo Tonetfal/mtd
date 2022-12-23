@@ -7,6 +7,11 @@
 
 void UMTD_WeaponInstance::ModStats(float Multiplier)
 {
+    if (!IsPlayer())
+    {
+        return;
+    }
+    
     Super::ModStats(Multiplier);
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
