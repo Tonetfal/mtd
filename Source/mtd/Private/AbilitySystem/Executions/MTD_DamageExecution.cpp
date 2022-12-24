@@ -15,30 +15,11 @@ struct FDamageStatics
 
     FDamageStatics()
     {
-        HealthDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_HealthSet::GetHealthAttribute(),
-            EGameplayEffectAttributeCaptureSource::Target,
-            false);
-
-        DamageBaseDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageBaseAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageAdditiveDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageAdditiveAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageMultiplierDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageMultiplierAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageStatDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_PlayerSet::GetDamageStatAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
+        HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false); 
+        DamageBaseDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageBase, Source, true); 
+        DamageAdditiveDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageAdditive, Source, true); 
+        DamageMultiplierDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageMultiplier, Source, true); 
+        DamageStatDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, DamageStat, Source, true);
     }
 };
 
@@ -52,30 +33,11 @@ struct FRangedDamageStatics
 
     FRangedDamageStatics()
     {
-        HealthDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_HealthSet::GetHealthAttribute(),
-            EGameplayEffectAttributeCaptureSource::Target,
-            false);
-
-        DamageRangedBaseDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageRangedBaseAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageAdditiveDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageAdditiveAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageMultiplierDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_CombatSet::GetDamageMultiplierAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
-
-        DamageStatDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_PlayerSet::GetDamageStatAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
+        HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false);
+        DamageRangedBaseDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageRangedBase, Source, true);
+        DamageAdditiveDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageAdditive, Source, true);
+        DamageMultiplierDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageMultiplier, Source, true);
+        DamageStatDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, DamageStat, Source, true);
     }
 };
 
@@ -146,17 +108,8 @@ static void Execute_Implementation(
     float DamageBase = 0.f;
     ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageDef, EvaluationParams, DamageBase);
 
-    // float DamageAdditive = 0.f;
-    // ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-    // 	DamageStatics().DamageAdditiveDef, EvaluationParams, DamageAdditive);
-    float DamageAdditive = ExecutionParams.GetOwningSpec().GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
-
-    // float DamageMultiplier = 0.f;
-    // ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-    // 	RangedDamageStatics().DamageMultiplierDef, EvaluationParams,
-    // 	DamageMultiplier);
-    float DamageMultiplier =
-        ExecutionParams.GetOwningSpec().GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
+    float DamageAdditive = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
+    float DamageMultiplier = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
 
     float DamageStat = 0.f;
     const bool bDamageStatFound = ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(

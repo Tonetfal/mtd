@@ -22,7 +22,11 @@ DECLARE_MULTICAST_DELEGATE_FourParams(
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-#define CAPTURE_ATTRIBUTE
+#define CAPTURE_ATTRIBUTE(ATTRIBUTE_SET, ATTRIBUTE, CAPTURE_SOURCE, SNAPSHOT) \
+    FGameplayEffectAttributeCaptureDefinition( \
+    ATTRIBUTE_SET ## ::Get ## ATTRIBUTE ## Attribute(), \
+    EGameplayEffectAttributeCaptureSource:: ## CAPTURE_SOURCE, \
+    SNAPSHOT);
 
 /**
  * Default attribute set used in this project.

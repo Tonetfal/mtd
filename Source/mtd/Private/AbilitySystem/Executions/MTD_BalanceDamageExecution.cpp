@@ -10,15 +10,8 @@ struct FBalanceStatics
 
     FBalanceStatics()
     {
-        TargetLastReceivedDamage = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_BalanceSet::GetLastReceivedDamageAttribute(),
-            EGameplayEffectAttributeCaptureSource::Target,
-            false);
-        
-        SourceBalanceDamage = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_BalanceSet::GetBaseDamageAttribute(),
-            EGameplayEffectAttributeCaptureSource::Source,
-            true);
+        TargetLastReceivedDamage = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, LastReceivedDamage, Target, false);
+        SourceBalanceDamage = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, BaseDamage, Source, true);
     }
 };
 
