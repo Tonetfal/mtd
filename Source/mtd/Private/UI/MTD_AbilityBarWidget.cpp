@@ -1,4 +1,5 @@
 #include "UI/MTD_AbilityBarWidget.h"
+#include "UI/MTD_UiCoreTypes.h"
 
 #include "Character/MTD_BaseCharacter.h"
 

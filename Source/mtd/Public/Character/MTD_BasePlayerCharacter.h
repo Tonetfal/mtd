@@ -6,8 +6,9 @@
 #include "MTD_BasePlayerCharacter.generated.h"
 
 class UCameraComponent;
-class USpringArmComponent;
+class UMTD_AbilitiesUiData;
 class UMTD_PlayerExtensionComponent;
+class USpringArmComponent;
 
 UCLASS()
 class MTD_API AMTD_BasePlayerCharacter : public AMTD_BaseCharacter
@@ -47,6 +48,9 @@ private:
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_PlayerExtensionComponent> PlayerExtensionComponent = nullptr;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|UI", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_AbilitiesUiData> UiData = nullptr;
 
     UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
     float Level = 0.f;

@@ -5,6 +5,7 @@
 
 #include "MTD_AbilitySystemComponent.generated.h"
 
+class UMTD_GameplayAbility;
 UCLASS()
 class MTD_API UMTD_AbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -17,6 +18,9 @@ public:
 
     void OnAbilityInputTagPressed(const FGameplayTag &InputTag);
     void OnAbilityInputTagReleased(const FGameplayTag &InputTag);
+
+    UFUNCTION(BlueprintCallable, Category="MTD|Ability System Component")
+    void GiveTagToAbility(const FGameplayTag &Tag, UMTD_GameplayAbility *Ability);
 
 private:
     UPROPERTY()

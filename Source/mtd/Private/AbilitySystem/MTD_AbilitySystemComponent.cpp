@@ -176,3 +176,19 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagReleased(const FGameplayTag &
         }
     }
 }
+
+void UMTD_AbilitySystemComponent::GiveTagToAbility(const FGameplayTag &Tag, UMTD_GameplayAbility *Ability)
+{
+    check(Ability);
+
+    for (FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
+    {
+        const auto OtherAbility = Cast<UMTD_GameplayAbility>(AbilitySpec.Ability);
+        
+        if ((IsValid(OtherAbility)) && (OtherAbility->GetMainAbilityTag() == Ability->GetMainAbilityTag()))
+        {
+            AbilitySpec.DynamicAbilityTags.AddTag(Tag);
+            break;
+        }
+    }
+}

@@ -7,48 +7,7 @@
 #include "MTD_AbilityBarWidget.generated.h"
 
 class AMTD_BaseCharacter;
-
-/**
- * An asset describing a single ability UI properties.
- */
-UCLASS(BlueprintType)
-class MTD_API UMTD_AbilityUiData : public UDataAsset
-{
-    GENERATED_BODY()
-
-private:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UTexture2D> Icon = nullptr;
-};
-
-/**
- * An asset containing the ability UI data and the appropriate slot that the ability will be placed on HUD.
- */
-UCLASS(BlueprintType)
-class MTD_API UMTD_AbilitySlotUiData : public UDataAsset
-{
-    GENERATED_BODY()
-
-private:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_AbilityUiData> AbilityData = nullptr;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true", ClampMin="0.0"))
-    int32 SlotIndex = 0;
-};
-
-/**
- * A set of Ability UI Data with associated with its respective Gameplay Tag.
- */
-UCLASS(BlueprintType)
-class MTD_API UMTD_AbilitiesUiData : public UDataAsset
-{
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    TMap<FGameplayTag,TObjectPtr<UMTD_AbilitySlotUiData>> Data;
-};
+class UMTD_AbilitiesUiData;
 
 /**
  * A set of Abilities UI Data with its respective Hero Player.
@@ -60,7 +19,7 @@ class MTD_API UMTD_HeroesAbilityUiData : public UDataAsset
 
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    TMap<TSubclassOf<AMTD_BaseCharacter>,TObjectPtr<UMTD_AbilitiesUiData>> Data;
+    TMap<TSubclassOf<AMTD_BaseCharacter>, TObjectPtr<UMTD_AbilitiesUiData>> Data;
 };
 
 UCLASS()
