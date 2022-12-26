@@ -161,6 +161,6 @@ void AMTD_BasePlayerCharacter::DisableCollision()
     UCapsuleComponent *CapsuleComp = GetCapsuleComponent();
     check(CapsuleComp);
 
-    SetActorEnableCollision(false);
-    CapsuleComp->SetEnableGravity(false);
+    CapsuleComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CapsuleComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 }
