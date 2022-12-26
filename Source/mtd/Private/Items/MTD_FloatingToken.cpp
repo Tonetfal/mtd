@@ -5,8 +5,8 @@
 
 AMTD_FloatingToken::AMTD_FloatingToken()
 {
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bStartWithTickEnabled = true;
+    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bStartWithTickEnabled = false;
     PrimaryActorTick.TickInterval = 0.1f; // Don't run it too often
 
     CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Component"));
@@ -42,20 +42,6 @@ AMTD_FloatingToken::AMTD_FloatingToken()
     MovementComponent = CreateDefaultSubobject<UMTD_TokenMovementComponent>(TEXT("Movement Component"));
 }
 
-void AMTD_FloatingToken::Tick(float DeltaSeconds)
-{
-    Super::Tick(DeltaSeconds);
-
-    const USceneComponent *Target = MovementComponent->HomingTargetComponent.Get();
-    
-    // Try to find a new target if there's none
-    if (!IsValid(Target))
-    {
-        const AActor *NewTarget = FindNewTarget();
-        MovementComponent->HomingTargetComponent = (IsValid(NewTarget)) ? (NewTarget->GetRootComponent()) : (nullptr);
-    }
-}
-
 void AMTD_FloatingToken::BeginPlay()
 {
     Super::BeginPlay();
@@ -78,7 +64,7 @@ void AMTD_FloatingToken::OnActivate_Implementation(APawn *Pawn)
 
 APawn *AMTD_FloatingToken::FindNewTarget() const
 {
-    return nullptr;
+    return (DetectedPawns.IsEmpty()) ? (nullptr) : (DetectedPawns[0]);
 }
 
 void AMTD_FloatingToken::OnPawnAdded(APawn *Pawn)
@@ -98,19 +84,42 @@ void AMTD_FloatingToken::OnPawnAdded(APawn *Pawn)
         
         MovementComponent->SetUpdatedComponent(GetRootComponent());
         MovementComponent->AddForce(Direction * MinimalForceTowardsTarget);
-        MovementComponent->HomingTargetComponent = Pawn->GetRootComponent();
+        SetNewTarget(Pawn);
     }
 }
 
 void AMTD_FloatingToken::OnPawnRemoved(APawn *Pawn)
 {
-    // If the actor was the homing target, select the first players from the detected players if any remained
+    // If the actor was the homing target, find a new one
     const USceneComponent *Target = MovementComponent->HomingTargetComponent.Get();
     if ((IsValid(Target)) && (Pawn == Target->GetOwner()))
     {
-        USceneComponent *NewTarget = (DetectedPawns.IsEmpty()) ? (nullptr) : (DetectedPawns[0]->GetRootComponent());
-        MovementComponent->HomingTargetComponent = NewTarget;
+        APawn *NewTarget = FindNewTarget();
+        SetNewTarget(NewTarget);
     }
+}
+
+void AMTD_FloatingToken::SetNewTarget(APawn *Pawn)
+{
+    if (bIgnoreTriggers)
+    {
+        return;
+    }
+    
+    MovementComponent->HomingTargetComponent = (IsValid(Pawn)) ? (Pawn->GetRootComponent()) : (nullptr);
+}
+
+void AMTD_FloatingToken::IgnoreTriggersFor(float Seconds)
+{
+    if (IsValid(MovementComponent->HomingTargetComponent.Get()))
+    {
+        SetNewTarget(nullptr);
+    }
+    
+    bIgnoreTriggers = true;
+    
+    FTimerHandle TimerHandle;
+    GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::OnStopIgnoreTriggers, Seconds, false);
 }
 
 void AMTD_FloatingToken::OnActivationTriggerBeginOverlap(
@@ -160,4 +169,15 @@ void AMTD_FloatingToken::OnDetectTriggerEndOverlap(
     
     DetectedPawns.Remove(Pawn);
     OnPawnRemoved(Pawn);
+}
+
+void AMTD_FloatingToken::OnStopIgnoreTriggers()
+{
+    bIgnoreTriggers = false;
+    
+    APawn *NewTarget = FindNewTarget();
+    if (IsValid(NewTarget))
+    {
+        SetNewTarget(NewTarget);
+    }
 }

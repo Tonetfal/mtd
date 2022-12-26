@@ -18,8 +18,6 @@ class MTD_API AMTD_FloatingToken : public AActor
 public:
     AMTD_FloatingToken();
 
-    virtual void Tick(float DeltaSeconds) override;
-
 protected:
     virtual void BeginPlay() override;
 
@@ -33,6 +31,10 @@ protected:
 
     virtual void OnPawnAdded(APawn *Pawn);
     virtual void OnPawnRemoved(APawn *Pawn);
+    virtual void SetNewTarget(APawn *Pawn);
+
+    UFUNCTION(BlueprintCallable, Category="MTD|Floating Token")
+    void IgnoreTriggersFor(float Seconds);
 
 private:
     UFUNCTION()
@@ -60,12 +62,17 @@ private:
         UPrimitiveComponent *OtherComp,
         int32 OtherBodyIndex);
 
+    UFUNCTION()
+    void OnStopIgnoreTriggers();
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components")
     TObjectPtr<UMTD_TokenMovementComponent> MovementComponent = nullptr;
     
     UPROPERTY()
     TArray<TObjectPtr<APawn>> DetectedPawns;
+
+    bool bIgnoreTriggers = false;
 
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
