@@ -5,7 +5,9 @@
 
 #include "MTD_ManaToken.generated.h"
 
+class UMTD_GameplayEffect;
 class UMTD_ManaComponent;
+
 UCLASS()
 class MTD_API AMTD_ManaToken : public AMTD_FloatingToken
 {
@@ -54,4 +56,7 @@ private:
     /// pool, hence listened for mana attribute changes in order to target the one who has lost some mana. After that
     /// the scan will be disabled.
     bool bScanMode = false;
+
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token")
+    TSubclassOf<UMTD_GameplayEffect> ManaModificationGameplayEffectClass = nullptr;
 };
