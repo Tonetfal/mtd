@@ -50,6 +50,10 @@
 		{
 			"Name": "CommonUI",
 			"Enabled": true
+		},
+		{
+			"Name": "ScreenFloatingText",
+			"Enabled": true
 		}
 	]
 }

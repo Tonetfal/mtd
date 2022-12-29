@@ -182,7 +182,15 @@ TArray<AMTD_ManaToken *> AMTD_ManaToken::SpawnMana(
 
         const TSubclassOf<AMTD_ManaToken> &ManaTokenClass = ManaTokensTable.FindChecked(CurrentTokenAmount);
         AMTD_ManaToken *ManaToken = SpawnManaToken(*World, SpawnTransform, ManaTokenClass);
-        SpawnedTokens.Add(ManaToken);
+        
+        if (!IsValid(ManaToken))
+        {
+            MTD_WARN("Failed to spawn a Mana Token.");
+        }
+        else
+        {
+            SpawnedTokens.Add(ManaToken);
+        }
 
         // Decrease mana amount respectivelly per each spawned mana token
         ManaAmount -= CurrentTokenAmount;
@@ -209,9 +217,18 @@ void AMTD_ManaToken::GiveStartVelocity(AMTD_ManaToken *ManaToken, const float Ba
 void AMTD_ManaToken::GiveStartVelocityToTokens(const TArray<AMTD_ManaToken *> &ManaTokens, const float BaseSpeed,
     const float MaxSpeedBonus)
 {
+    int32 Index = 0;
     for (AMTD_ManaToken *ManaToken : ManaTokens)
     {
+        if (!IsValid(ManaToken))
+        {
+            MTD_WARN("Mana token (%d) is invalid.", Index);
+            Index++;
+            continue;
+        }
+        
         GiveStartVelocity(ManaToken, BaseSpeed, MaxSpeedBonus);
+        Index++;
     }
 }
 

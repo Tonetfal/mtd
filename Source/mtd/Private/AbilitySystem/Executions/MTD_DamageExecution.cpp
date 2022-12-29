@@ -8,95 +8,45 @@
 struct FDamageStatics
 {
     FGameplayEffectAttributeCaptureDefinition HealthDef;
-    FGameplayEffectAttributeCaptureDefinition DamageBaseDef;
+    FGameplayEffectAttributeCaptureDefinition LastReceivedDamage_MetaDef;
+    FGameplayEffectAttributeCaptureDefinition BaseDamage_MetaDef;
     FGameplayEffectAttributeCaptureDefinition DamageAdditiveDef;
     FGameplayEffectAttributeCaptureDefinition DamageMultiplierDef;
     FGameplayEffectAttributeCaptureDefinition DamageStatDef;
 
     FDamageStatics()
     {
-        HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false); 
-        DamageBaseDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageBase, Source, true); 
+        HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false);
+        LastReceivedDamage_MetaDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, LastReceivedDamage_Meta, Target, false);
+        BaseDamage_MetaDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, BaseDamageToUse_Meta, Source, true); 
         DamageAdditiveDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageAdditive, Source, true); 
         DamageMultiplierDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageMultiplier, Source, true); 
         DamageStatDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, DamageStat, Source, true);
     }
 };
 
-struct FRangedDamageStatics
-{
-    FGameplayEffectAttributeCaptureDefinition HealthDef;
-    FGameplayEffectAttributeCaptureDefinition DamageRangedBaseDef;
-    FGameplayEffectAttributeCaptureDefinition DamageAdditiveDef;
-    FGameplayEffectAttributeCaptureDefinition DamageMultiplierDef;
-    FGameplayEffectAttributeCaptureDefinition DamageStatDef;
-
-    FRangedDamageStatics()
-    {
-        HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false);
-        DamageRangedBaseDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageRangedBase, Source, true);
-        DamageAdditiveDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageAdditive, Source, true);
-        DamageMultiplierDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageMultiplier, Source, true);
-        DamageStatDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, DamageStat, Source, true);
-    }
-};
-
-static FDamageStatics &BalanceDamageStatics()
+static FDamageStatics &DamageStatics()
 {
     static FDamageStatics Statics;
     return Statics;
 }
 
-static FRangedDamageStatics &RangedDamageStatics()
-{
-    static FRangedDamageStatics Statics;
-    return Statics;
-}
-
 UMTD_DamageExecution::UMTD_DamageExecution()
 {
-    RelevantAttributesToCapture.Add(BalanceDamageStatics().HealthDef);
-    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageBaseDef);
-    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageAdditiveDef);
-    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageMultiplierDef);
-    RelevantAttributesToCapture.Add(BalanceDamageStatics().DamageStatDef);
+    RelevantAttributesToCapture.Add(DamageStatics().HealthDef);
+    RelevantAttributesToCapture.Add(DamageStatics().LastReceivedDamage_MetaDef);
+    RelevantAttributesToCapture.Add(DamageStatics().BaseDamage_MetaDef);
+    RelevantAttributesToCapture.Add(DamageStatics().DamageAdditiveDef);
+    RelevantAttributesToCapture.Add(DamageStatics().DamageMultiplierDef);
+    RelevantAttributesToCapture.Add(DamageStatics().DamageStatDef);
 }
-
-static void Execute_Implementation(
-    const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &ExecOutput,
-    FGameplayEffectAttributeCaptureDefinition DamageDef);
 
 void UMTD_DamageExecution::Execute_Implementation(
-    const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const
-{
-    ::Execute_Implementation(ExecutionParams, OutExecutionOutput, BalanceDamageStatics().DamageBaseDef);
-}
-
-UMTD_RangedDamageExecution::UMTD_RangedDamageExecution()
-{
-    RelevantAttributesToCapture.Add(RangedDamageStatics().HealthDef);
-    RelevantAttributesToCapture.Add(RangedDamageStatics().DamageRangedBaseDef);
-    RelevantAttributesToCapture.Add(RangedDamageStatics().DamageAdditiveDef);
-    RelevantAttributesToCapture.Add(RangedDamageStatics().DamageMultiplierDef);
-    RelevantAttributesToCapture.Add(RangedDamageStatics().DamageStatDef);
-}
-
-void UMTD_RangedDamageExecution::Execute_Implementation(
-    const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const
-{
-    ::Execute_Implementation(ExecutionParams, OutExecutionOutput, RangedDamageStatics().DamageRangedBaseDef);
-}
-
-static void Execute_Implementation(
-    const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &ExecOutput,
-    FGameplayEffectAttributeCaptureDefinition DamageDef)
+    const FGameplayEffectCustomExecutionParameters &ExecParams,
+    FGameplayEffectCustomExecutionOutput &ExecOutput) const
 {
     const FMTD_GameplayTags Tags = FMTD_GameplayTags::Get();
-    const FGameplayEffectSpec &Spec = ExecutionParams.GetOwningSpec();
+    const FGameplayEffectSpec &Spec = ExecParams.GetOwningSpec();
 
     const FGameplayTagContainer *TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
     const FGameplayTagContainer *SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
@@ -106,22 +56,28 @@ static void Execute_Implementation(
     EvaluationParams.SourceTags = SourceTags;
 
     float DamageBase = 0.f;
-    ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageDef, EvaluationParams, DamageBase);
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        DamageStatics().BaseDamage_MetaDef, EvaluationParams, DamageBase);
 
     float DamageAdditive = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
     float DamageMultiplier = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
 
     float DamageStat = 0.f;
-    const bool bDamageStatFound = ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-        BalanceDamageStatics().DamageStatDef, EvaluationParams, DamageStat);
+    const bool bDamageStatFound = ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        DamageStatics().DamageStatDef, EvaluationParams, DamageStat);
 
     // TODO: const float DamageMultiplier = SomeSmartMathFunction(DamageStat);
     const float DamageDone =
         (DamageBase + DamageAdditive) * DamageMultiplier *
-        (bDamageStatFound ? 1.f /* the math function(DamageStat) */ : 1.f);
+        ((bDamageStatFound) ? (1.f) /* the math function(DamageStat) */ : (1.f));
 
     ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        BalanceDamageStatics().HealthDef.AttributeToCapture,
+        UMTD_CombatSet::GetLastReceivedDamage_MetaAttribute(),
+        EGameplayModOp::Override,
+        DamageDone));
+    
+    ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+        UMTD_HealthSet::GetHealthAttribute(),
         EGameplayModOp::Additive,
         -DamageDone));
 }

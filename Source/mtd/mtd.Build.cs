@@ -8,18 +8,20 @@ public class mtd : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
+			"AIModule",
 			"Core", 
 			"CoreUObject", 
 			"Engine", 
 			"InputCore",
 			"NavigationSystem",
-			"AIModule",
+			"NetCore",
+            
 			"GameplayTasks",
 			"GameplayAbilities", 
 			"GameplayTags",
+            
 			"ModularGameplay",
-			// "ModularGameplayActors",
-			"NetCore",
+            
             "CommonUI",
             "CommonUIEditor",
 		});

@@ -18,13 +18,13 @@ public:
 
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    FName Nickname;
+    FName Nickname = FName("");
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    FVector Offset;
+    FVector Offset = FVector::ZeroVector;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float Radius;
+    float Radius = 0.f;
 };
 
 UCLASS(BlueprintType)

@@ -4,21 +4,22 @@
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Executions/MTD_DamageExecution.h"
 
-FGameplayEffectExecutionScopedModifierInfo GetExecScopedModInfo(FGameplayAttribute Attribute, FGameplayTag Tag)
+FGameplayEffectExecutionScopedModifierInfo GetExecScopedModInfo(const FGameplayAttribute &Attribute,
+    const FGameplayTag &Tag, EGameplayModOp::Type ModOp, EGameplayEffectAttributeCaptureSource CaptureSource)
 {
     FGameplayEffectExecutionScopedModifierInfo ExecScopedModInfo;
     ExecScopedModInfo.AggregatorType = EGameplayEffectScopedModifierAggregatorType::Transient;
     ExecScopedModInfo.TransientAggregatorIdentifier = Tag;
 
     ExecScopedModInfo.CapturedAttribute.AttributeToCapture = Attribute;
-    ExecScopedModInfo.CapturedAttribute.AttributeSource = EGameplayEffectAttributeCaptureSource::Source;
+    ExecScopedModInfo.CapturedAttribute.AttributeSource = CaptureSource;
     ExecScopedModInfo.CapturedAttribute.bSnapshot = false;
 
-    FSetByCallerFloat DmgAddSetByCaller;
-    DmgAddSetByCaller.DataTag = Tag;
+    FSetByCallerFloat SetByCaller;
+    SetByCaller.DataTag = Tag;
 
-    ExecScopedModInfo.ModifierOp = EGameplayModOp::Additive;
-    ExecScopedModInfo.ModifierMagnitude = FGameplayEffectModifierMagnitude(DmgAddSetByCaller);
+    ExecScopedModInfo.ModifierOp = ModOp;
+    ExecScopedModInfo.ModifierMagnitude = FGameplayEffectModifierMagnitude(SetByCaller);
 
     return ExecScopedModInfo;
 }
@@ -30,15 +31,25 @@ FGameplayEffectExecutionDefinition GetDamageExecutionDefinition(
 
     FGameplayEffectExecutionDefinition ExecDef;
     ExecDef.CalculationClass = GeExecutionCalculation;
+    
+    ExecDef.CalculationModifiers.Add(GetExecScopedModInfo(
+        UMTD_CombatSet::GetBaseDamageToUse_MetaAttribute(),
+        Tags.SetByCaller_Damage_Base,
+        EGameplayModOp::Override,
+        EGameplayEffectAttributeCaptureSource::Target));
 
     ExecDef.CalculationModifiers.Add(GetExecScopedModInfo(
         UMTD_CombatSet::GetDamageAdditiveAttribute(),
-        Tags.SetByCaller_Damage_Additive));
+        Tags.SetByCaller_Damage_Additive,
+        EGameplayModOp::Additive,
+        EGameplayEffectAttributeCaptureSource::Source));
 
     ExecDef.CalculationModifiers.Add(GetExecScopedModInfo(
         UMTD_CombatSet::GetDamageMultiplierAttribute(),
-        Tags.SetByCaller_Damage_Multiplier));
-
+        Tags.SetByCaller_Damage_Multiplier,
+        EGameplayModOp::Additive,
+        EGameplayEffectAttributeCaptureSource::Source));
+    
     return ExecDef;
 }
 
@@ -47,11 +58,4 @@ UMTD_GameplayEffect_DamageInstant::UMTD_GameplayEffect_DamageInstant()
     DurationPolicy = EGameplayEffectDurationType::Instant;
 
     Executions.Add(GetDamageExecutionDefinition(UMTD_DamageExecution::StaticClass()));
-}
-
-UMTD_GameplayEffect_RangedDamageInstant::UMTD_GameplayEffect_RangedDamageInstant()
-{
-    DurationPolicy = EGameplayEffectDurationType::Instant;
-
-    Executions.Add(GetDamageExecutionDefinition(UMTD_RangedDamageExecution::StaticClass()));
 }

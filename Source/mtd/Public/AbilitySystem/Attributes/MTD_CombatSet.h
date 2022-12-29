@@ -21,6 +21,9 @@ public:
     ATTRIBUTE_ACCESSORS(UMTD_CombatSet, DamageAdditive);
     ATTRIBUTE_ACCESSORS(UMTD_CombatSet, DamageMultiplier);
 
+    ATTRIBUTE_ACCESSORS(UMTD_CombatSet, BaseDamageToUse_Meta);
+    ATTRIBUTE_ACCESSORS(UMTD_CombatSet, LastReceivedDamage_Meta);
+
 protected:
     /** Health damage that will be added on damage computing. Must be assigned only by a Melee Weapon Instance. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -37,4 +40,15 @@ protected:
     /** Value that will multiply health damage on damage computing. Must be assigned only by an Ability. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData DamageMultiplier;
+
+    /**
+     * Meta attribute. Damage value to use in calculation. Note: There are different types of damage a character may
+     * have, but only one can be used at once.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData BaseDamageToUse_Meta;
+
+    /** Meta attribute. Amount of damage dealt to owner most recently (may be updated several times per frame). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData LastReceivedDamage_Meta;
 };

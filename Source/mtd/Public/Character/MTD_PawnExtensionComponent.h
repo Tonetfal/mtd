@@ -2,13 +2,14 @@
 
 #include "mtd.h"
 #include "MTD_PawnComponent.h"
-#include "AbilitySystem/MTD_AbilityAnimationSet.h"
 
 #include "MTD_PawnExtensionComponent.generated.h"
 
 class UMTD_AbilityAnimationSet;
-class UMTD_PawnData;
 class UMTD_AbilitySystemComponent;
+class UMTD_PawnData;
+struct FGameplayTag;
+struct FMTD_AbilityAnimations;
 
 UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_PawnExtensionComponent : public UMTD_PawnComponent

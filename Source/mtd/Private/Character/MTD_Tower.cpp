@@ -115,13 +115,6 @@ void AMTD_Tower::BeginPlay()
                 MTD_WARN("ProjectileClass on ProjectileData [%s] is invalid.", *Data->ProjectileData->GetName());
                 return;
             }
-
-            if (!Data->ProjectileData->DamageGameplayEffectClass)
-            {
-                MTD_WARN("DamageGameplayEffectClass on ProjectileData [%s] is invalid.",
-                    *Data->ProjectileData->GetName());
-                return;
-            }
         }
         else
         {
@@ -391,7 +384,6 @@ void AMTD_Tower::SetupProjectileGameplayEffectClasses(AMTD_Projectile &Projectil
     Projectile.Damage = GetScaledDamage();
     Projectile.DamageMultiplier = 1.f;
 
-    Projectile.SetGameplayEffectDamageClass(ProjectileData->DamageGameplayEffectClass);
     for (const TSubclassOf<UMTD_GameplayEffect> &Ge : ProjectileData->GameplayEffectsToGrantClasses)
     {
         Projectile.AddGameplayEffectClassToGrantOnHit(Ge);

@@ -34,7 +34,7 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 
     AddTag(Gameplay_Ability_Attack_Melee, "Gameplay.Ability.Attack.Melee", "Melee attack ability.");
     AddTag(Gameplay_Ability_Attack_Ranged, "Gameplay.Ability.Attack.Ranged", "Ranged attack ability.");
-    AddTag(Gameplay_Ability_Death, "Gameplay.Ability.Death", "Melee attack ability.");
+    AddTag(Gameplay_Ability_Death, "Gameplay.Ability.Death", "Death ability.");
     AddTag(Gameplay_Ability_Knockback, "Gameplay.Ability.Knockback", "Knockback ability.");
 
     AddTag(InputTag_Attack, "InputTag.Attack", "Attack input.");

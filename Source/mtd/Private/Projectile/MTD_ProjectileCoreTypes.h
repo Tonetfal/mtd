@@ -38,10 +38,6 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     FMTD_ProjectileParameters ProjectileParameters;
 
-    /** Damage gameplay effect to apply on projectile hit. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-    TSubclassOf<UMTD_GameplayEffect> DamageGameplayEffectClass = nullptr;
-
     /** Gameplay effect classes to grant on projectile hit. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     TArray<TSubclassOf<UMTD_GameplayEffect>> GameplayEffectsToGrantClasses;
