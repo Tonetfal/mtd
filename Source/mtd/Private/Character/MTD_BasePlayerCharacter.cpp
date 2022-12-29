@@ -84,7 +84,7 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     Asc->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Type::Override, 0.f);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceDamageAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override, Value);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceResistAttributeName, Level, Value);
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, Value);

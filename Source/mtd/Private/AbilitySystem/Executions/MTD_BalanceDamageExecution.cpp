@@ -5,13 +5,15 @@
 
 struct FBalanceStatics
 {
-    FGameplayEffectAttributeCaptureDefinition TargetLastReceivedDamage;
-    FGameplayEffectAttributeCaptureDefinition SourceBalanceDamage;
+    FGameplayEffectAttributeCaptureDefinition TargetLastReceivedDamage_MetaDef;
+    FGameplayEffectAttributeCaptureDefinition TargetResistDef;
+    FGameplayEffectAttributeCaptureDefinition SourceBalanceDamageDef;
 
     FBalanceStatics()
     {
-        TargetLastReceivedDamage = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, LastReceivedDamage, Target, false);
-        SourceBalanceDamage = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, BaseDamage, Source, true);
+        TargetLastReceivedDamage_MetaDef = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, LastReceivedBalanceDamage_Meta, Target, false);
+        TargetResistDef = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, Resist, Target, true);
+        SourceBalanceDamageDef = CAPTURE_ATTRIBUTE(UMTD_BalanceSet, Damage, Source, true);
     }
 };
 
@@ -23,16 +25,17 @@ static FBalanceStatics &BalanceStatics()
 
 UMTD_BalanceDamageExecution::UMTD_BalanceDamageExecution()
 {
-    RelevantAttributesToCapture.Add(BalanceStatics().TargetLastReceivedDamage);
-    RelevantAttributesToCapture.Add(BalanceStatics().SourceBalanceDamage);
+    RelevantAttributesToCapture.Add(BalanceStatics().TargetLastReceivedDamage_MetaDef);
+    RelevantAttributesToCapture.Add(BalanceStatics().TargetResistDef);
+    RelevantAttributesToCapture.Add(BalanceStatics().SourceBalanceDamageDef);
 }
 
 void UMTD_BalanceDamageExecution::Execute_Implementation(
-    const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-    FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const
+    const FGameplayEffectCustomExecutionParameters &ExecParams,
+    FGameplayEffectCustomExecutionOutput &ExecOutput) const
 {
     const FMTD_GameplayTags Tags = FMTD_GameplayTags::Get();
-    const FGameplayEffectSpec &Spec = ExecutionParams.GetOwningSpec();
+    const FGameplayEffectSpec &Spec = ExecParams.GetOwningSpec();
 
     const FGameplayTagContainer *TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
     const FGameplayTagContainer *SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
@@ -42,11 +45,18 @@ void UMTD_BalanceDamageExecution::Execute_Implementation(
     EvaluationParams.SourceTags = SourceTags;
 
     float Damage = 0.f;
-    ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-        BalanceStatics().SourceBalanceDamage, EvaluationParams, Damage);
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        BalanceStatics().SourceBalanceDamageDef, EvaluationParams, Damage);
 
-   OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        BalanceStatics().TargetLastReceivedDamage.AttributeToCapture,
-        EGameplayModOp::Override,
-        Damage));
+    float Resist = 0.f;
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        BalanceStatics().TargetResistDef, EvaluationParams, Resist);
+
+    const float IgnoredDamage = (Damage / 100.f) * Resist;
+    Damage -= IgnoredDamage;
+    
+    ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+         UMTD_BalanceSet::GetLastReceivedBalanceDamage_MetaAttribute(),
+         EGameplayModOp::Override,
+         Damage));
 }

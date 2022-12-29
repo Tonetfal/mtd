@@ -68,9 +68,9 @@ void UMTD_BalanceComponent::OnBalanceDown(
     auto HitData = NewObject<UMTD_BalanceHitData>();
     HitData->BalanceDamage = DamageMagnitude;
     HitData->KnockbackDirection = {
-        BalanceSet->GetKnockbackDirectionX(),
-        BalanceSet->GetKnockbackDirectionY(),
-        BalanceSet->GetKnockbackDirectionZ()
+        BalanceSet->GetKnockbackDirectionX_Meta(),
+        BalanceSet->GetKnockbackDirectionY_Meta(),
+        BalanceSet->GetKnockbackDirectionZ_Meta()
     };
 
     // Send the "Gameplay.Event.Knockback" gameplay event through the owner's

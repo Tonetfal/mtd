@@ -25,7 +25,7 @@ void UMTD_WeaponInstance::ModStats(float Multiplier)
 
     Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(),
         EGameplayModOp::Additive, WeaponStats.BaseDamage * Multiplier);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(),
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(),
         EGameplayModOp::Override, WeaponStats.BalanceDamage);
 }
 

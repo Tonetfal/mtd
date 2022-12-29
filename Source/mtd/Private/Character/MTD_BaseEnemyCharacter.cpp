@@ -110,7 +110,7 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
     // Value *= EnemyData->Speed;
     // ...
 
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(), EGameplayModOp::Type::Override,
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override,
         EnemyData->BalanceDamage);
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetThresholdAttribute(), EGameplayModOp::Type::Override,
         EnemyData->BalanceThreshold);

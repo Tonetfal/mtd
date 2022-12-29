@@ -14,13 +14,15 @@ class MTD_API UMTD_BalanceSet : public UMTD_AttributeSet
     GENERATED_BODY()
 
 public:
-    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, LastReceivedDamage);
+    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, Damage);
     ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, Threshold);
-    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, BaseDamage);
     ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, Resist);
-    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionX);
-    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionY);
-    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionZ);
+    
+    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, LastReceivedBalanceDamage_Meta);
+    
+    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionX_Meta);
+    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionY_Meta);
+    ATTRIBUTE_ACCESSORS(UMTD_BalanceSet, KnockbackDirectionZ_Meta);
 
 protected:
     virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData &Data) override;
@@ -29,31 +31,31 @@ public:
     mutable FAttributeEventSignature OnBalanceDownDelegate;
 
 protected:
-    /** Amount of last received balance damage. */
+    /** Amount of damage dealt with a hit. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayAttributeData LastReceivedDamage;
-
+    FGameplayAttributeData Damage;
+    
     /** Resistable amount of damage balance. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData Threshold;
-
-    /** Amount of damage dealt with a hit. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayAttributeData BaseDamage;
 
     /** Percentage of how much damage is ignored. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData Resist;
 
-    /** X component of knockback direction normal vector. */
+    /** Meta attribute. Amount of last received balance damage. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayAttributeData KnockbackDirectionX;
+    FGameplayAttributeData LastReceivedBalanceDamage_Meta;
 
-    /** Y component of knockback direction normal vector. */
+    /** Meta attribute. X component of knockback direction normal vector. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayAttributeData KnockbackDirectionY;
+    FGameplayAttributeData KnockbackDirectionX_Meta;
 
-    /** Z component of knockback direction normal vector. */
+    /** Meta attribute. Y component of knockback direction normal vector. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FGameplayAttributeData KnockbackDirectionZ;
+    FGameplayAttributeData KnockbackDirectionY_Meta;
+
+    /** Meta attribute. Z component of knockback direction normal vector. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData KnockbackDirectionZ_Meta;
 };

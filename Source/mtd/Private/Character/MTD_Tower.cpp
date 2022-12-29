@@ -258,7 +258,7 @@ void AMTD_Tower::InitializeAttributes()
     EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, Level, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetBaseDamageAttribute(), EGameplayModOp::Type::Override, BalanceDamage);
+    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override, BalanceDamage);
 
     // Tower ignore any balance damage
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, 100.f);

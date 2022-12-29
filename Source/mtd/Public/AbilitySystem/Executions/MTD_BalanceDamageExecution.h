@@ -17,6 +17,6 @@ public:
     UMTD_BalanceDamageExecution();
 
     virtual void Execute_Implementation(
-        const FGameplayEffectCustomExecutionParameters &ExecutionParams,
-        FGameplayEffectCustomExecutionOutput &OutExecutionOutput) const override;
+        const FGameplayEffectCustomExecutionParameters &ExecParams,
+        FGameplayEffectCustomExecutionOutput &ExecOutput) const override;
 };
