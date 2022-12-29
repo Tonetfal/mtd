@@ -201,15 +201,19 @@ TArray<AMTD_ManaToken *> AMTD_ManaToken::SpawnMana(
 
 void AMTD_ManaToken::GiveStartVelocity(AMTD_ManaToken *ManaToken, const float BaseSpeed, const float MaxSpeedBonus)
 {
+    // The method presumes that the velocity is 0, and the starting force is going to be just ours, hence nullify
+    // anything applied previously
+    ManaToken->MovementComponent->ClearPendingForce();
+    
     const FVector Direction = FVector(
         FMath::RandRange(-1.f, 1.f),
         FMath::RandRange(-1.f, 1.f),
-        FMath::RandRange(0.5f, 1.f)).GetUnsafeNormal();
-    
+        FMath::RandRange(0.2f, 0.5f)).GetUnsafeNormal();
+
     const float BonusRatio = FMath::FRand();
     const float SpeedBonus = BonusRatio * MaxSpeedBonus;
     const float Speed = BaseSpeed + SpeedBonus;
-    
+
     const FVector Force = Direction * Speed;
     ManaToken->MovementComponent->AddForce(Force);
 }
