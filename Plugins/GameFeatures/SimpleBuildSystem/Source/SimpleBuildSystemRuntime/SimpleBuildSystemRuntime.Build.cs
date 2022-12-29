@@ -31,10 +31,9 @@ public class SimpleBuildSystemRuntime : ModuleRules
 		{
 			"CoreUObject",
 			"Engine",
-			"Slate",
-			"SlateCore",
+			
 			"ModularGameplay", 
-			"EnhancedInput"
+			"EnhancedInput",
 			// ... add private dependencies that you statically link with here ...	
 		});
 		

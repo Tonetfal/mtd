@@ -2,8 +2,8 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "SBS",
-	"Description": "Simple Build System",
+	"FriendlyName": "Simple Build System",
+	"Description": "Simple Build System.",
 	"Category": "Game Features",
 	"CreatedBy": "JekiTheMonkey",
 	"CreatedByURL": "",
@@ -22,6 +22,16 @@
 			"LoadingPhase": "Default"
 		}
 	],
+    "Plugins": [
+        {
+            "Name": "EnhancedInput",
+            "Enabled": true
+        },
+        {
+            "Name": "ModularGameplay",
+            "Enabled": true
+        }
+    ],
 	"ExplicitlyLoaded": true,
 	"BuiltInInitialFeatureState": "Active"
 }

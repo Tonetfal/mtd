@@ -75,7 +75,7 @@ public:
  * - Building
  * - Finilizing the result.
  */
-UCLASS(meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup="Player", meta=(BlueprintSpawnableComponent))
 class SIMPLEBUILDSYSTEMRUNTIME_API USBS_BuildComponent : public UPawnComponent
 {
     GENERATED_BODY()
