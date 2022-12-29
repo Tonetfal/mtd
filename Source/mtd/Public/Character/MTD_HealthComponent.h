@@ -19,7 +19,7 @@ enum class EMTD_DeathState : uint8
     DeathFinished
 };
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Character", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_HealthComponent : public UActorComponent
 {
     GENERATED_BODY()

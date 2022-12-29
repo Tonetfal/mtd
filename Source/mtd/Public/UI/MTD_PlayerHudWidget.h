@@ -8,18 +8,6 @@
 
 class UMTD_HealthComponent;
 
-USTRUCT(BlueprintType)
-struct FMTD_TraceData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite)
-    TEnumAsByte<ETeamAttitude::Type> AttitudeTowardsHittingObject;
-
-    UPROPERTY(BlueprintReadWrite)
-    float HitDistanceRatio;
-};
-
 UCLASS()
 class MTD_API UMTD_PlayerHudWidget : public UUserWidget
 {

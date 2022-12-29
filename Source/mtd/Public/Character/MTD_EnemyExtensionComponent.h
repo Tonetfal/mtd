@@ -7,7 +7,7 @@
 
 class UMTD_EnemyData;
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_EnemyExtensionComponent : public UMTD_PawnComponent
 {
     GENERATED_BODY()

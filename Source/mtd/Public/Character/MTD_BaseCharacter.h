@@ -10,10 +10,10 @@
 
 #include "MTD_BaseCharacter.generated.h"
 
-class UMTD_EquipmentManagerComponent;
 class AMTD_PlayerState;
 class UMTD_AbilitySystemComponent;
 class UMTD_BalanceComponent;
+class UMTD_EquipmentManagerComponent;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_ManaComponent;

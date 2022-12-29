@@ -7,7 +7,7 @@
 class UMTD_EquipmentInstance;
 class UMTD_EquipmentDefinition;
 
-UCLASS(BlueprintType, Const, meta=(BlueprintSpawnableComponent))
+UCLASS(BlueprintType, Const, ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
 class UMTD_EquipmentManagerComponent : public UPawnComponent
 {
     GENERATED_BODY()

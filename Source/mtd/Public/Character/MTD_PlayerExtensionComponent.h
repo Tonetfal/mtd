@@ -7,7 +7,7 @@
 
 class UMTD_PlayerData;
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Player", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_PlayerExtensionComponent : public UMTD_PawnComponent
 {
     GENERATED_BODY()

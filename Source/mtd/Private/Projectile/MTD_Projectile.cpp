@@ -21,6 +21,8 @@ AMTD_Projectile::AMTD_Projectile()
     CollisionComponent->SetEnableGravity(false);
     CollisionComponent->SetCanEverAffectNavigation(false);
 
+    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+
     MovementComponent = CreateDefaultSubobject<UMTD_ProjectileMovementComponent>(TEXT("Movement Component"));
     MovementComponent->SetUpdatedComponent(GetRootComponent());
 }
@@ -47,8 +49,6 @@ void AMTD_Projectile::BeginPlay()
 
     check(MovementComponent);
     check(CollisionComponent);
-
-    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
 
     FTimerHandle SelfDestroyTimerHandle;
     GetWorldTimerManager().SetTimer(SelfDestroyTimerHandle, this, &ThisClass::OnSelfDestroy, SecondsToSelfDestroy);

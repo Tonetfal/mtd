@@ -6,7 +6,7 @@
 
 #include "MTD_TeamComponent.generated.h"
 
-UCLASS(meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_TeamComponent : public UActorComponent, public IGenericTeamAgentInterface
 {
     GENERATED_BODY()

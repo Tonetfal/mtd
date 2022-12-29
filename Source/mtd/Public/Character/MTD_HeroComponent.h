@@ -13,7 +13,7 @@ class UMTD_PawnData;
 struct FInputActionValue;
 struct FGameplayTag;
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Character", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_HeroComponent : public UMTD_PawnComponent
 {
     GENERATED_BODY()

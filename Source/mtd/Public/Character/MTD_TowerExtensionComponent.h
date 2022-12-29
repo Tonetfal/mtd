@@ -7,7 +7,7 @@
 
 class UMTD_TowerData;
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Tower", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_TowerExtensionComponent : public UMTD_PawnComponent
 {
     GENERATED_BODY()

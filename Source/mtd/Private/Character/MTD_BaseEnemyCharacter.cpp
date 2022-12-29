@@ -128,6 +128,13 @@ void AMTD_BaseEnemyCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
     DisableCollisions();
 }
 
+void AMTD_BaseEnemyCharacter::OnDeathFinished_Implementation(AActor *OwningActor)
+{
+    // Don't call the default implementation
+
+    GetEquipmentManagerComponent()->UnequipItem();
+}
+
 void AMTD_BaseEnemyCharacter::EquipDefaultWeapon()
 {
     if (!IsValid(DefaultWeaponDefinitionClass))
@@ -313,7 +320,7 @@ void AMTD_BaseEnemyCharacter::OnHealthChanged_Implementation(UMTD_HealthComponen
         if (IsValid(GameTarget))
         {
             const AActor *CheapiestActor = nullptr;
-            CheapiestActor = GetCheapiestActor(Target, GameTarget);
+            CheapiestActor = GetCheapiestActor(InstigatorPawn, GameTarget);
 
             // GameTarget is implicit; if there is no target, the AI will go towards GameTarget
             FinalTarget = (CheapiestActor == GameTarget) ? (nullptr) : (Target);
@@ -321,13 +328,6 @@ void AMTD_BaseEnemyCharacter::OnHealthChanged_Implementation(UMTD_HealthComponen
     }
 
     SetNewTarget(FinalTarget);
-}
-
-void AMTD_BaseEnemyCharacter::OnDeathFinished_Implementation(AActor *OwningActor)
-{
-    // Don't call the default implementation
-
-    GetEquipmentManagerComponent()->UnequipItem();
 }
 
 void AMTD_BaseEnemyCharacter::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
@@ -352,6 +352,11 @@ void AMTD_BaseEnemyCharacter::OnSightSphereBeginOverlap(
     bool bFromSweep,
     const FHitResult &SweepResult)
 {
+    if (GetHealthComponent()->IsDeadOrDying())
+    {
+        return;
+    }
+    
     auto Pawn = CastChecked<APawn>(OtherActor);
     DetectedTargets.Add(Pawn);
 
@@ -367,6 +372,11 @@ void AMTD_BaseEnemyCharacter::OnLoseSightSphereEndOverlap(
     UPrimitiveComponent *OtherComp,
     int32 OtherBodyIndex)
 {
+    if (GetHealthComponent()->IsDeadOrDying())
+    {
+        return;
+    }
+    
     auto Pawn = CastChecked<APawn>(OtherActor);
     DetectedTargets.Remove(Pawn);
 
@@ -385,6 +395,11 @@ void AMTD_BaseEnemyCharacter::OnAttackTriggerBeginOverlap(
     bool bFromSweep,
     const FHitResult &SweepResult)
 {
+    if (GetHealthComponent()->IsDeadOrDying())
+    {
+        return;
+    }
+    
     auto Pawn = CastChecked<APawn>(OtherActor);
     const int32 Index = AttackTargets.Add(Pawn);
 
@@ -400,6 +415,11 @@ void AMTD_BaseEnemyCharacter::OnAttackTriggerEndOverlap(
     UPrimitiveComponent *OtherComp,
     int32 OtherBodyIndex)
 {
+    if (GetHealthComponent()->IsDeadOrDying())
+    {
+        return;
+    }
+    
     auto Pawn = CastChecked<APawn>(OtherActor);
     AttackTargets.Remove(Pawn);
 

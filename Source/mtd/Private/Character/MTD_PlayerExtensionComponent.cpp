@@ -1,6 +1,5 @@
 #include "Character/MTD_PlayerExtensionComponent.h"
 
-#include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
 
@@ -36,7 +35,8 @@ void UMTD_PlayerExtensionComponent::OnRegister()
     const auto Player = GetPawnChecked<AMTD_BasePlayerCharacter>();
     if (!IsValid(Player))
     {
-        MTDS_ERROR("MTD_PlayerExtensionComponent on [%s] can only be added to Player actors.", *GetNameSafe(GetOwner()));
+        MTDS_ERROR("MTD_PlayerExtensionComponent on [%s] can only be added to Player actors.",
+            *GetNameSafe(GetOuter()));
         return;
     }
 
@@ -44,6 +44,6 @@ void UMTD_PlayerExtensionComponent::OnRegister()
     Player->GetComponents(StaticClass(), PlayerExtensionComponents);
     if (PlayerExtensionComponents.Num() != 1)
     {
-        MTDS_ERROR("Only one MTD_PlayerExtensionComponent should exist on [%s].", *GetNameSafe(GetOwner()));
+        MTDS_ERROR("Only one MTD_PlayerExtensionComponent should exist on [%s].", *GetNameSafe(GetOuter()));
     }
 }

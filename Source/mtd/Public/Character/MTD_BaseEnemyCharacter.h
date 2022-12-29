@@ -33,6 +33,7 @@ protected:
     //~AMTD_BaseCharacter Interface
     virtual void InitializeAttributes() override;
     virtual void OnDeathStarted_Implementation(AActor *OwningActor) override;
+    virtual void OnDeathFinished_Implementation(AActor *OwningActor) override;
     //~End of AMTD_BaseCharacter Interface
 
     UFUNCTION(BlueprintNativeEvent)
@@ -40,7 +41,6 @@ protected:
     virtual void OnHealthChanged_Implementation(
         UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
 
-    virtual void OnDeathFinished_Implementation(AActor *OwningActor) override;
     
     //~IMTD_GameResultInterface Interface
     virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;

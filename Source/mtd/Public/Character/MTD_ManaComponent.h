@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
     float, NewValue,
     AActor*, Instigator);
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Character", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_ManaComponent : public UMTD_PawnComponent
 {
     GENERATED_BODY()

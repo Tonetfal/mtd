@@ -1,5 +1,6 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 
+#include "AbilitySystem/MTD_AbilityAnimationSet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_CharacterCoreTypes.h"
 
@@ -12,13 +13,6 @@ UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
 {
     check(InPawnData);
-
-    auto Pawn = GetPawnChecked<APawn>();
-
-    if (Pawn->GetLocalRole() != ROLE_Authority)
-    {
-        return;
-    }
 
     if (IsValid(PawnData))
     {

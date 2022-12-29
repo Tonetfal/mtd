@@ -20,7 +20,7 @@ public:
 };
 
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_PawnComponent : public UPawnComponent, public IMTD_ReadyInterface
 {
     GENERATED_BODY()

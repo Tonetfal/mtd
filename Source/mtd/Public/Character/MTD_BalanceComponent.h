@@ -23,7 +23,7 @@ public:
     FVector KnockbackDirection = FVector::ZeroVector;
 };
 
-UCLASS(Blueprintable, meta=(BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
 class MTD_API UMTD_BalanceComponent : public UActorComponent
 {
     GENERATED_BODY()
