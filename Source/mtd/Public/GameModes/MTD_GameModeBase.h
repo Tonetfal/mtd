@@ -22,6 +22,9 @@ class MTD_API AMTD_GameModeBase : public AGameModeBase
 public:
     AMTD_GameModeBase();
 
+    UFUNCTION(Exec)
+    void AddExp(int32 Exp, int32 PlayerIndex = 0);
+
 protected:
     virtual void BeginPlay() override;
     virtual void StartPlay() override;

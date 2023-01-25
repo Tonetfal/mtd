@@ -17,7 +17,7 @@ void UMTD_ManaComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent
 
     if (AbilitySystemComponent)
     {
-        MTDS_ERROR("Mana component for owner [%s] has already been initilized with an ability system",
+        MTDS_ERROR("Mana Component for Owner [%s] has already been initilized with an ability system.",
             *Owner->GetName());
         return;
     }
@@ -25,14 +25,14 @@ void UMTD_ManaComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent
     AbilitySystemComponent = Asc;
     if (!AbilitySystemComponent)
     {
-        MTDS_ERROR("Cannot initilize health component for owner [%s] with a NULL ability system", *Owner->GetName());
+        MTDS_ERROR("Cannot initilize Mana Component for Owner [%s] with a NULL ability system.", *Owner->GetName());
         return;
     }
 
     ManaSet = AbilitySystemComponent->GetSet<UMTD_ManaSet>();
     if (!ManaSet)
     {
-        MTDS_ERROR("Cannot initialize health component with NULL combat set on the ability system");
+        MTDS_ERROR("Cannot initialize Mana Component with NULL mana set on the ability system.");
         return;
     }
 

@@ -5,6 +5,7 @@
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
+#include "Character/MTD_LevelComponent.h"
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "Inventory/MTD_InventoryManagerComponent.h"
 #include "Player/MTD_PlayerController.h"
@@ -17,6 +18,11 @@ AMTD_PlayerState::AMTD_PlayerState()
     AbilitySystemComponent = CreateDefaultSubobject<UMTD_AbilitySystemComponent>("MTD Ability System Component");
     EquipmentManagerComponent = CreateDefaultSubobject<UMTD_EquipmentManagerComponent>("MTD Equipment Component");
     InventoryManagerComponent = CreateDefaultSubobject<UMTD_InventoryManagerComponent>("MTD Inventory Manager Component");
+
+    if (!IsABot())
+    {
+        LevelComponent = CreateDefaultSubobject<UMTD_LevelComponent>("MTD Level Component");
+    }
 
     CreateDefaultSubobject<UMTD_HealthSet>("HealthSet");
     CreateDefaultSubobject<UMTD_ManaSet>("ManaSet");
@@ -75,4 +81,15 @@ void AMTD_PlayerState::PostInitializeComponents()
 
     check(AbilitySystemComponent);
     AbilitySystemComponent->InitAbilityActorInfo(this, GetPawn());
+
+    if (!IsABot())
+    {
+        // Initialize LevelComponent the next tick because it makes use of PlayerSet that is assigned a little bit later
+        GetWorldTimerManager().SetTimerForNextTick(
+            [this]()
+            {
+                LevelComponent->InitializeWithAbilitySystem(AbilitySystemComponent);
+            }
+        );
+    }
 }

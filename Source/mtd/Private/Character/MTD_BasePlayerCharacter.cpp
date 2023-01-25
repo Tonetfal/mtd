@@ -123,8 +123,11 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
 
     // @todo Get from an actual source
     const float Level = 1.f;
-
     Asc->ApplyModToAttribute(UMTD_PlayerSet::GetLevelStatAttribute(), EGameplayModOp::Type::Override, Level);
+
+    // @todo Load from save file
+    const float Experience = 0.f;
+    Asc->ApplyModToAttribute(UMTD_PlayerSet::GetExperienceStatAttribute(), EGameplayModOp::Type::Override, Experience);
 
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, Level, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);

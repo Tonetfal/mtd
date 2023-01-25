@@ -1,17 +1,31 @@
 ﻿#include "System/MTD_GameInstance.h"
 
+#include "Engine/CurveTable.h"
 #include "Engine/DataTable.h"
 #include "Inventory/Items/MTD_ArmorItemData.h"
 #include "Inventory/Items/MTD_MaterialItemData.h"
 #include "Inventory/Items/MTD_WeaponItemData.h"
+#include "MTD_CoreTypes.h"
 
 void UMTD_GameInstance::Init()
 {
     Super::Init();
+    FGenericTeamId::SetAttitudeSolver(&SolveTeamAttitude);
 
+    VerifyBaseItemDataTable();
     VerifyArmorDataTable();
     VerifyWeaponDataTable();
     VerifyMaterialDataTable();
+    VerifyLevelCurveTable();
+}
+
+void UMTD_GameInstance::VerifyBaseItemDataTable() const
+{
+    if (!IsValid(BaseItemDataTable))
+    {
+        MTDS_WARN("Base Item Data Table is invalid.");
+        return;
+    }
 }
 
 void UMTD_GameInstance::VerifyArmorDataTable() const
@@ -48,7 +62,7 @@ void UMTD_GameInstance::VerifyWeaponDataTable() const
     const TMap<FName, uint8*> &DataTable = WeaponDataTable->GetRowMap();
     for (auto [Name, Pointer] : DataTable)
     {
-        const auto WeaponItemDataRow = (FMTD_WeaponItemDataRow*) (Pointer);
+        const auto WeaponItemDataRow = reinterpret_cast<FMTD_WeaponItemDataRow *>(Pointer);
         if (WeaponItemDataRow)
         {
             if (WeaponItemDataRow->HeroClasses.IsEmpty())
@@ -70,7 +84,7 @@ void UMTD_GameInstance::VerifyMaterialDataTable() const
     const TMap<FName, uint8*> &DataTable = MaterialDataTable->GetRowMap();
     for (auto [Name, Pointer] : DataTable)
     {
-        const auto MaterialItemDataRow = (FMTD_MaterialItemDataRow*) (Pointer);
+        const auto MaterialItemDataRow = reinterpret_cast<FMTD_MaterialItemDataRow *>(Pointer);
         if (MaterialItemDataRow)
         {
             if (MaterialItemDataRow->MaxAmount < 1)
@@ -78,5 +92,14 @@ void UMTD_GameInstance::VerifyMaterialDataTable() const
                 MTDS_WARN("Material Item Data [%s] is not a positive number.", *Name.ToString());
             }
         }
+    }
+}
+
+void UMTD_GameInstance::VerifyLevelCurveTable() const
+{
+    if (!IsValid(LevelExperienceCurveTable))
+    {
+        MTDS_WARN("Level Curve Table is invalid.");
+        return;
     }
 }

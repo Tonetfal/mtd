@@ -1,17 +1,37 @@
 #include "GameModes/MTD_GameModeBase.h"
 
-#include "MTD_CoreTypes.h"
+#include "Character/MTD_LevelComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/MTD_PlayerState.h"
 
 AMTD_GameModeBase::AMTD_GameModeBase()
 {
 }
 
+void AMTD_GameModeBase::AddExp(int32 Exp, int32 PlayerIndex)
+{
+    const APlayerController *PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), PlayerIndex);
+    if (!IsValid(PlayerController))
+    {
+        MTDS_WARN("There is no Player Controller at Index [%d].", PlayerIndex);
+        return;
+    }
+    
+    const auto Ps = PlayerController->GetPlayerState<AMTD_PlayerState>();
+    if (!IsValid(Ps))
+    {
+        MTDS_WARN("MTD Player State on [%s] is invalid.", *PlayerController->GetName());
+        return;
+    }
+    
+    UMTD_LevelComponent *LevelComponent = Ps->GetLevelComponent();
+    check(LevelComponent);
+    LevelComponent->AddExp(Exp);
+}
+
 void AMTD_GameModeBase::BeginPlay()
 {
     Super::BeginPlay();
-
-    FGenericTeamId::SetAttitudeSolver(&SolveTeamAttitude);
 }
 
 void AMTD_GameModeBase::StartPlay()
