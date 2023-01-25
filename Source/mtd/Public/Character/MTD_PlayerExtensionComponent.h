@@ -15,7 +15,7 @@ class MTD_API UMTD_PlayerExtensionComponent : public UMTD_PawnComponent
 public:
     UMTD_PlayerExtensionComponent();
 
-    UFUNCTION(BlueprintPure, Category="MTD|Pawn")
+    UFUNCTION(BlueprintPure, Category="MTD|Player")
     static UMTD_PlayerExtensionComponent *FindPlayerExtensionComponent(const AActor *Actor);
 
     void SetPlayerData(const UMTD_PlayerData *InPlayerData);
@@ -36,7 +36,7 @@ private:
 
 inline UMTD_PlayerExtensionComponent *UMTD_PlayerExtensionComponent::FindPlayerExtensionComponent(const AActor *Actor)
 {
-    return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_PlayerExtensionComponent>()) : (nullptr);
+    return ((IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_PlayerExtensionComponent>()) : (nullptr));
 }
 
 template <class T>

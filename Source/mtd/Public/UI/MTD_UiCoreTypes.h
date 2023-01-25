@@ -1,10 +1,9 @@
 ﻿#pragma once
 
+#include "GameplayTagContainer.h"
 #include "mtd.h"
 
 #include "MTD_UiCoreTypes.generated.h"
-
-struct FGameplayTag;
 
 /**
  * Asset describing a single ability UI properties.

@@ -7,11 +7,14 @@
 
 #include "MTD_PlayerController.generated.h"
 
+class AMTD_BasePlayerCharacter;
 class AMTD_PlayerState;
 class UMTD_AbilitySystemComponent;
 
 UCLASS()
-class MTD_API AMTD_PlayerController : public APlayerController, public IGenericTeamAgentInterface
+class MTD_API AMTD_PlayerController
+    : public APlayerController
+    , public IGenericTeamAgentInterface
 {
     GENERATED_BODY()
 
@@ -23,6 +26,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="MTD|Player Controller")
     AMTD_PlayerState *GetMtdPlayerState() const;
+    
+    UFUNCTION(BlueprintCallable, Category="MTD|Player Controller")
+    AMTD_BasePlayerCharacter *GetMtdPlayerCharacter() const;
 
     virtual void AddYawInput(float Val) override;
 

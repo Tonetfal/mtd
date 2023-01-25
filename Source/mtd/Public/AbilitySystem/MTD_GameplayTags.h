@@ -28,6 +28,8 @@ public:
     FGameplayTag Ability_ActivateFail_ActivationGroup;
 
     FGameplayTag Gameplay_Ability_Behavior_SurvivesDeath;
+    
+    FGameplayTag Gameplay_Hero_All;
 
     FGameplayTag Gameplay_Ability_Attack_Melee;
     FGameplayTag Gameplay_Ability_Attack_Ranged;

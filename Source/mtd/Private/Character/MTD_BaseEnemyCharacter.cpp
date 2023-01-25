@@ -15,7 +15,10 @@
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
+#include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 #include "Kismet/DataTableFunctionLibrary.h"
+#include "Player/MTD_PlayerState.h"
+#include "System/MTD_Tags.h"
 #include "Utility/MTD_Utility.h"
 
 AMTD_BaseEnemyCharacter::AMTD_BaseEnemyCharacter()
@@ -58,6 +61,8 @@ AMTD_BaseEnemyCharacter::AMTD_BaseEnemyCharacter()
 
     AttackTrigger->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnAttackTriggerBeginOverlap);
     AttackTrigger->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnAttackTriggerEndOverlap);
+
+    Tags.Add(FMTD_Tags::Enemy);
 }
 
 void AMTD_BaseEnemyCharacter::BeginPlay()
@@ -132,19 +137,48 @@ void AMTD_BaseEnemyCharacter::OnDeathFinished_Implementation(AActor *OwningActor
 {
     // Don't call the default implementation
 
-    GetEquipmentManagerComponent()->UnequipItem();
+    AMTD_PlayerState *MtdPs = GetMtdPlayerState();
+    if (!IsValid(MtdPs))
+    {
+        MTDS_WARN("MTD Player State is invalid.");
+        return;
+    }
+    
+    UMTD_EquipmentManagerComponent *EquipManager = MtdPs->GetEquipmentManagerComponent();
+    if (!IsValid(EquipManager))
+    {
+        MTDS_WARN("Equipment Manager Component is invalid.");
+        return;
+    }
+    
+    EquipManager->UnequipAll();
 }
 
 void AMTD_BaseEnemyCharacter::EquipDefaultWeapon()
 {
-    if (!IsValid(DefaultWeaponDefinitionClass))
+    UMTD_BaseInventoryItemData *ItemData = UMTD_InventoryBlueprintFunctionLibrary::CreateBaseInventoryItemData(
+        this, DefaultWeaponID);
+    if (!IsValid(ItemData))
     {
-        MTDS_WARN("Default Weapon Definition Class is not set. Enemy [%s] will have no weapon.", *GetName());
+        MTDS_WARN("Failed to create a default weapon on [%s].", *GetName());
         return;
     }
-
-    UMTD_EquipmentManagerComponent *EquipManager = GetEquipmentManagerComponent();
-    EquipManager->EquipItem(DefaultWeaponDefinitionClass);
+    
+    AMTD_PlayerState *MtdPs = GetMtdPlayerState();
+    if (!IsValid(MtdPs))
+    {
+        MTDS_WARN("MTD Player State is invalid.");
+        return;
+    }
+    
+    UMTD_EquipmentManagerComponent *EquipManager = MtdPs->GetEquipmentManagerComponent();
+    if (!IsValid(EquipManager))
+    {
+        MTDS_WARN("Equipment Manager Component is invalid.");
+        return;
+    }
+    
+    EquipManager->EquipItem(ItemData);
 }
 
 void AMTD_BaseEnemyCharacter::SetNewTarget(APawn *Pawn)

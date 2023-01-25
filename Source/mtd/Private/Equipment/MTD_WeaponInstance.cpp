@@ -1,61 +1,60 @@
 #include "Equipment/MTD_WeaponInstance.h"
 
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Attributes/MTD_BalanceSet.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
+#include "Engine/StaticMeshSocket.h"
+#include "Inventory/Items/MTD_WeaponItemData.h"
+#include "Utility/MTD_Utility.h"
 
-void UMTD_WeaponInstance::ModStats(float Multiplier)
+void UMTD_WeaponInstance::ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc)
 {
-    if (!IsPlayer())
-    {
-        return;
-    }
-    
-    Super::ModStats(Multiplier);
-
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
-    {
-        return;
-    }
+    Super::ModStats_Internal(Multiplier, Asc);
 
     check(Asc->GetAttributeSet(UMTD_CombatSet::StaticClass()));
     check(Asc->GetAttributeSet(UMTD_BalanceSet::StaticClass()));
 
-    Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(),
-        EGameplayModOp::Additive, WeaponStats.BaseDamage * Multiplier);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(),
-        EGameplayModOp::Override, WeaponStats.BalanceDamage);
+    const auto WeaponData = Cast<UMTD_WeaponItemData>(ItemData);
+    check(WeaponData);
+
+    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageBase, WeaponData->MeleeDamage);
+    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageRangedBase, WeaponData->RangedDamage);
+    APPLY_MOD_TO_ATTRIBUTE(Balance, Damage, WeaponData->BalanceDamage);
 }
 
-TArray<FGameplayEffectSpecHandle> UMTD_WeaponInstance::GetGameplayEffectSpecHandlesToGrantOnHit() const
+FVector UMTD_WeaponInstance::GetFirePointWorldPosition() const
 {
-    TArray<FGameplayEffectSpecHandle> Result;
-
-    AActor *GeOwner = GetOwner();
-    if (!IsValid(GeOwner))
+    if ((!IsValid(FirePointSocket)) && (!InitializeFirePoint()))
     {
-        return Result;
+        return FVector::ZeroVector;
     }
 
-    const UAbilitySystemComponent *Asc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GeOwner);
-    if (!IsValid(Asc))
+    FTransform Transform;
+    FirePointSocket->GetSocketTransform(Transform, WeaponMesh);
+
+    const FVector SocketLocation = Transform.GetLocation();
+    return SocketLocation;
+}
+
+bool UMTD_WeaponInstance::InitializeFirePoint() const
+{
+    const AActor *Actor = GetSpawnedActor();
+    if (!IsValid(Actor))
     {
-        return Result;
+        return false;
     }
 
-    const FGameplayEffectContextHandle GeContextHandle = Asc->MakeEffectContext();
-
-    for (const TSubclassOf<UGameplayEffect> GeClass : GameplayEffectsToGrantOnHit)
+    WeaponMesh = FMTD_Utility::GetActorComponent<UStaticMeshComponent>(Actor);
+    if (!IsValid(WeaponMesh))
     {
-        if (!GeClass)
-        {
-            continue;
-        }
-
-        Result.Add(Asc->MakeOutgoingSpec(GeClass, 1.f, GeContextHandle));
+        return false;
     }
 
-    return Result;
+    FirePointSocket = WeaponMesh->GetSocketByName(FirePointSocketName);
+    if (!IsValid(FirePointSocket))
+    {
+        return false;
+    }
+
+    return true;
 }

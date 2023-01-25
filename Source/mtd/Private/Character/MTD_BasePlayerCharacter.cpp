@@ -3,6 +3,7 @@
 #include "AbilitySystem/Attributes/MTD_BalanceSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
+#include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/MTD_CharacterCoreTypes.h"
@@ -12,6 +13,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/DataTableFunctionLibrary.h"
+#include "Player/MTD_PlayerState.h"
+#include "System/MTD_Tags.h"
 
 AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
 {
@@ -21,18 +24,17 @@ AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
     UCapsuleComponent *CollisionComponent = GetCapsuleComponent();
     CollisionComponent->SetCollisionProfileName(PlayerCollisionProfileName);
 
-    SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm Component"));
+    SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("Spring Arm Component");
     SpringArmComponent->SetupAttachment(GetRootComponent());
     SpringArmComponent->TargetArmLength = 400.f;
     SpringArmComponent->SocketOffset.Z = 200.f;
     SpringArmComponent->bUsePawnControlRotation = true;
 
-    CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera Component"));
+    CameraComponent = CreateDefaultSubobject<UCameraComponent>("Camera Component");
     CameraComponent->SetupAttachment(SpringArmComponent, SpringArmComponent->SocketName);
     CameraComponent->bUsePawnControlRotation = false;
 
-    PlayerExtensionComponent = CreateDefaultSubobject<UMTD_PlayerExtensionComponent>(
-        TEXT("MTD Player Extension Component"));
+    PlayerExtensionComponent = CreateDefaultSubobject<UMTD_PlayerExtensionComponent>("MTD Player Extension Component");
 
     UCharacterMovementComponent *Cmc = GetCharacterMovement();
     Cmc->bIgnoreBaseRotation = true;
@@ -41,6 +43,14 @@ AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
     bUseControllerRotationPitch = false;
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = false;
+
+    Tags.Add(FMTD_Tags::Character);
+}
+
+FGameplayTagContainer AMTD_BasePlayerCharacter::GetHeroClasses() const
+{
+    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
+    return ((IsValid(PlayerData) ? (PlayerData->HeroClasses) : (FGameplayTagContainer::EmptyContainer)));
 }
 
 void AMTD_BasePlayerCharacter::BeginPlay()
@@ -49,6 +59,42 @@ void AMTD_BasePlayerCharacter::BeginPlay()
 
     InitializeInput();
     InitializeAttributes();
+
+    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player Data is invalid.");
+    }
+    else
+    {
+        AMTD_PlayerState *MtdPs = GetMtdPlayerState();
+        if (!IsValid(MtdPs))
+        {
+            MTDS_WARN("MTD Player State is invalid.");
+        }
+        else
+        {
+            MtdPs->SetHeroClasses(PlayerData->HeroClasses);
+        }
+    }
+}
+
+void AMTD_BasePlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    
+    if (EndPlayReason == EEndPlayReason::Destroyed)
+    {
+        AMTD_PlayerState *MtdPs = GetMtdPlayerState();
+        if (!IsValid(MtdPs))
+        {
+            MTDS_WARN("MTD Player State is invalid.");
+        }
+        else
+        {
+            MtdPs->ClearHeroClasses();
+        }
+    }
 }
 
 void AMTD_BasePlayerCharacter::InitializeAttributes()
@@ -74,6 +120,11 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     }
 
     float Value;
+
+    // @todo Get from an actual source
+    const float Level = 1.f;
+
+    Asc->ApplyModToAttribute(UMTD_PlayerSet::GetLevelStatAttribute(), EGameplayModOp::Type::Override, Level);
 
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, Level, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);

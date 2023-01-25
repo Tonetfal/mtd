@@ -5,6 +5,8 @@
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
+#include "Equipment/MTD_EquipmentManagerComponent.h"
+#include "Inventory/MTD_InventoryManagerComponent.h"
 #include "Player/MTD_PlayerController.h"
 
 AMTD_PlayerState::AMTD_PlayerState()
@@ -12,17 +14,25 @@ AMTD_PlayerState::AMTD_PlayerState()
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    AbilitySystemComponent = CreateDefaultSubobject<UMTD_AbilitySystemComponent>(TEXT("MTD Ability System Component"));
+    AbilitySystemComponent = CreateDefaultSubobject<UMTD_AbilitySystemComponent>("MTD Ability System Component");
+    EquipmentManagerComponent = CreateDefaultSubobject<UMTD_EquipmentManagerComponent>("MTD Equipment Component");
+    InventoryManagerComponent = CreateDefaultSubobject<UMTD_InventoryManagerComponent>("MTD Inventory Manager Component");
 
-    CreateDefaultSubobject<UMTD_HealthSet>(TEXT("HealthSet"));
-    CreateDefaultSubobject<UMTD_ManaSet>(TEXT("ManaSet"));
-    CreateDefaultSubobject<UMTD_CombatSet>(TEXT("CombatSet"));
-    CreateDefaultSubobject<UMTD_BalanceSet>(TEXT("BalanceSet"));
+    CreateDefaultSubobject<UMTD_HealthSet>("HealthSet");
+    CreateDefaultSubobject<UMTD_ManaSet>("ManaSet");
+    CreateDefaultSubobject<UMTD_CombatSet>("CombatSet");
+    CreateDefaultSubobject<UMTD_BalanceSet>("BalanceSet");
 }
 
 AMTD_PlayerController *AMTD_PlayerState::GetMtdPlayerController() const
 {
     return Cast<AMTD_PlayerController>(GetOwner());
+}
+
+AMTD_BasePlayerCharacter *AMTD_PlayerState::GetMtdPlayerCharacter() const
+{
+    const AMTD_PlayerController *MtdPc = GetMtdPlayerController();
+    return ((IsValid(MtdPc)) ? (MtdPc->GetMtdPlayerCharacter()) : (nullptr));
 }
 
 UAbilitySystemComponent *AMTD_PlayerState::GetAbilitySystemComponent() const

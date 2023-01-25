@@ -31,6 +31,9 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
 
     AddTag(Gameplay_Ability_Behavior_SurvivesDeath, "Gameplay.Ability.Behavior.SurvivesDeath",
         "An ability with this type tag should not be canceled due to death.");
+    
+    AddTag(Gameplay_Hero_All, "Gameplay.Hero.All",
+        "Tag meaning that an entity can use anything, or be used by anyone.");
 
     AddTag(Gameplay_Ability_Attack_Melee, "Gameplay.Ability.Attack.Melee", "Melee attack ability.");
     AddTag(Gameplay_Ability_Attack_Ranged, "Gameplay.Ability.Attack.Ranged", "Ranged attack ability.");

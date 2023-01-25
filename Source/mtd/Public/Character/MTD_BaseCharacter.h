@@ -6,14 +6,12 @@
 #include "CombatSystem/MTD_MeleeHitboxData.h"
 #include "GameFramework/Character.h"
 #include "mtd.h"
-#include "Equipment/MTD_EquipmentDefinition.h"
 
 #include "MTD_BaseCharacter.generated.h"
 
 class AMTD_PlayerState;
 class UMTD_AbilitySystemComponent;
 class UMTD_BalanceComponent;
-class UMTD_EquipmentManagerComponent;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_ManaComponent;
@@ -86,7 +84,6 @@ public:
     UMTD_HealthComponent *GetHealthComponent() const;
     UMTD_ManaComponent *GetManaComponent() const;
     UMTD_BalanceComponent *GetBalanceComponent() const;
-    UMTD_EquipmentManagerComponent *GetEquipmentManagerComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Character")
     AMTD_PlayerState *GetMtdPlayerState() const;
@@ -107,9 +104,6 @@ private:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HealthComponent> HealthComponent = nullptr;
-    
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_EquipmentManagerComponent> EquipmentManagerComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_ManaComponent> ManaComponent = nullptr;
@@ -160,9 +154,4 @@ inline UMTD_ManaComponent *AMTD_BaseCharacter::GetManaComponent() const
 inline UMTD_BalanceComponent *AMTD_BaseCharacter::GetBalanceComponent() const
 {
     return BalanceComponent;
-}
-
-inline UMTD_EquipmentManagerComponent *AMTD_BaseCharacter::GetEquipmentManagerComponent() const
-{
-    return EquipmentManagerComponent;
 }

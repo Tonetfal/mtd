@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GameplayTagContainer.h"
 #include "mtd.h"
 #include "MTD_BaseCharacter.h"
 
@@ -7,22 +8,31 @@
 
 class UCameraComponent;
 class UMTD_AbilitiesUiData;
+class UMTD_InventoryManagerComponent;
 class UMTD_PlayerExtensionComponent;
 class USpringArmComponent;
 
 UCLASS()
-class MTD_API AMTD_BasePlayerCharacter : public AMTD_BaseCharacter
+class MTD_API AMTD_BasePlayerCharacter
+    : public AMTD_BaseCharacter
 {
     GENERATED_BODY()
 
 public:
     AMTD_BasePlayerCharacter();
 
+    FGameplayTagContainer GetHeroClasses() const;
+    UCameraComponent *GetCameraComponent() const;
+
 protected:
     //~AActor Interface
     virtual void BeginPlay() override;
+
+public:
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     //~End of AActor Interface
-    
+
+protected:
     //~AMTD_BaseCharacter Interface
     virtual void InitializeAttributes() override;
     virtual void OnDeathStarted_Implementation(AActor *OwningActor) override;
@@ -51,7 +61,9 @@ private:
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|UI", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_AbilitiesUiData> UiData = nullptr;
-
-    UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-    float Level = 0.f;
 };
+
+inline UCameraComponent *AMTD_BasePlayerCharacter::GetCameraComponent() const
+{
+    return CameraComponent;
+}

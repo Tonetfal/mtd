@@ -1,7 +1,6 @@
 #include "Character/MTD_Tower.h"
 
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
-#include "AbilitySystem/Attributes/MTD_ManaSet.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
@@ -21,6 +20,7 @@
 #include "Player/MTD_TowerController.h"
 #include "Projectile/MTD_Projectile.h"
 #include "Projectile/MTD_ProjectileMovementComponent.h"
+#include "System/MTD_Tags.h"
 
 AMTD_Tower::AMTD_Tower()
 {
@@ -78,6 +78,8 @@ AMTD_Tower::AMTD_Tower()
     HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
 
     bCanAffectNavigationGeneration = false;
+
+    Tags.Add(FMTD_Tags::Tower);
 }
 
 void AMTD_Tower::BeginPlay()

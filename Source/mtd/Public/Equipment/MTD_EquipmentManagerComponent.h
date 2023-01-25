@@ -1,16 +1,33 @@
 #pragma once
 
-#include "mtd.h"
 #include "Components/PawnComponent.h"
+#include "Equipment/MTD_EquipmentCoreTypes.h"
+#include "mtd.h"
+
 #include "MTD_EquipmentManagerComponent.generated.h"
 
+class AMTD_InventoryItemInstance;
+class UMTD_BaseInventoryItemData;
+class UMTD_EquippableItemData;
 class UMTD_EquipmentInstance;
-class UMTD_EquipmentDefinition;
 
+/**
+ * Manager of pawn's equipment items used by it.
+ */
 UCLASS(BlueprintType, Const, ClassGroup="Pawn", meta=(BlueprintSpawnableComponent))
-class UMTD_EquipmentManagerComponent : public UPawnComponent
+class UMTD_EquipmentManagerComponent
+    : public UPawnComponent
 {
     GENERATED_BODY()
+
+public:
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+        FOnItemEquipmentSignature,
+        UMTD_EquipmentInstance*, EquipmentInstance);
+    
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+        FOnItemUnEquipmentSignature,
+        UMTD_EquipmentInstance*, EquipmentInstance);
 
 public:
     UMTD_EquipmentManagerComponent(const FObjectInitializer &ObjectInitializer);
@@ -24,26 +41,51 @@ public:
     //~End of UActorComponent interface
 
     UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
-    UMTD_EquipmentInstance *EquipItem(TSubclassOf<UMTD_EquipmentDefinition> EquipmentDefinition);
+    UMTD_EquipmentInstance *EquipItem(UMTD_BaseInventoryItemData *ItemData);
 
     UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
-    void UnequipItem();
+    UMTD_EquippableItemData *UnequipItemType(EMTD_EquipmentType EquipmentType);
+    
+    UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
+    UMTD_EquippableItemData *UnequipItemInstance(UMTD_EquipmentInstance *EquipmentInstance);
+    
+    UFUNCTION(BlueprintCallable, Category="MTD|Equipment")
+    void UnequipAll();
+
+    /**
+     * Check game logical conditions of whether the character is able to equip an item. It checks things like level
+     * required and character classes.
+     */
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
+    bool CanEquipItem(UMTD_BaseInventoryItemData *ItemData) const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
+    bool IsItemTypeEquipped(EMTD_EquipmentType EquipmentType) const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
-    const UMTD_EquipmentInstance *GetEquipmentInstance() const;
+    const UMTD_EquipmentInstance *GetEquipmentInstance(EMTD_EquipmentType EquipmentType) const;
+
+public:
+    UPROPERTY(BlueprintAssignable)
+    FOnItemEquipmentSignature OnItemEquipmentDelegate;
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnItemUnEquipmentSignature OnItemUnEquipmentDelegate;
 
 private:
-    UPROPERTY()
-    TObjectPtr<UMTD_EquipmentInstance> EquipmentInstance;
+    UPROPERTY(BlueprintReadOnly, Category="MTD|Equipment", meta=(AllowPrivateAccess="true"))
+    TMap<EMTD_EquipmentType, TObjectPtr<UMTD_EquipmentInstance>> EquipmentInstances;
 };
 
 inline UMTD_EquipmentManagerComponent *UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(
     const AActor *Actor)
 {
-    return (IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_EquipmentManagerComponent>()) : (nullptr);
+    return ((IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_EquipmentManagerComponent>()) : (nullptr));
 }
 
-inline const UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::GetEquipmentInstance() const
+inline const UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::GetEquipmentInstance(
+    EMTD_EquipmentType EquipmentType) const
 {
-    return EquipmentInstance;
+    const TObjectPtr<UMTD_EquipmentInstance> *EquipmentInstance = EquipmentInstances.Find(EquipmentType);
+    return (EquipmentInstance) ? (*EquipmentInstance) : (nullptr);
 }

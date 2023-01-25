@@ -1,48 +1,19 @@
-#pragma once
+﻿#pragma once
 
-#include "MTD_EquipmentCoreTypes.generated.h"
+#include "Inventory/Items/MTD_InventoryItemsCoreTypes.h"
+#include "mtd.h"
 
-USTRUCT(BlueprintType)
-struct FMTD_EquipmentPlayerStats
+UENUM(BlueprintType)
+enum class EMTD_EquipmentType : uint8
 {
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditDefaultsOnly, DisplayName="Health")
-    float HealthStat = 0.f;
-
-    UPROPERTY(EditDefaultsOnly, DisplayName="Damage")
-    float DamageStat = 0.f;
-
-    UPROPERTY(EditDefaultsOnly, DisplayName="Movement speed")
-    float SpeedStat = 0.f;
-};
-
-USTRUCT(BlueprintType)
-struct FMTD_EquipmentWeaponStats
-{
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditDefaultsOnly)
-    float BaseDamage = 0.f;
+    Invalid,
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float BalanceDamage = 7.5f;
-};
+    Helmet      = EMTD_InventoryArmorType::Helmet,
+    Chestplate  = EMTD_InventoryArmorType::Chestplate,
+    Gauntlets   = EMTD_InventoryArmorType::Gauntlets,
+    Boots       = EMTD_InventoryArmorType::Boots,
 
-USTRUCT(BlueprintType)
-struct FMTD_EquipmentRangedWeaponStats
-{
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditDefaultsOnly)
-    float BaseDamage = 0.f;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float ProjectileSpeed = 5000.f;
+    Weapon,
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    float BalanceDamage = 7.5f;
+    Count       UMETA(Hidden)
 };

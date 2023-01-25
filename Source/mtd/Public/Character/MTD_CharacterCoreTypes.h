@@ -58,9 +58,12 @@ public:
     /** Input configuration used by players to create input mappings and bind input actions. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<UMTD_InputConfig> InputConfig = nullptr;
-    
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TArray<TObjectPtr<const UInputMappingContext>> InputContexts;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FGameplayTagContainer HeroClasses;
 };
 
 UCLASS(BlueprintType, Const, meta=(ShortTooltip="Data asset used to define a Tower."))

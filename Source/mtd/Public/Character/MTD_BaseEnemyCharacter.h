@@ -9,6 +9,7 @@ class UBehaviorTree;
 class UBoxComponent;
 class UMTD_EnemyData;
 class UMTD_EnemyExtensionComponent;
+class UMTD_EquipmentDefinition;
 class USphereComponent;
 
 UCLASS()
@@ -125,7 +126,7 @@ private:
 
     /** Equipment the enemy will be spawned with. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Enemy", meta=(AllowPrivateAccess="true"))
-    TSubclassOf<UMTD_EquipmentDefinition> DefaultWeaponDefinitionClass = nullptr;
+    int32 DefaultWeaponID = 0;
 
     UPROPERTY()
     TObjectPtr<APawn> Target = nullptr;

@@ -1,6 +1,7 @@
 #include "Player/MTD_PlayerController.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_TeamComponent.h"
 #include "Player/MTD_PlayerState.h"
 
@@ -22,6 +23,11 @@ UMTD_AbilitySystemComponent *AMTD_PlayerController::GetMtdAbilitySystemComponent
 AMTD_PlayerState *AMTD_PlayerController::GetMtdPlayerState() const
 {
     return GetPlayerState<AMTD_PlayerState>();
+}
+
+AMTD_BasePlayerCharacter *AMTD_PlayerController::GetMtdPlayerCharacter() const
+{
+    return Cast<AMTD_BasePlayerCharacter>(GetCharacter());
 }
 
 void AMTD_PlayerController::AddYawInput(float Val)

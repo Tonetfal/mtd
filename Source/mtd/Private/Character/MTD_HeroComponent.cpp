@@ -187,11 +187,10 @@ void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
     MtdInputComponent->BindAbilityActions(
         InputConfig, this, &ThisClass::Input_AbilityInputTagPressed, &ThisClass::Input_AbilityInputTagReleased);
 
-    auto BindNativeAction =
-        [&, this](FGameplayTag GameplayTag, auto Delegate)
-    {
-        MtdInputComponent->BindNativeAction(InputConfig, GameplayTag, ETriggerEvent::Triggered, this, Delegate);
-    };
+    auto BindNativeAction = [&, this] (FGameplayTag GameplayTag, auto Delegate)
+        {
+            MtdInputComponent->BindNativeAction(InputConfig, GameplayTag, ETriggerEvent::Triggered, this, Delegate);
+        };
 
     BindNativeAction(GameplayTags.InputTag_Move, &ThisClass::Input_Move);
     BindNativeAction(GameplayTags.InputTag_Look_Mouse, &ThisClass::Input_LookMouse);

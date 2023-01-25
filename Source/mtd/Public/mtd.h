@@ -3,16 +3,16 @@
 #include "CoreMinimal.h"
 #include "MTD_Log.h"
 
-const FName AllyCollisionProfileName = TEXT("Ally");
-const FName PlayerCollisionProfileName = TEXT("Player");
-const FName TowerCollisionProfileName = TEXT("Tower");
-const FName EnemyCollisionProfileName = TEXT("Enemy");
-const FName FloatingTokenCollisionProfileName = TEXT("FloatingToken");
-const FName AllyAttackCollisionProfileName = TEXT("AllyAttack");
-const FName EnemyAttackCollisionProfileName = TEXT("EnemyAttack");
-const FName AllyProjectileCollisionProfileName = TEXT("AllyProjectile");
-const FName EnemyProjectileCollisionProfileName = TEXT("EnemyProjectile");
-const FName SightSphereCollisionProfileName = TEXT("SightSphere");
+const FName AllyCollisionProfileName = "Ally";
+const FName PlayerCollisionProfileName = "Player";
+const FName TowerCollisionProfileName = "Tower";
+const FName EnemyCollisionProfileName = "Enemy";
+const FName FloatingTokenCollisionProfileName = "FloatingToken";
+const FName AllyAttackCollisionProfileName = "AllyAttack";
+const FName EnemyAttackCollisionProfileName = "EnemyAttack";
+const FName AllyProjectileCollisionProfileName = "AllyProjectile";
+const FName EnemyProjectileCollisionProfileName = "EnemyProjectile";
+const FName SightSphereCollisionProfileName = "SightSphere";
 
 constexpr ECollisionChannel AllyProjectileCollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
 constexpr ECollisionChannel AttackCollisionChannel = ECollisionChannel::ECC_GameTraceChannel2;
@@ -24,3 +24,4 @@ constexpr ECollisionChannel TowerCollisionChannel = ECollisionChannel::ECC_GameT
 constexpr ECollisionChannel EnemyTraceChannel = ECollisionChannel::ECC_GameTraceChannel7;
 constexpr ECollisionChannel PlayerTraceChannel = ECollisionChannel::ECC_GameTraceChannel8;
 constexpr ECollisionChannel TowerTraceChannel = ECollisionChannel::ECC_GameTraceChannel9;
+constexpr ECollisionChannel ItemTraceChannel = ECollisionChannel::ECC_GameTraceChannel10;

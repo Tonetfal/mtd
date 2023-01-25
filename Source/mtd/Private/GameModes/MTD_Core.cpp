@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
+#include "System/MTD_Tags.h"
 
 AMTD_Core::AMTD_Core()
 {
@@ -18,6 +19,8 @@ AMTD_Core::AMTD_Core()
     CollisionComponent->SetCanEverAffectNavigation(false);
 
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("Health Component"));
+    
+    Tags.Add(FMTD_Tags::Core);
 }
 
 UMTD_AbilitySystemComponent *AMTD_Core::GetMtdAbilitySystemComponent() const

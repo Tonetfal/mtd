@@ -1,44 +1,47 @@
 #pragma once
 
-#include "AbilitySystem/MTD_AbilitySet.h"
-#include "GameFramework/Actor.h"
 #include "mtd.h"
 
 #include "MTD_EquipmentDefinition.generated.h"
 
+class UMTD_AbilitySet;
 class UMTD_EquipmentInstance;
 
 USTRUCT(BlueprintType)
-struct FMTD_EquipmentActorToSpawn
+struct FMTD_EquipmentActorDefinition
 {
     GENERATED_BODY()
 
 public:
     UPROPERTY(EditAnywhere)
-    TSubclassOf<AActor> ActorToSpawn = nullptr;
+    TSubclassOf<AActor> ActorClass = nullptr;
 
     UPROPERTY(EditAnywhere)
-    FName AttachToSocket{TEXT("None")};
+    FName AttachToSocket = "Weapon";
 
     UPROPERTY(EditAnywhere)
     FTransform AttachTransform = FTransform::Identity;
 };
 
-UCLASS(Blueprintable, Const, Abstract, BlueprintType)
-class MTD_API UMTD_EquipmentDefinition : public UObject
+/**
+ * Data asset defining equipment held by a pawn.
+ */
+UCLASS(Blueprintable, BlueprintType, Const)
+class UMTD_EquipmentDefinitionAsset
+    : public UDataAsset
 {
     GENERATED_BODY()
 
 public:
-    UMTD_EquipmentDefinition();
+    UMTD_EquipmentDefinitionAsset();
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Equipment")
-    TSubclassOf<UMTD_EquipmentInstance> InstanceType = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Equipment")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TSubclassOf<UMTD_EquipmentInstance> EquipmentInstanceClass = nullptr;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<const UMTD_AbilitySet> AbilitySetToGrant = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Equipment")
-    FMTD_EquipmentActorToSpawn ActorToSpawn;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FMTD_EquipmentActorDefinition ActorToSpawnDefinition;
 };

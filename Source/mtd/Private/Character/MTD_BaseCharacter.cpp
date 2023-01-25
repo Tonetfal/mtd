@@ -21,12 +21,11 @@ AMTD_BaseCharacter::AMTD_BaseCharacter()
 
     GetMesh()->SetCollisionProfileName("NoCollision");
 
-    PawnExtentionComponent = CreateDefaultSubobject<UMTD_PawnExtensionComponent>(TEXT("MTD Pawn Extension Component"));
-    HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>(TEXT("MTD Hero Component"));
-    EquipmentManagerComponent = CreateDefaultSubobject<UMTD_EquipmentManagerComponent>(TEXT("MTD Equipment Component"));
-    HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>(TEXT("MTD Health Component"));
-    ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>(TEXT("MTD Mana Component"));
-    BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>(TEXT("MTD Balance Component"));
+    PawnExtentionComponent = CreateDefaultSubobject<UMTD_PawnExtensionComponent>("MTD Pawn Extension Component");
+    HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>("MTD Hero Component");
+    HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>("MTD Health Component");
+    ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>("MTD Mana Component");
+    BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>("MTD Balance Component");
     
     PawnExtentionComponent->OnAbilitySystemInitialized_RegisterAndCall(
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
@@ -306,7 +305,22 @@ void AMTD_BaseCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
 void AMTD_BaseCharacter::OnDeathFinished_Implementation(AActor *OwningActor)
 {
     GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::DestroyDueToDeath);
-    EquipmentManagerComponent->UnequipItem();
+    
+    AMTD_PlayerState *MtdPs = GetMtdPlayerState();
+    if (!IsValid(MtdPs))
+    {
+        MTDS_WARN("MTD Player State is invalid.");
+        return;
+    }
+    
+    UMTD_EquipmentManagerComponent *EquipManager = MtdPs->GetEquipmentManagerComponent();
+    if (!IsValid(EquipManager))
+    {
+        MTDS_WARN("Equipment Manager Component is invalid.");
+        return;
+    }
+    
+    EquipManager->UnequipAll();
 }
 
 AMTD_PlayerState *AMTD_BaseCharacter::GetMtdPlayerState() const

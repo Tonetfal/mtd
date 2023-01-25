@@ -1,29 +1,48 @@
 #pragma once
 
-#include "GameplayAbilitySpec.h"
 #include "Equipment/MTD_EquipmentInstance.h"
+#include "GameplayAbilitySpec.h"
 #include "mtd.h"
 
 #include "MTD_WeaponInstance.generated.h"
 
 class UGameplayEffect;
+class UMTD_ProjectileData;
+class UMTD_WeaponItemData;
 
 UCLASS()
-class MTD_API UMTD_WeaponInstance : public UMTD_EquipmentInstance
+class MTD_API UMTD_WeaponInstance
+    : public UMTD_EquipmentInstance
 {
     GENERATED_BODY()
 
 protected:
-    virtual void ModStats(float Multiplier) override;
-
-    UFUNCTION(BlueprintCallable, Category="MTD|Weapon")
-    TArray<FGameplayEffectSpecHandle> GetGameplayEffectSpecHandlesToGrantOnHit() const;
+    virtual void ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc) override;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Weapon")
+    FVector GetFirePointWorldPosition() const;
 
 private:
-    UPROPERTY(EditDefaultsOnly, Category="MTD|Equipment|Stats|Weapon", meta=(AllowPrivateAccess="true"))
-    FMTD_EquipmentWeaponStats WeaponStats;
+    bool InitializeFirePoint() const;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon", meta=(AllowPrivateAccess="true",
-        ShortTooltip="Gameplay effects to grant on melee attack hit."))
+private:
+    UPROPERTY(EditInstanceOnly, Category="MTD|Equipment|Stats|Weapon", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_WeaponItemData> WeaponItemData = nullptr;
+    
+    /** Gameplay effects to grant on melee hit. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Weapon", meta=(AllowPrivateAccess="true"))
     TArray<TSubclassOf<UGameplayEffect>> GameplayEffectsToGrantOnHit;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Equipment|Stats|Ranged Weapon",
+        meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_ProjectileData> ProjectileData = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Equipment|Ranged Weapon")
+    FName FirePointSocketName = "FirePoint";
+
+    UPROPERTY()
+    mutable TObjectPtr<const UStaticMeshSocket> FirePointSocket = nullptr;
+
+    UPROPERTY()
+    mutable TObjectPtr<const UStaticMeshComponent> WeaponMesh = nullptr;
 };
