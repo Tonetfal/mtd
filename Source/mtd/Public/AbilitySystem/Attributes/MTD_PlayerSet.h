@@ -25,8 +25,14 @@ public:
     ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, HealthStat);
     ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, DamageStat);
     ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, SpeedStat);
+    
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, HealthStat_Bonus);
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, DamageStat_Bonus);
+    ATTRIBUTE_ACCESSORS(UMTD_PlayerSet, SpeedStat_Bonus);
 
 public:
+    UMTD_PlayerSet();
+    
     virtual void PreAttributeChange(const FGameplayAttribute &Attribute, float &NewValue) override;
     virtual void PostAttributeChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue) override;
 
@@ -56,6 +62,17 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData SpeedStat;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData HealthStat_Bonus;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData DamageStat_Bonus;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData SpeedStat_Bonus;
+
+    TMap<FGameplayAttribute, FGameplayAttribute> BonusAttributeReplicationMapping;
 
     const FRealCurve *ExpLevelRow = nullptr;
     const FRealCurve *TotalExpLevelRow = nullptr;

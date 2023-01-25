@@ -20,6 +20,7 @@ public:
     const UDataTable *GetWeaponDataTable() const;
     const UDataTable *GetMaterialDataTable() const;
     const UCurveTable *GetLevelExpCurveTable() const;
+    const UCurveTable *GetAttributePointsCurveTable() const;
 
 private:
     void VerifyBaseItemDataTable() const;
@@ -27,6 +28,7 @@ private:
     void VerifyWeaponDataTable() const;
     void VerifyMaterialDataTable() const;
     void VerifyLevelCurveTable() const;
+    void VerifyAttributePointsCurveTable() const;
     
 private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Items", meta=(AllowPrivateAccess="true"))
@@ -43,6 +45,9 @@ private:
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Players", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UCurveTable> LevelExperienceCurveTable = nullptr;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Players", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UCurveTable> AttributePointsCurveTable = nullptr;
 };
 
 inline const UDataTable *UMTD_GameInstance::GetBaseItemDataTable() const
@@ -68,4 +73,9 @@ inline const UDataTable *UMTD_GameInstance::GetMaterialDataTable() const
 inline const UCurveTable *UMTD_GameInstance::GetLevelExpCurveTable() const
 {
     return LevelExperienceCurveTable;
+}
+
+inline const UCurveTable *UMTD_GameInstance::GetAttributePointsCurveTable() const
+{
+    return AttributePointsCurveTable;
 }

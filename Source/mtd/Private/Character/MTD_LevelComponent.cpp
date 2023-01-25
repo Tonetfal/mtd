@@ -1,5 +1,6 @@
 ﻿#include "Character/MTD_LevelComponent.h"
 
+#include "AbilitySystem/Attributes/MTD_BuilderSet.h"
 #include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "System/MTD_GameInstance.h"
@@ -8,6 +9,8 @@ UMTD_LevelComponent::UMTD_LevelComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     PrimaryComponentTick.bStartWithTickEnabled = false;
+
+    MapUpgradeAttributes();
 }
 
 void UMTD_LevelComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc)
@@ -112,6 +115,47 @@ int32 UMTD_LevelComponent::GetTotalExpForLevel(int32 Level) const
     return TotalExp;
 }
 
+int32 UMTD_LevelComponent::GetRemainingAttributePoints() const
+{
+    return RemainingAttributePoints;
+}
+
+bool UMTD_LevelComponent::UseAttributePoints(int32 Amount, EMTD_UpgradeAttribute Attribute)
+{
+    if (!IsValid(AbilitySystemComponent))
+    {
+        MTDS_WARN("Ability System Component is invalid.");
+        return false;
+    }
+    
+    if (Amount < 1)
+    {
+        MTDS_WARN("Amount [%d] must be a positive number.", Amount);
+        return false;
+    }
+
+    if (RemainingAttributePoints < 1)
+    {
+        MTDS_LOG("There is no Remaining Attribute Points");
+        return false;
+    }
+
+    const FGameplayAttribute *GameplayAttribute = UpgradeAttributesMapping.Find(Attribute);
+    check(GameplayAttribute);
+    check(AbilitySystemComponent->HasAttributeSetForAttribute(*GameplayAttribute));
+
+    if (RemainingAttributePoints < Amount)
+    {
+        MTDS_LOG("Remaining Attributes Points [%d] are less then requested amount [%d]. Only [%d] will be used.",
+            RemainingAttributePoints, Amount, RemainingAttributePoints);
+        Amount = RemainingAttributePoints;
+    }
+
+    AbilitySystemComponent->ApplyModToAttribute(*GameplayAttribute, EGameplayModOp::Additive, Amount);
+    RemainingAttributePoints -= Amount;
+    return true;
+}
+
 void UMTD_LevelComponent::OnUnregister()
 {
     Super::OnUnregister();
@@ -120,6 +164,22 @@ void UMTD_LevelComponent::OnUnregister()
 void UMTD_LevelComponent::OnLevelChanged(const FOnAttributeChangeData &ChangeData)
 {
     MTDS_LOG("Level up [%f] -> [%f].", ChangeData.OldValue, ChangeData.NewValue);
+
+    if (AttributePointsRow)
+    {
+        for (int32 i = ChangeData.OldValue; (i < ChangeData.NewValue); i++)
+        {
+            ensure(AttributePointsRow->KeyExistsAtTime(i));
+            const int32 Points = AttributePointsRow->Eval(i);
+            RemainingAttributePoints += Points;
+            
+            MTDS_LOG("Player got [%d] Attribute Points for leveling up at [%d].", Points, i);
+        }
+    }
+    else
+    {
+        MTDS_WARN("Attribute Points Row is null.");
+    }
     
     OnLevelChangedDelegate.Broadcast(
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));
@@ -133,9 +193,24 @@ void UMTD_LevelComponent::OnExperienceChanged(const FOnAttributeChangeData &Chan
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));
 }
 
+#define MAP(x, y, z) UpgradeAttributesMapping.Add( \
+    EMTD_UpgradeAttribute:: ## x ## y, UMTD_ ## z ## Set::Get ## y ## Stat_BonusAttribute())
+void UMTD_LevelComponent::MapUpgradeAttributes()
+{
+    MAP(Player, Damage, Player);
+    MAP(Player, Health, Player);
+    MAP(Player, Speed, Player);
+    
+    MAP(Tower, Damage, Builder);
+    MAP(Tower, Health, Builder);
+    MAP(Tower, Range, Builder);
+    MAP(Tower, Speed, Builder);
+}
+#undef MAP
+
 bool UMTD_LevelComponent::CacheExpRows()
 {
-    if (((ExpLevelRow) && (TotalExpLevelRow)))
+    if (((ExpLevelRow) && (TotalExpLevelRow) && (AttributePointsRow)))
     {
         // Already cached
         return true;
@@ -154,6 +229,13 @@ bool UMTD_LevelComponent::CacheExpRows()
         return false;
     }
     
+    const UCurveTable *AttributePointsLevelTable = GameInstance->GetAttributePointsCurveTable();
+    if (!IsValid(AttributePointsLevelTable))
+    {
+        MTDS_WARN("Attribute Points Curve Table is invalid.");
+        return false;
+    }
+    
     const FRealCurve *ExpFoundRow = ExperienceLevelTable->FindCurve(ExpRowName, {});
     if (!ExpFoundRow)
     {
@@ -167,8 +249,16 @@ bool UMTD_LevelComponent::CacheExpRows()
         MTDS_WARN("Could not find Row [%s] in Experience Level Curve Table.", *TotalExpRowName.ToString());
         return false;
     }
+    
+    const FRealCurve *AttributePointsFoundRow = AttributePointsLevelTable->FindCurve(AttributePointsRowName, {});
+    if (!AttributePointsFoundRow)
+    {
+        MTDS_WARN("Could not find Row [%s] in Attribute Points Curve Table.", *AttributePointsRowName.ToString());
+        return false;
+    }
 
     ExpLevelRow = ExpFoundRow;
     TotalExpLevelRow = TotalExpFoundRow;
+    AttributePointsRow = AttributePointsFoundRow;
     return true;
 }

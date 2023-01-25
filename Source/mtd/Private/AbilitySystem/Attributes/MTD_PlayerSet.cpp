@@ -3,6 +3,15 @@
 #include "Character/MTD_LevelComponent.h"
 #include "System/MTD_GameInstance.h"
 
+#define MAP(x) BonusAttributeReplicationMapping.Add(Get ## x ## Stat_BonusAttribute(), Get ## x ## StatAttribute())
+UMTD_PlayerSet::UMTD_PlayerSet()
+{
+    MAP(Damage);
+    MAP(Health);
+    MAP(Speed);
+}
+#undef MAP
+
 void UMTD_PlayerSet::PreAttributeChange(const FGameplayAttribute &Attribute, float &NewValue)
 {
     Super::PreAttributeChange(Attribute, NewValue);
@@ -45,6 +54,17 @@ void UMTD_PlayerSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
                 }
             }
         }
+    }
+
+    else if (const auto &MappedValue = BonusAttributeReplicationMapping.Find(Attribute))
+    {
+        FGameplayAttributeData *AttributeData = MappedValue->GetGameplayAttributeData(this);
+        check(AttributeData);
+        
+        const float Delta = (NewValue - OldValue);
+        const float CurrentValue = AttributeData->GetCurrentValue();
+        const float FinalValue = (CurrentValue + Delta);
+        AttributeData->SetCurrentValue(FinalValue);
     }
 }
 
