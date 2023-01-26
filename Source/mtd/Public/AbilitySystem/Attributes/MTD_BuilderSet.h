@@ -19,6 +19,16 @@ public:
     ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, DamageStat);
     ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, RangeStat);
     ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, SpeedStat);
+    
+    ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, HealthStat_Bonus);
+    ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, DamageStat_Bonus);
+    ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, RangeStat_Bonus);
+    ATTRIBUTE_ACCESSORS(UMTD_BuilderSet, SpeedStat_Bonus);
+
+public:
+    UMTD_BuilderSet();
+
+    virtual void PostAttributeChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue) override;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -32,4 +42,18 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData SpeedStat;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData HealthStat_Bonus;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData DamageStat_Bonus;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData RangeStat_Bonus;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData SpeedStat_Bonus;
+
+    TMap<FGameplayAttribute, FGameplayAttribute> BonusAttributeReplicationMapping;
 };

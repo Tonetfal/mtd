@@ -8,11 +8,12 @@
 #include "MTD_PlayerState.generated.h"
 
 class AMTD_BasePlayerCharacter;
-class UMTD_InventoryManagerComponent;
-class UGameplayAbility;
 class AMTD_PlayerController;
+class UGameplayAbility;
 class UMTD_AbilitySystemComponent;
 class UMTD_EquipmentManagerComponent;
+class UMTD_InventoryManagerComponent;
+class UMTD_LevelComponent;
 
 UCLASS()
 class MTD_API AMTD_PlayerState
@@ -37,9 +38,9 @@ public:
     virtual UAbilitySystemComponent *GetAbilitySystemComponent() const override;
     //~End of IAbilitySystemInterface Interface
 
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Player State")
     UMTD_EquipmentManagerComponent *GetEquipmentManagerComponent() const;
     UMTD_InventoryManagerComponent *GetInventoryManagerComponent() const;
+    UMTD_LevelComponent *GetLevelComponent() const;
 
     UFUNCTION(BlueprintCallable, Category="MTD|Ability")
     virtual void GrantAbility(TSubclassOf<UGameplayAbility> AbilityClass, int32 Level, int32 InputCode);
@@ -56,6 +57,9 @@ public:
     const FGameplayTagContainer &GetHeroClasses() const;
     void ClearHeroClasses();
 
+private:
+    void RegisterCheatCommands();
+
 protected:
     UPROPERTY(VisibleAnywhere, Category="MTD|Components")
     TObjectPtr<UMTD_AbilitySystemComponent> AbilitySystemComponent = nullptr;
@@ -65,6 +69,9 @@ protected:
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_InventoryManagerComponent> InventoryManagerComponent = nullptr;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UMTD_LevelComponent> LevelComponent = nullptr;
 
     UPROPERTY()
     FGameplayTagContainer HeroClasses;
@@ -83,6 +90,11 @@ inline UMTD_EquipmentManagerComponent *AMTD_PlayerState::GetEquipmentManagerComp
 inline UMTD_InventoryManagerComponent *AMTD_PlayerState::GetInventoryManagerComponent() const
 {
     return InventoryManagerComponent;
+}
+
+inline UMTD_LevelComponent *AMTD_PlayerState::GetLevelComponent() const
+{
+    return LevelComponent;
 }
 
 inline void AMTD_PlayerState::SetHeroClasses(const FGameplayTagContainer &InHeroClasses)

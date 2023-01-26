@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mtd.h"
 #include "AbilitySystem/Attributes/MTD_AttributeSet.h"
+#include "mtd.h"
 
 #include "MTD_HealthSet.generated.h"
 
