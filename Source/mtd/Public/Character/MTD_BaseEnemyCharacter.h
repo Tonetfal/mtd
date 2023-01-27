@@ -41,7 +41,6 @@ protected:
     void OnHealthChanged(UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
     virtual void OnHealthChanged_Implementation(
         UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
-
     
     //~IMTD_GameResultInterface Interface
     virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;

@@ -15,8 +15,10 @@
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
+#include "GameModes/MTD_TowerDefenseMode.h"
 #include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 #include "Kismet/DataTableFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/MTD_PlayerState.h"
 #include "System/MTD_Tags.h"
 #include "Utility/MTD_Utility.h"
@@ -82,11 +84,14 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
         return;
     }
 
-    if (!IsValid(EnemyData->TemporaryAttributeTable))
+    const auto Tdm = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(GetWorld()));
+    if (!IsValid(Tdm))
     {
-        MTDS_WARN("Attribute Table on Owner [%s]'s Enemy Data is invalid.", *GetName());
+        MTDS_WARN("Tower Defense Mode is invalid.");
         return;
     }
+
+    const float Difficulty = Tdm->GetScaledDifficulty();
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
     if (!IsValid(Asc))
@@ -95,11 +100,11 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
         return;
     }
 
-    float Value;
-    float TemporaryLevel = 1.f;
+    // @todo use an actual formula to compute scaling
+    const auto ScaleValue = [Difficulty] (float Value) { return (Value * Difficulty); };
 
-    EVALUTE_ATTRIBUTE(EnemyData->TemporaryAttributeTable, HealthScaleAttributeName, TemporaryLevel, Value);
-    Value *= EnemyData->Health;
+    float Value;
+    Value = ScaleValue(EnemyData->Health);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
 
@@ -107,13 +112,12 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
     Asc->ApplyModToAttribute(UMTD_ManaSet::GetMaxManaAttribute(), EGameplayModOp::Type::Override, Value);
     Asc->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Type::Override, Value);
 
-    EVALUTE_ATTRIBUTE(EnemyData->TemporaryAttributeTable, DamageScaleScaleAttributeName, TemporaryLevel, Value);
-    Value *= EnemyData->Damage;
+    Value = ScaleValue(EnemyData->Damage);
     Asc->ApplyModToAttribute(UMTD_CombatSet::GetDamageBaseAttribute(), EGameplayModOp::Type::Override, Value);
 
-    // EVALUTE_ATTRIBUTE(EnemyData->TemporaryAttributeTable, SpeedScaleScaleAttributeName, TemporaryLevel, Value);
-    // Value *= EnemyData->Speed;
-    // ...
+    // @todo implement speed
+    // Value = ScaleValue(EnemyData->Speed);
+    // Asc->ApplyModToAttribute(UMTD_CombatSet::GetSpeedAttribute(), EGameplayModOp::Type::Override, Value);
 
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override,
         EnemyData->BalanceDamage);
@@ -128,6 +132,31 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
 void AMTD_BaseEnemyCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
 {
     Super::OnDeathStarted_Implementation(OwningActor);
+    
+    const auto EnemyData = EnemyExtensionComponent->GetEnemyData<UMTD_EnemyData>();
+    if (IsValid(EnemyData))
+    {
+        const auto Tdm = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(GetWorld()));
+        if (IsValid(Tdm))
+        {
+            const float Experience = EnemyData->Experience;
+            const float Difficulty = Tdm->GetScaledDifficulty();
+            
+            // @todo use an actual formula to compute scaling
+            const auto ScaleExp = [Difficulty] (float Exp) { return (Exp * Difficulty); };
+
+            Tdm->BroadcastExp(ScaleExp(Experience));
+        }
+        else
+        {
+            MTDS_WARN("Tower Defense Mode is invalid.");
+            return;
+        }
+    }
+    else
+    {
+        MTDS_WARN("Enemy Data on Enemy [%s] is invalid.", *GetName());
+    }
 
     DetachFromControllerPendingDestroy();
     DisableCollisions();
@@ -140,16 +169,11 @@ void AMTD_BaseEnemyCharacter::OnDeathFinished_Implementation(AActor *OwningActor
     AMTD_PlayerState *MtdPs = GetMtdPlayerState();
     if (!IsValid(MtdPs))
     {
-        MTDS_WARN("MTD Player State is invalid.");
         return;
     }
     
     UMTD_EquipmentManagerComponent *EquipManager = MtdPs->GetEquipmentManagerComponent();
-    if (!IsValid(EquipManager))
-    {
-        MTDS_WARN("Equipment Manager Component is invalid.");
-        return;
-    }
+    check(IsValid(EquipManager));
     
     EquipManager->UnequipAll();
 }

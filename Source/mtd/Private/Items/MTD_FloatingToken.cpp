@@ -59,6 +59,11 @@ bool AMTD_FloatingToken::CanBeActivatedOn(APawn *Pawn) const
 
 void AMTD_FloatingToken::OnActivate_Implementation(APawn *Pawn)
 {
+    if (IgnoreTimerHandle.IsValid())
+    {
+        GetWorldTimerManager().ClearTimer(IgnoreTimerHandle);
+    }
+    
     Destroy();
 }
 
@@ -117,9 +122,7 @@ void AMTD_FloatingToken::IgnoreTriggersFor(float Seconds)
     }
     
     bIgnoreTriggers = true;
-    
-    FTimerHandle TimerHandle;
-    GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::OnStopIgnoreTriggers, Seconds, false);
+    GetWorldTimerManager().SetTimer(IgnoreTimerHandle, this, &ThisClass::OnStopIgnoreTriggers, Seconds, false);
 }
 
 void AMTD_FloatingToken::OnActivationTriggerBeginOverlap(

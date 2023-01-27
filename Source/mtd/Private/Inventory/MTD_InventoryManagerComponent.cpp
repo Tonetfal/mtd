@@ -8,7 +8,6 @@
 #include "Inventory/Items/MTD_MaterialItemData.h"
 #include "Player/MTD_PlayerState.h"
 
-
 UMTD_InventoryManagerComponent::UMTD_InventoryManagerComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;

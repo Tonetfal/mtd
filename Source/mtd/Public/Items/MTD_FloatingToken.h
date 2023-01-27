@@ -86,4 +86,6 @@ private:
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Trigger", meta=(AllowPrivateAccess="true"))
     float MinimalForceTowardsTarget = 25.f;
+
+    FTimerHandle IgnoreTimerHandle;
 };

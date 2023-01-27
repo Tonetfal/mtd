@@ -6,24 +6,36 @@
 
 #include "MTD_GameModeBase.generated.h"
 
-class UNavigationQueryFilter;
+class AMTD_PlayerState;
 class ANavigationData;
 class UMTD_LevelDefinition;
+class UNavigationQueryFilter;
+    
+/**
+ * Base game mode class used in this project.
+ */
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-    FOnGameTerminatedSignature,
-    EMTD_GameResult, GameResult);
-
-UCLASS(meta=(ShortTooltip="The base Game Mode Base class used by this project."))
-class MTD_API AMTD_GameModeBase : public AGameModeBase
+UCLASS()
+class MTD_API AMTD_GameModeBase
+    : public AGameModeBase
 {
     GENERATED_BODY()
+
+public:
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+        FOnGameTerminatedSignature,
+        EMTD_GameResult, GameResult);
 
 public:
     AMTD_GameModeBase();
 
     UFUNCTION(Exec)
     void AddExp(int32 Exp, int32 PlayerIndex = 0);
+    
+    UFUNCTION(Exec)
+    void BroadcastExp(int32 Exp);
+
+    virtual void PreInitializeComponents() override;
 
 protected:
     virtual void BeginPlay() override;
@@ -42,9 +54,8 @@ public:
     FOnGameTerminatedSignature OnGameTerminatedDelegate;
 
 private:
-    // TODO: Move in an appropriate place instead. Temporary solution.
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Level", meta=(AllowPrivateAccess="true"))
-    TObjectPtr<UMTD_LevelDefinition> LevelDefinition = nullptr;
-
+    UPROPERTY()
+    TArray<TObjectPtr<AMTD_PlayerState>> Players;
+    
     bool bGameOver = false;
 };
