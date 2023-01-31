@@ -26,6 +26,12 @@ public:
     const UMTD_CharacterQuantityDefinition *GetEnemyQuantityAsset() const;
     const TArray<TObjectPtr<UMTD_LevelDefinition>> &GetGameLevels() const;
 
+protected:
+    virtual void OnStart() override;
+
+public:
+    virtual void Shutdown() override;
+
 private:
     void VerifyBaseItemDataTable() const;
     void VerifyArmorDataTable() const;

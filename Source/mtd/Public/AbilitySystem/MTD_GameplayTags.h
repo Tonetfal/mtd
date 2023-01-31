@@ -19,6 +19,8 @@ public:
     static void InitializeNativeTags();
     static FGameplayTag FindTagByString(FString TagString, bool bMatchPartialString = false);
 
+    static bool IsForAllHeroClasses(const FGameplayTagContainer& InTags);
+
 public:
     FGameplayTag Ability_ActivateFail_IsDead;
     FGameplayTag Ability_ActivateFail_Cooldown;

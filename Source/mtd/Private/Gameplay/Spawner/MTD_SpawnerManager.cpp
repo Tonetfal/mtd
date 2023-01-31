@@ -63,7 +63,7 @@ void UMTD_SpawnerManager::CacheSpawners()
         auto Spawner = Cast<AMTD_CharacterSpawner>(Actor);
 
         Spawner->OnSpawnDelegate.AddDynamic(this, &ThisClass::OnCharacterSpawn);
-        Spawner->OnPreparedForNewWaveDelegate.AddDynamic(this, &ThisClass::OnSpawnedPrepared);
+        Spawner->OnPreparedForNewWaveDelegate.AddDynamic(this, &ThisClass::OnSpawnerPrepared);
         Spawners.Add(Spawner);
     }
 }
@@ -82,6 +82,9 @@ void UMTD_SpawnerManager::OnWaveStarted(int32 WaveNumber, float RemainingSeconds
     {
         Spawner->StartSpawning();
     }
+
+    // Reset counter for this wave
+    KilledCharactersOnCurrentWave = 0;
 }
 
 void UMTD_SpawnerManager::OnWaveEnded(float WaveDuration)
@@ -90,7 +93,8 @@ void UMTD_SpawnerManager::OnWaveEnded(float WaveDuration)
     {
         Spawner->StopSpawning();
     }
-    
+
+    // Reset counter for next wave
     TotalCharactersToSpawnOnCurrentWave = 0;
 }
 
@@ -116,15 +120,16 @@ void UMTD_SpawnerManager::OnCharacterKilled(AActor *Actor)
     // Save information about death event
     KilledCharacters.Push(Actor);
     KilledCharactersOnCurrentWave++;
+    ensure(KilledCharactersOnCurrentWave <= TotalCharactersToSpawnOnCurrentWave);
 
-    if (KilledCharactersOnCurrentWave > TotalCharactersToSpawnOnCurrentWave)
+    if (KilledCharactersOnCurrentWave == TotalCharactersToSpawnOnCurrentWave)
     {
         // Notify about the fact that everything has been spawned
         OnAllCharactersKilledDelegate.Broadcast(TotalCharactersToSpawnOnCurrentWave);
     }
 }
 
-void UMTD_SpawnerManager::OnSpawnedPrepared(int32 TotalCharactersToSpawn)
+void UMTD_SpawnerManager::OnSpawnerPrepared(int32 TotalCharactersToSpawn)
 {
     TotalCharactersToSpawnOnCurrentWave += TotalCharactersToSpawn;
 }

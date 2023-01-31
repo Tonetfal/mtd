@@ -116,3 +116,8 @@ FGameplayTag FMTD_GameplayTags::FindTagByString(FString TagString, bool bMatchPa
 
     return Tag;
 }
+
+bool FMTD_GameplayTags::IsForAllHeroClasses(const FGameplayTagContainer &InTags)
+{
+    return InTags.HasTagExact(GameplayTags.Gameplay_Hero_All);
+}

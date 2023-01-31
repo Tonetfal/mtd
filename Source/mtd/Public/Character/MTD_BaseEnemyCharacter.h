@@ -63,6 +63,9 @@ private:
     AActor *GetCheapiestActor(AActor *Lhs, AActor *Rhs) const;
 
     void UnlockRetarget();
+    void DropGoods();
+    void DropItem();
+    void DropExp();
     void DisableCollisions();
 
     UFUNCTION()

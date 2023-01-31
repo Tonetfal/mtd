@@ -6,6 +6,7 @@
 
 #include "MTD_GameModeBase.generated.h"
 
+struct FGameplayTagContainer;
 class AMTD_PlayerState;
 class ANavigationData;
 class UMTD_LevelDefinition;
@@ -28,18 +29,13 @@ public:
 
 public:
     AMTD_GameModeBase();
+    virtual void PostActorCreated() override;
 
     UFUNCTION(Exec)
     void AddExp(int32 Exp, int32 PlayerIndex = 0);
     
     UFUNCTION(Exec)
     void BroadcastExp(int32 Exp);
-
-    virtual void PreInitializeComponents() override;
-
-protected:
-    virtual void BeginPlay() override;
-    virtual void StartPlay() override;
 
 public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Game Mode")
@@ -48,6 +44,15 @@ public:
 protected:
     UFUNCTION(BlueprintCallable, Category="MTD|Game Mode")
     void TerminateGame(EMTD_GameResult Reason);
+
+private:
+    void StartListeningForPlayers();
+    void OnActorSpawned(AActor *Actor);
+    void OnAddPlayer(AActor *Actor);
+    
+    UFUNCTION()
+    void OnRemovePlayer(AActor *Actor);
+    void OnHeroClassesChanged(const FGameplayTagContainer &HeroClasses);
 
 public:
     UPROPERTY(BlueprintAssignable)

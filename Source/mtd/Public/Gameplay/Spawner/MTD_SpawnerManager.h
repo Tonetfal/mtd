@@ -62,7 +62,7 @@ private:
     void OnCharacterKilled(AActor *Actor);
 
     UFUNCTION()
-    void OnSpawnedPrepared(int32 TotalCharactersToSpawn);
+    void OnSpawnerPrepared(int32 TotalCharactersToSpawn);
 
 private:
     /** All the spawners placed on map. */

@@ -65,6 +65,8 @@ private:
     
     UFUNCTION()
     void OnWaveEnded(float WaveDuration);
+
+    void SetPhase(EMTD_GamePhase InGamePhase);
     
     void CacheCores();
     
@@ -83,6 +85,13 @@ private:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Tower Defense Mode",
         meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_SpawnerManager> SpawnerManager = nullptr;
+
+    /** Time in seconds to delay before switching a phase. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Tower Defense Mode",
+        meta=(AllowPrivateAccess="true", ClampMin="0.1"))
+    float TimePhaseSwitchDelay = 0.1f;
+
+    FTimerHandle TimePhaseSwitchDelayTimerHandle;
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="MTD|Tower Defense Mode|Runtime",
         meta=(AllowPrivateAccess="true"))

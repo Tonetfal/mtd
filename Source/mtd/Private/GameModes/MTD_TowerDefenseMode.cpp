@@ -83,12 +83,40 @@ void AMTD_TowerDefenseMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AMTD_TowerDefenseMode::OnWaveStarted(int32 WaveNumber, float RemainingSeconds)
 {
-    OnPhaseChangedDelegate.Broadcast(EMTD_GamePhase::Combat);
+    SetPhase(EMTD_GamePhase::Combat);
 }
 
 void AMTD_TowerDefenseMode::OnWaveEnded(float WaveDuration)
 {
-    OnPhaseChangedDelegate.Broadcast(EMTD_GamePhase::Build);
+    SetPhase(EMTD_GamePhase::Build);
+}
+
+void AMTD_TowerDefenseMode::SetPhase(EMTD_GamePhase InGamePhase)
+{
+    if (CurrentGamePhase == InGamePhase)
+    {
+        // Avoid resetting if it's the same state
+        return;
+    }
+    
+    if (TimePhaseSwitchDelayTimerHandle.IsValid())
+    {
+        MTDS_WARN("Time phase switch delay timer handle is still valid. Phase switch is dropped.");
+        return;
+    }
+
+    // Save the state
+    CurrentGamePhase = InGamePhase;
+
+    // Payload code
+    auto Payload = [this, InGamePhase] ()
+        {
+            OnPhaseChangedDelegate.Broadcast(InGamePhase);
+            TimePhaseSwitchDelayTimerHandle.Invalidate();
+        };
+
+    // Delay the payload execution
+    GetWorldTimerManager().SetTimer(TimePhaseSwitchDelayTimerHandle, Payload, TimePhaseSwitchDelay, false);
 }
 
 AActor *AMTD_TowerDefenseMode::GetGameTarget(APawn *Client) const

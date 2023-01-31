@@ -16,7 +16,9 @@
 #include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "GameModes/MTD_TowerDefenseMode.h"
+#include "Inventory/MTD_InventoryItemInstance.h"
 #include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
+#include "Inventory/Items/MTD_ItemDropsBlueprintFunctionLibrary.h"
 #include "Kismet/DataTableFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/MTD_PlayerState.h"
@@ -132,32 +134,8 @@ void AMTD_BaseEnemyCharacter::InitializeAttributes()
 void AMTD_BaseEnemyCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
 {
     Super::OnDeathStarted_Implementation(OwningActor);
-    
-    const auto EnemyData = EnemyExtensionComponent->GetEnemyData<UMTD_EnemyData>();
-    if (IsValid(EnemyData))
-    {
-        const auto Tdm = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(GetWorld()));
-        if (IsValid(Tdm))
-        {
-            const float Experience = EnemyData->Experience;
-            const float Difficulty = Tdm->GetScaledDifficulty();
-            
-            // @todo use an actual formula to compute scaling
-            const auto ScaleExp = [Difficulty] (float Exp) { return (Exp * Difficulty); };
 
-            Tdm->BroadcastExp(ScaleExp(Experience));
-        }
-        else
-        {
-            MTDS_WARN("Tower Defense Mode is invalid.");
-            return;
-        }
-    }
-    else
-    {
-        MTDS_WARN("Enemy Data on Enemy [%s] is invalid.", *GetName());
-    }
-
+    DropGoods();
     DetachFromControllerPendingDestroy();
     DisableCollisions();
 }
@@ -392,6 +370,52 @@ void AMTD_BaseEnemyCharacter::OnGameTerminated_Implementation(EMTD_GameResult Ga
 {
     Super::OnGameTerminated_Implementation(GameResult);
     DetachFromControllerPendingDestroy();
+}
+
+void AMTD_BaseEnemyCharacter::DropGoods()
+{
+    DropItem();
+    DropExp();
+}
+
+void AMTD_BaseEnemyCharacter::DropItem()
+{
+    AMTD_InventoryItemInstance *ItemInstance =
+        UMTD_ItemDropsBlueprintFunctionLibrary::CreateRandomDropItemInstance(this, false);
+    
+    if (!IsValid(ItemInstance))
+    {
+        // An item can be not spawned not due an error, but simply due random
+        return;
+    }
+}
+
+void AMTD_BaseEnemyCharacter::DropExp()
+{
+    const auto EnemyData = EnemyExtensionComponent->GetEnemyData<UMTD_EnemyData>();
+    if (IsValid(EnemyData))
+    {
+        const auto Tdm = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(GetWorld()));
+        if (IsValid(Tdm))
+        {
+            const float Experience = EnemyData->Experience;
+            const float Difficulty = Tdm->GetScaledDifficulty();
+            
+            // @todo use an actual formula to compute scaling
+            const auto ScaleExp = [Difficulty] (float Exp) { return (Exp * Difficulty); };
+
+            Tdm->BroadcastExp(ScaleExp(Experience));
+        }
+        else
+        {
+            MTDS_WARN("Tower Defense Mode is invalid.");
+            return;
+        }
+    }
+    else
+    {
+        MTDS_WARN("Enemy Data on Enemy [%s] is invalid.", *GetName());
+    }
 }
 
 void AMTD_BaseEnemyCharacter::DisableCollisions()

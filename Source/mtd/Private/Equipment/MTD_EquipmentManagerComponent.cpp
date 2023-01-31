@@ -229,13 +229,13 @@ bool UMTD_EquipmentManagerComponent::CanEquipItem(UMTD_BaseInventoryItemData *It
     }
     
     // Check if item can be used by anyone
-    if (EquipmentHeroClasses.HasTag(GameplayTags.Gameplay_Hero_All))
+    if (FMTD_GameplayTags::IsForAllHeroClasses(EquipmentHeroClasses))
     {
         return true;
     }
 
     // Check if hero is marked as every class
-    if (CharacterHeroClasses.HasTag(GameplayTags.Gameplay_Hero_All))
+    if (FMTD_GameplayTags::IsForAllHeroClasses(CharacterHeroClasses))
     {
         return true;
     }
