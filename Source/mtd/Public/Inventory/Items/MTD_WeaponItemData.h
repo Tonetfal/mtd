@@ -67,9 +67,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Weapon")
     int32 MeleeDamage = 0;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Weapon")
-    float BalanceDamage = 7.5f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Ranged Weapon")
     int32 RangedDamage = 0;

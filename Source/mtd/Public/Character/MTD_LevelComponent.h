@@ -37,10 +37,10 @@ public:
 public:
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
         FLevelAttributeChangedSignature,
-        UMTD_LevelComponent*, LevelComponent,
+        UMTD_LevelComponent *, LevelComponent,
         float, OldValue,
         float, NewValue,
-        AActor*, Instigator);
+        AActor *, Instigator);
 
 public:
     UMTD_LevelComponent();
@@ -93,6 +93,7 @@ protected:
     virtual void OnExperienceChanged(const FOnAttributeChangeData &ChangeData);
 
 private:
+    void SendLevelUpEvent();
     void MapUpgradeAttributes();
     bool CacheExpRows();
 

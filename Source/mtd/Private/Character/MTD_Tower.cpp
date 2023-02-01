@@ -159,6 +159,8 @@ void AMTD_Tower::Tick(float DeltaTime)
 void AMTD_Tower::PreInitializeComponents()
 {
     Super::PreInitializeComponents();
+
+    OnLevelUpDelegate.AddDynamic(this, &ThisClass::OnLevelUp);
 }
 
 void AMTD_Tower::PostInitProperties()
@@ -181,6 +183,33 @@ void AMTD_Tower::NotifyControllerChanged()
     Super::NotifyControllerChanged();
 
     PawnExtentionComponent->HandleControllerChanged();
+}
+
+int32 AMTD_Tower::GetCurrentLevel() const
+{
+    return CurrentLevel;
+}
+
+void AMTD_Tower::AddLevel(int32 InDeltaLevel)
+{
+    if (CurrentLevel == MaxLevel)
+    {
+        MTDS_WARN("Cannot add any level because current level [%d] is the maximum one.", CurrentLevel);
+        return;
+    }
+
+    const int32 MaxDeltaLevel = (MaxLevel - CurrentLevel);
+    const int32 DeltaLevel = FMath::Min(InDeltaLevel, MaxDeltaLevel);
+    if (InDeltaLevel != DeltaLevel)
+    {
+        MTDS_WARN("Delta Level [%d] is decreased to [%d].", InDeltaLevel, DeltaLevel);
+    }
+
+    const int32 OldLevel = CurrentLevel;
+    CurrentLevel = (CurrentLevel + DeltaLevel);
+    OnLevelUpDelegate.Broadcast(CurrentLevel, OldLevel);
+
+    SendLevelUpEvent();
 }
 
 void AMTD_Tower::FellOutOfWorld(const UDamageType &DamageType)
@@ -222,8 +251,12 @@ float AMTD_Tower::GetReloadTime_Implementation() const
 
 void AMTD_Tower::InitializeAttributes()
 {
-    // TowerData with its attribute table must be validated by BeginPlay
     const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
+    if (!IsValid(TowerData))
+    {
+        MTDS_WARN("Tower Data is invalid.");
+        return;
+    }
 
     // Dispatch the Attribute Table regardless the ASC presence due SBS. The SBS may spawn a tower without a controller,
     // hence the ASC will not be initialized. However, the reason SBS may spawn it is because it needs to retrieve
@@ -232,32 +265,32 @@ void AMTD_Tower::InitializeAttributes()
 
     float Value;
 
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, DamageAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, DamageAttributeName, CurrentLevel, Value);
     BaseDamage = Value;
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, RangeAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, RangeAttributeName, CurrentLevel, Value);
     BaseVisionRange = Value;
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, VisionDegreesAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, VisionDegreesAttributeName, CurrentLevel, Value);
     BaseVisionHalfDegrees = Value / 2.f;
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, FirerateAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, FirerateAttributeName, CurrentLevel, Value);
     BaseFirerate = Value;
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, ProjectileSpeedAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, ProjectileSpeedAttributeName, CurrentLevel, Value);
     BaseProjectileSpeed = Value;
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, BalanceDamageAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, BalanceDamageAttributeName, CurrentLevel, Value);
     BalanceDamage = Value;
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
     if (!IsValid(Asc))
     {
-        MTDS_WARN("Ability System Component on Tower [%s] is invalid.", *GetName());
+        // Avoid logging due the reason written above
         return;
     }
     
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, Level, Value);
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, CurrentLevel, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
     Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override, BalanceDamage);
@@ -265,9 +298,58 @@ void AMTD_Tower::InitializeAttributes()
     // Tower ignore any balance damage
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, 100.f);
     
+    OnAttributesChangedDelegate.Broadcast();
+    MTDS_VERBOSE("Attributes have been initialized.", *GetName());
+}
 
-    OnAttributesChanged.Broadcast();
-    MTDS_VERBOSE("Tower [%s]'s attributes have been initialized.", *GetName());
+void AMTD_Tower::OnLevelUp(int32 NewLevel, int32 OldLevel)
+{
+    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
+    if (!IsValid(TowerData))
+    {
+        MTDS_WARN("Tower Data is invalid.");
+        return;
+    }
+    
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    if (!IsValid(Asc))
+    {
+        MTDS_WARN("Ability System Component is invalid.");
+        return;
+    }
+
+    float Value;
+    for (int32 LevelCounter = (OldLevel + 1); (LevelCounter <= NewLevel); LevelCounter++)
+    {
+        EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthDeltaAttributeName, CurrentLevel, Value);
+        Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Additive, Value);
+
+        MTDS_VERBOSE("Attributes for level [%d] have been changed.", *GetName(), CurrentLevel);
+    }
+}
+
+void AMTD_Tower::SendLevelUpEvent()
+{
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        return;
+    }
+
+    const AActor *Avatar = AbilitySystemComponent->GetAvatarActor();
+    if (!IsValid(Avatar))
+    {
+        return;
+    }
+
+    // Send the "Gameplay.Event.LevelUp" gameplay event through the owner's
+    // ability system. This can be used to trigger a level up gameplay ability.
+    FGameplayEventData Payload;
+    Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_LevelUp;
+    Payload.Target = AbilitySystemComponent->GetAvatarActor();
+    Payload.ContextHandle = AbilitySystemComponent->MakeEffectContext();;
+
+    AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
 void AMTD_Tower::OnGameTerminated_Implementation(EMTD_GameResult GameResult)

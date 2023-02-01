@@ -29,10 +29,12 @@ class UMTD_ProjectileData;
     } while(0)
 
 /** Attribute names used to retrieve data from curve tables. */
-const FName HealthAttributeName = "Health";
-const FName ManaAttributeName = "Mana";
-const FName BalanceResistAttributeName = "BalanceResist";
+const FName HealthAttributeName = "TotalHealth";
+const FName HealthDeltaAttributeName = "DeltaHealth";
+const FName ManaAttributeName = "TotalMana";
+const FName ManaDeltaAttributeName = "DeltaMana";
 const FName BalanceDamageAttributeName = "BalanceDamage";
+const FName BalanceResistAttributeName = "BalanceResist";
 
 const FName DamageAttributeName = "Damage";
 const FName RangeAttributeName = "Range";

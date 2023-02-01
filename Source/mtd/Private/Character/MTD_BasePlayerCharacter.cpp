@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/MTD_CharacterCoreTypes.h"
+#include "Character/MTD_LevelComponent.h"
 #include "Character/MTD_PlayerExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -67,14 +68,23 @@ void AMTD_BasePlayerCharacter::BeginPlay()
     }
     else
     {
-        AMTD_PlayerState *MtdPs = GetMtdPlayerState();
-        if (!IsValid(MtdPs))
+        AMTD_PlayerState *MtdPlayerState = GetMtdPlayerState();
+        if (!IsValid(MtdPlayerState))
         {
             MTDS_WARN("MTD Player State is invalid.");
         }
         else
         {
-            MtdPs->SetHeroClasses(PlayerData->HeroClasses);
+            MtdPlayerState->SetHeroClasses(PlayerData->HeroClasses);
+            UMTD_LevelComponent *LevelComponent = MtdPlayerState->GetLevelComponent();
+            if (!IsValid(LevelComponent))
+            {
+                MTDS_WARN("Level Component on Player State [%s] is invalid.", *MtdPlayerState->GetName());
+            }
+            else
+            {
+                LevelComponent->OnLevelChangedDelegate.AddDynamic(this, &ThisClass::OnLevelUp);
+            }
         }
     }
 }
@@ -102,20 +112,20 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(PlayerData))
     {
-        MTDS_WARN("Player Data on Player [%s] is invalid.", *GetName());
+        MTDS_WARN("Player Data is invalid.", *GetName());
         return;
     }
 
     if (!IsValid(PlayerData->AttributeTable))
     {
-        MTDS_WARN("Attribute Table on Owner [%s]'s Player Data is invalid.", *GetName());
+        MTDS_WARN("Attribute Table is invalid.", *GetName());
         return;
     }
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
     if (!IsValid(Asc))
     {
-        MTDS_WARN("Ability System Component on Player [%s] is invalid.", *GetName());
+        MTDS_WARN("Ability System Component is invalid.", *GetName());
         return;
     }
 
@@ -143,7 +153,43 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceResistAttributeName, Level, Value);
     Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, Value);
 
-    MTDS_VERBOSE("Player [%s]'s attributes have been initialized.", *GetName());
+    MTDS_VERBOSE("Attributes have been initialized.", *GetName());
+}
+
+void AMTD_BasePlayerCharacter::OnLevelUp(UMTD_LevelComponent *LevelComponent, float OldValue, float NewValue,
+    AActor *InInstigator)
+{
+    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player Data is invalid.", *GetName());
+        return;
+    }
+
+    if (!IsValid(PlayerData->AttributeTable))
+    {
+        MTDS_WARN("Attribute Table is invalid.", *GetName());
+        return;
+    }
+
+    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
+    if (!IsValid(Asc))
+    {
+        MTDS_WARN("Ability System Component is invalid.", *GetName());
+        return;
+    }
+
+    float Value;
+    for (int32 CurrentLevel = (OldValue + 1); (CurrentLevel <= NewValue); CurrentLevel++)
+    {
+        EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthDeltaAttributeName, CurrentLevel, Value);
+        Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Additive, Value);
+        
+        EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaDeltaAttributeName, CurrentLevel, Value);
+        Asc->ApplyModToAttribute(UMTD_ManaSet::GetMaxManaAttribute(), EGameplayModOp::Type::Additive, Value);
+
+        MTDS_VERBOSE("Attributes for level [%d] have been changed.", *GetName(), CurrentLevel);
+    }
 }
 
 void AMTD_BasePlayerCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
@@ -173,7 +219,7 @@ void AMTD_BasePlayerCharacter::InitializeInput()
     const auto Data = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(Data))
     {
-        MTDS_WARN("Player Data on Player [%s] is invalid.", *GetName());
+        MTDS_WARN("Player Data is invalid.", *GetName());
         return;
     }
 
@@ -181,7 +227,7 @@ void AMTD_BasePlayerCharacter::InitializeInput()
     {
         if (!Context)
         {
-            MTDS_WARN("A Mapping Input Context on Player [%s] is invalid.", *GetName());
+            MTDS_WARN("A Mapping Input Context is invalid.", *GetName());
             continue;
         }
         

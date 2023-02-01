@@ -48,6 +48,7 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
     AddTag(InputTag_AutoRun, "InputTag.AutoRun", "Auto-run input.");
 
     AddTag(Gameplay_Event_Death, "Gameplay.Event.Death", "Event that fires on death.");
+    AddTag(Gameplay_Event_LevelUp, "Gameplay.Event.LevelUp", "Event that fires on level up.");
     AddTag(Gameplay_Event_Knockback, "Gameplay.Event.Knockback", "Event that fires on knockback.");
     AddTag(Gameplay_Event_RangeHit, "Gameplay.Event.RangeHit", "Event that fires on ranged weapon hit.");
     AddTag(Gameplay_Event_MeleeHit, "Gameplay.Event.MeleeHit", "Event that fires on melee weapon hit.");

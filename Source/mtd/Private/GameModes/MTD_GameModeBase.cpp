@@ -139,5 +139,11 @@ void AMTD_GameModeBase::OnRemovePlayer(AActor *Actor)
 
 void AMTD_GameModeBase::OnHeroClassesChanged(const FGameplayTagContainer &HeroClasses)
 {
-    UMTD_ItemDropManager::Get()->AddHeroClasses(HeroClasses);
+    UMTD_ItemDropManager *ItemDropManager = UMTD_ItemDropManager::Get();
+
+    // May be invalid prior to play-time, in BPs viewport for intance
+    if (IsValid(ItemDropManager))
+    {
+        ItemDropManager->AddHeroClasses(HeroClasses);
+    }
 }

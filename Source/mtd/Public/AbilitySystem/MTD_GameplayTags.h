@@ -46,6 +46,7 @@ public:
     FGameplayTag InputTag_AutoRun;
 
     FGameplayTag Gameplay_Event_Death;
+    FGameplayTag Gameplay_Event_LevelUp;
     FGameplayTag Gameplay_Event_Knockback;
     FGameplayTag Gameplay_Event_RangeHit;
     FGameplayTag Gameplay_Event_MeleeHit;

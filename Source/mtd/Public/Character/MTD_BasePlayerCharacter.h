@@ -9,6 +9,7 @@
 class UCameraComponent;
 class UMTD_AbilitiesUiData;
 class UMTD_InventoryManagerComponent;
+class UMTD_LevelComponent;
 class UMTD_PlayerExtensionComponent;
 class USpringArmComponent;
 
@@ -35,6 +36,10 @@ public:
 protected:
     //~AMTD_BaseCharacter Interface
     virtual void InitializeAttributes() override;
+    
+    UFUNCTION()
+    virtual void OnLevelUp(UMTD_LevelComponent *LevelComponent, float OldValue, float NewValue, AActor *InInstigator);
+    
     virtual void OnDeathStarted_Implementation(AActor *OwningActor) override;
     //~End of AMTD_BaseCharacter Interface
 
