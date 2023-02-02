@@ -65,6 +65,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Equipment")
     const UMTD_EquipmentInstance *GetEquipmentInstance(EMTD_EquipmentType EquipmentType) const;
 
+private:
+    bool SwapItem(const EMTD_EquipmentType EquipmentType, UMTD_EquippableItemData *NewEquipmentItemData);
+
 public:
     UPROPERTY(BlueprintAssignable)
     FOnItemEquipmentSignature OnItemEquipmentDelegate;

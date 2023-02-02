@@ -43,7 +43,7 @@ void AMTD_TowerController::OnPossess(APawn *InPawn)
     PerceptionComponent->RequestStimuliListenerUpdate();
 
     auto Tower = CastChecked<AMTD_Tower>(InPawn);
-    Tower->OnAttributesChangedDelegate.AddDynamic(this, &ThisClass::UpdateSightAttributes);
+    Tower->OnRangeAttributeChangedDelegate.AddDynamic(this, &ThisClass::UpdateSightAttributes);
 }
 
 AActor *AMTD_TowerController::GetFireTarget()

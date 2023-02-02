@@ -88,8 +88,9 @@ void AMTD_Tower::BeginPlay()
 {
     Super::BeginPlay();
 
-    StartListeningForGameTerminated();
     CachePlayerAsc();
+    StartListeningForGameTerminated();
+    StartListeningForRangeAttributeChanges();
     if (!CheckTowerDataValidness())
     {
         return;
@@ -346,7 +347,7 @@ void AMTD_Tower::InitializeAttributes()
     // Towers ignore any balance damage
     Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), 100.f);
     
-    OnAttributesChangedDelegate.Broadcast();
+    OnRangeAttributeChangedDelegate.Broadcast();
     MTDS_VERBOSE("Attributes have been initialized.");
 }
 
@@ -444,6 +445,25 @@ void AMTD_Tower::StartListeningForGameTerminated()
         auto MtdGameMode = CastChecked<AMTD_GameModeBase>(GameMode);
         MtdGameMode->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
     }
+}
+
+void AMTD_Tower::StartListeningForRangeAttributeChanges()
+{
+    if (!IsValid(InstigatorAsc))
+    {
+        MTDS_WARN("Instigator's Ability System Component is invalid.");
+        return;
+    }
+
+    InstigatorAsc->GetGameplayAttributeValueChangeDelegate(
+        UMTD_BuilderSet::GetRangeStatAttribute()).AddUObject(this, &ThisClass::OnRangeAttributeChanged);
+    InstigatorAsc->GetGameplayAttributeValueChangeDelegate(
+        UMTD_BuilderSet::GetRangeStat_BonusAttribute()).AddUObject(this, &ThisClass::OnRangeAttributeChanged);
+}
+
+void AMTD_Tower::OnRangeAttributeChanged(const FOnAttributeChangeData &Attribute)
+{
+    OnRangeAttributeChangedDelegate.Broadcast();
 }
 
 void AMTD_Tower::CachePlayerAsc()

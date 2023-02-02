@@ -8,13 +8,13 @@
 
 #include "MTD_Tower.generated.h"
 
-class UMTD_GameplayEffect;
 class AMTD_PlayerState;
 class AMTD_Projectile;
 class UBoxComponent;
 class UMTD_AbilityAnimationSet;
 class UMTD_AbilitySystemComponent;
 class UMTD_BuilderSet;
+class UMTD_GameplayEffect;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_PawnExtensionComponent;
@@ -22,6 +22,7 @@ class UMTD_TowerData;
 class USphereComponent;
 struct FGameplayEffectSpecHandle;
 struct FGameplayEventData;
+struct FOnAttributeChangeData;
 
 UCLASS()
 class MTD_API AMTD_Tower : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
@@ -136,6 +137,8 @@ private:
     void OnReloadFinished();
 
     void StartListeningForGameTerminated();
+    void StartListeningForRangeAttributeChanges();
+    void OnRangeAttributeChanged(const FOnAttributeChangeData &Attribute);
     void CachePlayerAsc();
     bool CheckTowerDataValidness() const;
 
@@ -157,7 +160,7 @@ public:
 
 public:
     UPROPERTY(BlueprintAssignable)
-    FDynamicMulticastSignature OnAttributesChangedDelegate;
+    FDynamicMulticastSignature OnRangeAttributeChangedDelegate;
 
     UPROPERTY(BlueprintAssignable)
     FOnLevelUpSignature OnLevelUpDelegate;

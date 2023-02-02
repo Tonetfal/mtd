@@ -111,14 +111,17 @@ void UMTD_EquipmentInstance::DestroyEquipmentActor()
     SpawnedActor->Destroy();
 }
 
-void UMTD_EquipmentInstance::OnEquipped()
+void UMTD_EquipmentInstance::OnEquipped(bool bModStats)
 {
     K2_OnEquipped();
 
-    GrantStats();
+    if (bModStats)
+    {
+        GrantStats();
+    }
 }
 
-void UMTD_EquipmentInstance::OnUnequipped()
+void UMTD_EquipmentInstance::OnUnequipped(bool bModStats)
 {
     K2_OnUnequipped();
     
@@ -126,7 +129,10 @@ void UMTD_EquipmentInstance::OnUnequipped()
     GrantedHandles.TakeFromAbilitySystem(MtdAsc);
     DestroyEquipmentActor();
 
-    TakeBackStats();
+    if (bModStats)
+    {
+        TakeBackStats();
+    }
 }
 
 void UMTD_EquipmentInstance::ModStats(float Multiplier)
@@ -163,14 +169,14 @@ void UMTD_EquipmentInstance::ModStats_Internal(float Multiplier, UAbilitySystemC
     const auto EquippableData = Cast<UMTD_EquippableItemData>(ItemData);
     check(EquippableData);
 
-    APPLY_MOD_TO_ATTRIBUTE(Player, HealthStat, EquippableData->PlayerHealth);
-    APPLY_MOD_TO_ATTRIBUTE(Player, DamageStat, EquippableData->PlayerDamage);
-    APPLY_MOD_TO_ATTRIBUTE(Player, SpeedStat, EquippableData->PlayerDamage);
+    MOD_ATTRIBUTE_BASE(Player, HealthStat, EquippableData->PlayerHealth);
+    MOD_ATTRIBUTE_BASE(Player, DamageStat, EquippableData->PlayerDamage);
+    MOD_ATTRIBUTE_BASE(Player, SpeedStat, EquippableData->PlayerDamage);
     
-    APPLY_MOD_TO_ATTRIBUTE(Builder, HealthStat, EquippableData->TowerHealth);
-    APPLY_MOD_TO_ATTRIBUTE(Builder, DamageStat, EquippableData->TowerDamage);
-    APPLY_MOD_TO_ATTRIBUTE(Builder, RangeStat, EquippableData->TowerRange);
-    APPLY_MOD_TO_ATTRIBUTE(Builder, SpeedStat, EquippableData->TowerSpeed);
+    MOD_ATTRIBUTE_BASE(Builder, HealthStat, EquippableData->TowerHealth);
+    MOD_ATTRIBUTE_BASE(Builder, DamageStat, EquippableData->TowerDamage);
+    MOD_ATTRIBUTE_BASE(Builder, RangeStat, EquippableData->TowerRange);
+    MOD_ATTRIBUTE_BASE(Builder, SpeedStat, EquippableData->TowerSpeed);
 }
 
 bool UMTD_EquipmentInstance::IsPlayer() const

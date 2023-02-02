@@ -17,8 +17,8 @@ void UMTD_WeaponInstance::ModStats_Internal(float Multiplier, UAbilitySystemComp
     const auto WeaponData = Cast<UMTD_WeaponItemData>(ItemData);
     check(WeaponData);
 
-    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageBase, WeaponData->MeleeDamage);
-    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageRangedBase, WeaponData->RangedDamage);
+    MOD_ATTRIBUTE_BASE(Combat, DamageBase, WeaponData->MeleeDamage);
+    MOD_ATTRIBUTE_BASE(Combat, DamageRangedBase, WeaponData->RangedDamage);
 }
 
 FVector UMTD_WeaponInstance::GetFirePointWorldPosition() const
