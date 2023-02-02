@@ -1,12 +1,13 @@
-#include "AbilitySystem/Executions/MTD_CooldownExecution.h"
+#include "AbilitySystem/ModMagnitudeCalculations/MTD_MMC_Cooldown.h"
 
+#include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 #include "AbilitySystemComponent.h"
 
-UMTD_CooldownExecution::UMTD_CooldownExecution()
+UMTD_MMC_Cooldown::UMTD_MMC_Cooldown()
 {
 }
 
-float UMTD_CooldownExecution::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
+float UMTD_MMC_Cooldown::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
 {
     const auto Ability = Cast<UMTD_GameplayAbility>(Spec.GetContext().GetAbilityInstance_NotReplicated());
     if (!IsValid(Ability))

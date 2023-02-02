@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
 #include "mtd.h"
@@ -9,17 +8,20 @@
 
 #include "MTD_Tower.generated.h"
 
+class UMTD_GameplayEffect;
 class AMTD_PlayerState;
 class AMTD_Projectile;
 class UBoxComponent;
 class UMTD_AbilityAnimationSet;
 class UMTD_AbilitySystemComponent;
+class UMTD_BuilderSet;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_PawnExtensionComponent;
 class UMTD_TowerData;
 class USphereComponent;
 struct FGameplayEffectSpecHandle;
+struct FGameplayEventData;
 
 UCLASS()
 class MTD_API AMTD_Tower : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
@@ -133,6 +135,10 @@ private:
     void StartReloading();
     void OnReloadFinished();
 
+    void StartListeningForGameTerminated();
+    void CachePlayerAsc();
+    bool CheckTowerDataValidness() const;
+
     FVector GetTargetDistanceVector(const USceneComponent *Projectile, const USceneComponent *Target) const;
     FVector GetTargetDirection(const USceneComponent *Projectile, const USceneComponent *Target) const;
 
@@ -214,6 +220,15 @@ private:
     bool bIsReloading = false;
 
     FTimerHandle ReloadTimerHandle;
+
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Tower")
+    TSubclassOf<UMTD_GameplayEffect> TowerHealthAttributeScalingGeClass = nullptr;
+
+    UPROPERTY()
+    TObjectPtr<UAbilitySystemComponent> InstigatorAsc = nullptr;
+    
+    UPROPERTY()
+    TObjectPtr<const UMTD_BuilderSet> InstigatorBuilderSet = nullptr;
 };
 
 inline UMTD_HealthComponent *AMTD_Tower::GetHealthComponent() const

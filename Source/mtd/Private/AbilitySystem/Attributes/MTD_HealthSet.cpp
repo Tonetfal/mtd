@@ -73,6 +73,27 @@ void UMTD_HealthSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
     }
 }
 
+void UMTD_HealthSet::PostAttributeBaseChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue) const
+{
+    Super::PostAttributeBaseChange(Attribute, OldValue, NewValue);
+    
+    if (Attribute == GetMaxHealthAttribute())
+    {
+        // Decrease current health if max health has decreased
+        if (GetHealth() > NewValue)
+        {
+            UAbilitySystemComponent *AbilitySystem = GetOwningAbilitySystemComponentChecked();
+
+            AbilitySystem->ApplyModToAttribute(GetHealthAttribute(), EGameplayModOp::Override, NewValue);
+        }
+    }
+
+    // if (bOutOfHealth && GetHealth() > 0.f)
+    // {
+    //     bOutOfHealth = false;
+    // }
+}
+
 void UMTD_HealthSet::ClampAttribute(const FGameplayAttribute &Attribute, float &NewValue) const
 {
     if (Attribute == GetHealthAttribute())

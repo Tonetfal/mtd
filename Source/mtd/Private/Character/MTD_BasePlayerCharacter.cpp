@@ -112,20 +112,20 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(PlayerData))
     {
-        MTDS_WARN("Player Data is invalid.", *GetName());
+        MTDS_WARN("Player Data is invalid.");
         return;
     }
 
     if (!IsValid(PlayerData->AttributeTable))
     {
-        MTDS_WARN("Attribute Table is invalid.", *GetName());
+        MTDS_WARN("Attribute Table is invalid.");
         return;
     }
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
     if (!IsValid(Asc))
     {
-        MTDS_WARN("Ability System Component is invalid.", *GetName());
+        MTDS_WARN("Ability System Component is invalid.");
         return;
     }
 
@@ -140,20 +140,20 @@ void AMTD_BasePlayerCharacter::InitializeAttributes()
     Asc->ApplyModToAttribute(UMTD_PlayerSet::GetExperienceStatAttribute(), EGameplayModOp::Type::Override, Experience);
 
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Override, Value);
-    Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
+    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetHealthAttribute(), Value);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_ManaSet::GetMaxManaAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
     Asc->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Type::Override, 0.f);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceDamageAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetDamageAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetDamageAttribute(), Value);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceResistAttributeName, Level, Value);
-    Asc->ApplyModToAttribute(UMTD_BalanceSet::GetResistAttribute(), EGameplayModOp::Type::Override, Value);
+    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), Value);
 
-    MTDS_VERBOSE("Attributes have been initialized.", *GetName());
+    MTDS_VERBOSE("Attributes have been initialized.");
 }
 
 void AMTD_BasePlayerCharacter::OnLevelUp(UMTD_LevelComponent *LevelComponent, float OldValue, float NewValue,
@@ -162,34 +162,29 @@ void AMTD_BasePlayerCharacter::OnLevelUp(UMTD_LevelComponent *LevelComponent, fl
     const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(PlayerData))
     {
-        MTDS_WARN("Player Data is invalid.", *GetName());
+        MTDS_WARN("Player Data is invalid.");
         return;
     }
 
     if (!IsValid(PlayerData->AttributeTable))
     {
-        MTDS_WARN("Attribute Table is invalid.", *GetName());
+        MTDS_WARN("Attribute Table is invalid.");
         return;
     }
 
     UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
     if (!IsValid(Asc))
     {
-        MTDS_WARN("Ability System Component is invalid.", *GetName());
+        MTDS_WARN("Ability System Component is invalid.");
         return;
     }
 
     float Value;
-    for (int32 CurrentLevel = (OldValue + 1); (CurrentLevel <= NewValue); CurrentLevel++)
-    {
-        EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthDeltaAttributeName, CurrentLevel, Value);
-        Asc->ApplyModToAttribute(UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayModOp::Type::Additive, Value);
-        
-        EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaDeltaAttributeName, CurrentLevel, Value);
-        Asc->ApplyModToAttribute(UMTD_ManaSet::GetMaxManaAttribute(), EGameplayModOp::Type::Additive, Value);
-
-        MTDS_VERBOSE("Attributes for level [%d] have been changed.", *GetName(), CurrentLevel);
-    }
+    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, NewValue, Value);
+    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
+    
+    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaAttributeName, NewValue, Value);
+    Asc->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
 }
 
 void AMTD_BasePlayerCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
@@ -219,7 +214,7 @@ void AMTD_BasePlayerCharacter::InitializeInput()
     const auto Data = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(Data))
     {
-        MTDS_WARN("Player Data is invalid.", *GetName());
+        MTDS_WARN("Player Data is invalid.");
         return;
     }
 
@@ -227,7 +222,7 @@ void AMTD_BasePlayerCharacter::InitializeInput()
     {
         if (!Context)
         {
-            MTDS_WARN("A Mapping Input Context is invalid.", *GetName());
+            MTDS_WARN("A Mapping Input Context is invalid.");
             continue;
         }
         

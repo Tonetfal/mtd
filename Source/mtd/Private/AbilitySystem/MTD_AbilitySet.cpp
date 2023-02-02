@@ -73,8 +73,8 @@ void UMTD_AbilitySet::GiveToAbilitySystem(
     check(MtdAsc);
 
     GrantAbilities(MtdAsc, OutGrantedHandles, SourceObject);
-    GrantEffects(MtdAsc, OutGrantedHandles, SourceObject);
     GrantAttributes(MtdAsc, OutGrantedHandles, SourceObject);
+    GrantEffects(MtdAsc, OutGrantedHandles, SourceObject);
 }
 
 void UMTD_AbilitySet::K2_GiveToAbilitySystem(

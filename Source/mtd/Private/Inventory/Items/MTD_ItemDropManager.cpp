@@ -85,6 +85,7 @@ void UMTD_ItemDropManager::Destroy()
     {
         ItemDropManager->RemoveFromRoot();
         ItemDropManager->MarkAsGarbage();
+        ItemDropManager = nullptr;
         
         MTD_LOG("Item Drop Manager has been destroyed.");
     }

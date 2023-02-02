@@ -1,8 +1,8 @@
-#include "AbilitySystem/ModMagnitudeCalculations/MTD_MmcManaCost.h"
+#include "AbilitySystem/ModMagnitudeCalculations/MTD_MMC_ManaCost.h"
 
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 
-float UMTD_MmcManaCost::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
+float UMTD_MMC_ManaCost::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
 {
     const UGameplayAbility *Ability = Spec.GetContext().GetAbilityInstance_NotReplicated();
     if (!IsValid(Ability))
