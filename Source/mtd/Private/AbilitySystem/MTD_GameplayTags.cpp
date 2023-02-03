@@ -61,6 +61,15 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
         "SetByCaller tag used by damage gameplay effects.");
     AddTag(SetByCaller_Damage_Multiplier, "SetByCaller.Damage.Multiplier",
         "SetByCaller tag used by damage gameplay effects.");
+        
+    AddTag(SetByCaller_Balance_Damage, "SetByCaller.Balance.Damage",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_X, "SetByCaller.KnockbackDirection.X",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_Y, "SetByCaller.KnockbackDirection.Y",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_Z, "SetByCaller.KnockbackDirection.Z",
+        "SetByCaller tag used by damage gameplay effects.");
 
     AddTag(Status_Death, "Status.Death", "Target has the death status.");
     AddTag(Status_Death_Dying, "Status.Death.Dying", "Target has begun the death process.");

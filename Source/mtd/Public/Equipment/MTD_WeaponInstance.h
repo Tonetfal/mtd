@@ -16,11 +16,14 @@ class MTD_API UMTD_WeaponInstance
 {
     GENERATED_BODY()
 
-protected:
-    virtual void ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc) override;
+public:
+    const UMTD_ProjectileData *GetProjectileData() const;
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Weapon")
     FVector GetFirePointWorldPosition() const;
+
+protected:
+    virtual void ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc) override;
 
 private:
     bool InitializeFirePoint() const;
@@ -46,3 +49,8 @@ private:
     UPROPERTY()
     mutable TObjectPtr<const UStaticMeshComponent> WeaponMesh = nullptr;
 };
+
+inline const UMTD_ProjectileData *UMTD_WeaponInstance::GetProjectileData() const
+{
+    return ProjectileData;
+}

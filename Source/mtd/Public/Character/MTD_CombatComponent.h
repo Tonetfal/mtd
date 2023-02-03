@@ -65,9 +65,9 @@ private:
     UPROPERTY(EditAnywhere, Category="MTD|Combat Component|Debug")
     bool bDebugMelee = false;
 
-    /** Seconds the hitboxes will be drawn for. */
-    UPROPERTY(EditAnywhere, Category="MTD|Combat Component|Debug")
-    float DrawTime = 0.1f;
+    /** Time in seconds the hitboxes will be drawn for. */
+    UPROPERTY(EditAnywhere, Category="MTD|Combat Component|Debug", meta=(EditCondition="bDebugMelee"))
+    float SweepDrawTime = 0.1f;
 
     /** Targets that has been hit with active attack, and that will be ignored until the attack ends. */
     UPROPERTY()

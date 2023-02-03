@@ -115,4 +115,6 @@ void AMTD_InventoryItemSpawner::DispatchWeaponParameters(UMTD_BaseInventoryItemD
     WeaponItemData->RangedDamage = WeaponItemParameters.RangedDamage;
     WeaponItemData->Projectiles = WeaponItemParameters.Projectiles;
     WeaponItemData->ProjectileSpeed = WeaponItemParameters.ProjectileSpeed;
+    WeaponItemData->bRadial = WeaponItemParameters.bRadial;
+    WeaponItemData->RadialRange = WeaponItemParameters.RadialRange;
 }

@@ -146,28 +146,9 @@ bool AMTD_InventoryItemInstance::Interact_Implementation(AMTD_BaseCharacter *Cha
         // Equip item
         const UMTD_EquipmentInstance *EquipmentInstance = EquipmentManagerComponent->EquipItem(ItemData);
         const bool bEquipped = IsValid(EquipmentInstance);
+        
         bShouldDestroy = bEquipped;
         ensureAlways(bEquipped);
-        
-        // ensure(EquipmentManagerComponent->CanEquipItem(ItemData));
-        //
-        // auto EquipItemData = Cast<UMTD_EquippableItemData>(ItemData);
-        // check(IsValid(EquipItemData));
-        //
-        // const EMTD_EquipmentType EquipmentType = UMTD_InventoryBlueprintFunctionLibrary::GetEquipmentType(ItemData);
-        // if (EquipmentManagerComponent->IsItemTypeEquipped(EquipmentType))
-        // {
-        //     // Remove the current equipment, try to add it to the inventory; the item may be dropped on the floor
-        //     UMTD_EquippableItemData *UnequippedItemData = EquipmentManagerComponent->UnequipItemType(EquipmentType);
-        //     check(IsValid(UnequippedItemData));
-        //     
-        //     InventoryManagerComponent->AddItem(UnequippedItemData, true);
-        // }
-        //
-        // // Previously CanEquipItem was checked along other validness things, hence it should never fail
-        // const UMTD_EquipmentInstance *EquipmentInstance =  EquipmentManagerComponent->EquipItem(ItemData);
-        // const bool bEquipped = IsValid(EquipmentInstance);
-        // bShouldDestroy = bEquipped;
     }
 
     // Something could fail due some errors prior to runtime, such as null or invalid fields in a database

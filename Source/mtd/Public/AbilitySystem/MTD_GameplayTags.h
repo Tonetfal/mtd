@@ -56,6 +56,11 @@ public:
     FGameplayTag SetByCaller_Damage_Base;
     FGameplayTag SetByCaller_Damage_Additive;
     FGameplayTag SetByCaller_Damage_Multiplier;
+    
+    FGameplayTag SetByCaller_Balance_Damage;
+    FGameplayTag SetByCaller_KnockbackDirection_X;
+    FGameplayTag SetByCaller_KnockbackDirection_Y;
+    FGameplayTag SetByCaller_KnockbackDirection_Z;
 
     FGameplayTag Status_Death;
     FGameplayTag Status_Death_Dying;

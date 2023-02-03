@@ -137,7 +137,7 @@ void UMTD_CombatComponent::PerformHitboxCheck()
         TArray<FHitResult> OutHits;
         UKismetSystemLibrary::SphereTraceMultiForObjects(
             World, TraceLocation, TraceLocation, HitboxEntry.Radius, ObjectTypesToHit, false, MeleeHitTargets,
-            DrawDebugTrace, OutHits, false, FLinearColor::Red, FLinearColor::Green, DrawTime);
+            DrawDebugTrace, OutHits, false, FLinearColor::Red, FLinearColor::Green, SweepDrawTime);
 
         // Iterate through each hit target and true to perform a hit
         for (const FHitResult &Hit : OutHits)

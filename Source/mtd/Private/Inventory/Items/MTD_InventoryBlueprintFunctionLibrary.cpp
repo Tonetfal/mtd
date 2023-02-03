@@ -128,6 +128,12 @@ static void RandomizeWeaponItemData(FMTD_GenerationParameters &Params, UMTD_Weap
         {
             WeaponItemData.ProjectileSpeed = (FMath::FRand() * FMTD_WeaponItemDataRow.ProjectileSpeedLimit);
         }
+        
+        if (FMTD_WeaponItemDataRow.bRadial)
+        {
+            WeaponItemData.bRadial = true;
+            WeaponItemData.RadialRange = (FMath::FRand() * FMTD_WeaponItemDataRow.RadialRangeLimit);
+        }
     }
 }
 
