@@ -11,6 +11,7 @@
 #include "Character/MTD_PlayerExtensionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Character/MTD_CombatComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/DataTableFunctionLibrary.h"
@@ -44,6 +45,8 @@ AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
     bUseControllerRotationPitch = false;
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = false;
+    
+    CombatComponent->AddObjectTypeToHit(EnemyQuery);
 
     Tags.Add(FMTD_Tags::Character);
 }

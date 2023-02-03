@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
+#include "Character/MTD_CombatComponent.h"
 #include "Character/MTD_EnemyExtensionComponent.h"
 #include "Character/MTD_HealthComponent.h"
 #include "Components/BoxComponent.h"
@@ -33,7 +34,7 @@ AMTD_BaseEnemyCharacter::AMTD_BaseEnemyCharacter()
     UCapsuleComponent *CollisionComponent = GetCapsuleComponent();
     CollisionComponent->SetCollisionProfileName(EnemyCollisionProfileName);
 
-    SightSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sight Sphere"));
+    SightSphere = CreateDefaultSubobject<USphereComponent>("Sight Sphere");
     SightSphere->SetupAttachment(GetRootComponent());
 
     SightSphere->InitSphereRadius(100.f);
@@ -41,7 +42,7 @@ AMTD_BaseEnemyCharacter::AMTD_BaseEnemyCharacter()
     SightSphere->SetGenerateOverlapEvents(true);
     SightSphere->ShapeColor = FColor::Green;
 
-    LoseSightSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Lose Sight Sphere"));
+    LoseSightSphere = CreateDefaultSubobject<USphereComponent>("Lose Sight Sphere");
     LoseSightSphere->SetupAttachment(SightSphere);
 
     LoseSightSphere->InitSphereRadius(150.f);
@@ -49,24 +50,39 @@ AMTD_BaseEnemyCharacter::AMTD_BaseEnemyCharacter()
     LoseSightSphere->SetGenerateOverlapEvents(true);
     LoseSightSphere->ShapeColor = FColor::Red;
 
-    AttackTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("Attack Trigger"));
+    AttackTrigger = CreateDefaultSubobject<UBoxComponent>("Attack Trigger");
     AttackTrigger->SetupAttachment(GetRootComponent());
 
     AttackTrigger->InitBoxExtent(FVector(20.f, 20.f, 85.f));
     AttackTrigger->SetCollisionProfileName(EnemyAttackCollisionProfileName);
     AttackTrigger->SetGenerateOverlapEvents(true);
 
-    EnemyExtensionComponent = CreateDefaultSubobject<UMTD_EnemyExtensionComponent>(TEXT("Enemy Extension Component"));
+    EnemyExtensionComponent = CreateDefaultSubobject<UMTD_EnemyExtensionComponent>("Enemy Extension Component");
 
-    GetHealthComponent()->OnHealthChangedDelegate.AddDynamic(this, &ThisClass::OnHealthChanged);
+    // For some reason in PreInitializeComponent this binding triggers ensure macro, hence it's here
+    check(IsValid(HealthComponent));
+    HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &ThisClass::OnHealthChanged);
+    
+    check(IsValid(CombatComponent));
+    CombatComponent->AddObjectTypeToHit(PlayerQuery);
+    CombatComponent->AddObjectTypeToHit(TowerQuery);
+
+    Tags.Add(FMTD_Tags::Enemy);
+}
+
+void AMTD_BaseEnemyCharacter::PreInitializeComponents()
+{
+    Super::PreInitializeComponents();
+    
+    check(IsValid(SightSphere));
+    check(IsValid(LoseSightSphere));
+    check(IsValid(AttackTrigger));
     
     SightSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSightSphereBeginOverlap);
     LoseSightSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnLoseSightSphereEndOverlap);
 
     AttackTrigger->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnAttackTriggerBeginOverlap);
     AttackTrigger->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnAttackTriggerEndOverlap);
-
-    Tags.Add(FMTD_Tags::Enemy);
 }
 
 void AMTD_BaseEnemyCharacter::BeginPlay()
@@ -355,11 +371,10 @@ void AMTD_BaseEnemyCharacter::OnHealthChanged_Implementation(UMTD_HealthComponen
         // Should always be the case
         if (IsValid(GameTarget))
         {
-            const AActor *CheapiestActor = nullptr;
-            CheapiestActor = GetCheapiestActor(InstigatorPawn, GameTarget);
+            const AActor *CheapiestActor = GetCheapiestActor(InstigatorPawn, GameTarget);
 
             // GameTarget is implicit; if there is no target, the AI will go towards GameTarget
-            FinalTarget = (CheapiestActor == GameTarget) ? (nullptr) : (Target);
+            FinalTarget = ((CheapiestActor == GameTarget) ? (nullptr) : (Target));
         }
     }
 
@@ -434,7 +449,7 @@ void AMTD_BaseEnemyCharacter::OnSightSphereBeginOverlap(
     bool bFromSweep,
     const FHitResult &SweepResult)
 {
-    if (GetHealthComponent()->IsDeadOrDying())
+    if (HealthComponent->IsDeadOrDying())
     {
         return;
     }
@@ -454,7 +469,7 @@ void AMTD_BaseEnemyCharacter::OnLoseSightSphereEndOverlap(
     UPrimitiveComponent *OtherComp,
     int32 OtherBodyIndex)
 {
-    if (GetHealthComponent()->IsDeadOrDying())
+    if (HealthComponent->IsDeadOrDying())
     {
         return;
     }
@@ -477,7 +492,7 @@ void AMTD_BaseEnemyCharacter::OnAttackTriggerBeginOverlap(
     bool bFromSweep,
     const FHitResult &SweepResult)
 {
-    if (GetHealthComponent()->IsDeadOrDying())
+    if (HealthComponent->IsDeadOrDying())
     {
         return;
     }
@@ -497,7 +512,7 @@ void AMTD_BaseEnemyCharacter::OnAttackTriggerEndOverlap(
     UPrimitiveComponent *OtherComp,
     int32 OtherBodyIndex)
 {
-    if (GetHealthComponent()->IsDeadOrDying())
+    if (HealthComponent->IsDeadOrDying())
     {
         return;
     }

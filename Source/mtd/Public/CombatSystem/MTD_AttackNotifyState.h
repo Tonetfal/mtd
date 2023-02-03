@@ -6,7 +6,8 @@
 #include "MTD_AttackNotifyState.generated.h"
 
 UCLASS()
-class MTD_API UMTD_AttackNotifyState : public UAnimNotifyState
+class MTD_API UMTD_AttackNotifyState
+    : public UAnimNotifyState
 {
 	GENERATED_BODY()
 

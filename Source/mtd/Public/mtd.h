@@ -25,3 +25,7 @@ constexpr ECollisionChannel EnemyTraceChannel = ECollisionChannel::ECC_GameTrace
 constexpr ECollisionChannel PlayerTraceChannel = ECollisionChannel::ECC_GameTraceChannel8;
 constexpr ECollisionChannel TowerTraceChannel = ECollisionChannel::ECC_GameTraceChannel9;
 constexpr ECollisionChannel ItemTraceChannel = ECollisionChannel::ECC_GameTraceChannel10;
+
+constexpr EObjectTypeQuery EnemyQuery = EObjectTypeQuery::ObjectTypeQuery9;
+constexpr EObjectTypeQuery PlayerQuery = EObjectTypeQuery::ObjectTypeQuery10;
+constexpr EObjectTypeQuery TowerQuery = EObjectTypeQuery::ObjectTypeQuery12;

@@ -25,9 +25,11 @@ public:
     AMTD_BaseEnemyCharacter();
 
     UBehaviorTree *GetBehaviorTree() const;
+    
+    //~AActor Interface
+    virtual void PreInitializeComponents() override;
 
 protected:
-    //~AActor Interface
     virtual void BeginPlay() override;
     //~End of AActor Interface
 
