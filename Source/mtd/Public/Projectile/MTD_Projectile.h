@@ -29,17 +29,20 @@ public:
     UCapsuleComponent *GetCollisionComponent() const;
     UMTD_ProjectileMovementComponent *GetMovementComponent() const;
 
+    //~AActor Interface
+    virtual void PostInitializeComponents() override;
+
 protected:
     virtual void BeginPlay() override;
+    //~End of AActor Interface
 
     UFUNCTION()
-    void OnBeginOverlap(
+    void OnCollisionHit(
         UPrimitiveComponent *HitComponent,
         AActor *OtherActor,
         UPrimitiveComponent *OtherComp,
-        int32 OtherBodyIndex,
-        bool bFromSweep,
-        const FHitResult &SweepResult);
+        FVector NormalImpulse,
+        const FHitResult &Hit);
 
     UFUNCTION(BlueprintNativeEvent)
     void OnProjectilePreHit(const FGameplayEventData &EventData);

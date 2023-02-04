@@ -25,21 +25,24 @@ public:
 
     /** Add acceleration towards the direction the projectile is following the next tick. */
     UFUNCTION(BlueprintCallable, Category="MTD|Projectile Movement Component")
-    void AddAcceleration(float InAcceleration);
+    void AddAcceleration(FVector InAcceleration);
 
     /** Clear the acceleration added by AddAcceleration. */
     void ClearAcceleration();
 
 private:
-    FVector ComputeMoveDelta(float DeltaSeconds);
-    void Accelerate(float DeltaSeconds);
-    void RotateTowardsHoming(float DeltaSeconds);
-    void ComputeVelocity();
+    /** Compute the distance the token should move in the given time, at a given a velocity. */
+    virtual FVector ComputeMoveDelta(FVector InVelocity, float DeltaSeconds) const;
 
-    void SetSpeed(float Speed);
+    /** Given an initial velocity and a time step, compute a new velocity. */
+    virtual FVector ComputeVelocity(FVector InVelocity, float DeltaSeconds) const;
     
-    FVector GetHomingDistanceVector() const;
-    FVector GetHomingDirection() const;
+    virtual FVector ComputeDistanceVectorTowards(const USceneComponent *Target) const;
+    virtual FVector ComputeDirectionTowards(const USceneComponent *Target) const;
+    virtual FVector RotateTowards(FVector InVelocity, const USceneComponent *Target, float DeltaSeconds) const;
+    
+    /** Don't allow velocity magnitude to exceed MaxSpeed, if MaxSpeed is non-zero. */
+    FVector LimitVelocity(FVector NewVelocity) const;
     
     bool CheckStillInWorld() const;
 
@@ -72,23 +75,26 @@ public:
      * follow the direction it was following just before the death.
      */
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category="MTD|Projectile Movement Component")
-    TWeakObjectPtr<AActor> HomingTarget = nullptr;
+    TWeakObjectPtr<USceneComponent> HomingTargetComponent = nullptr;
 
     /** If bIsHoming is not set, this will be the direction the projectile will follow until destructuion. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Projectile Movement Component")
     FVector Direction = FVector::ZeroVector;
 
+    /**
+     * If true sweeps will be used to simulate physical movement from two positions.
+     * If false the projectile will teleport between them instead.
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Projectile Movement Component|Simulation")
+    bool bSweep = true;
+
 private:
-    /** Speed the projectile is travelling at. */
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="MTD|Projectile Movement Component",
-        meta=(AllowPrivateAccess="true"))
-    float CurrentSpeed = 0.f;
 
     /** Acceleration that will be added to the speed the next tick towards the direction. */
-    float PendingAcceleration = 0.f;
+    FVector PendingAcceleration = FVector::ZeroVector;
     
     /** Acceleration that will be added to the speed this tick towards the direction. */
-    float PendingAccelerationThisUpdate = 0.f;
+    FVector PendingAccelerationThisUpdate = FVector::ZeroVector;
 };
 
 inline float UMTD_ProjectileMovementComponent::GetMaxSpeed() const
@@ -96,22 +102,12 @@ inline float UMTD_ProjectileMovementComponent::GetMaxSpeed() const
     return MaxSpeed;
 }
 
-inline void UMTD_ProjectileMovementComponent::AddAcceleration(float InAcceleration)
+inline void UMTD_ProjectileMovementComponent::AddAcceleration(FVector InAcceleration)
 {
     PendingAcceleration += InAcceleration;
 }
 
 inline void UMTD_ProjectileMovementComponent::ClearAcceleration()
 {
-    PendingAcceleration = 0.f;
-}
-
-inline void UMTD_ProjectileMovementComponent::ComputeVelocity()
-{
-    Velocity = Direction * CurrentSpeed;
-}
-
-inline void UMTD_ProjectileMovementComponent::SetSpeed(float Speed)
-{
-    CurrentSpeed = (CurrentSpeed < MaxSpeed) ? (Speed) : (MaxSpeed);
+    PendingAcceleration = FVector::ZeroVector;
 }

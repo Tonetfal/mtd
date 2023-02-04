@@ -14,7 +14,7 @@ AMTD_Projectile::AMTD_Projectile()
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision Component"));
+    CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>("Collision Component");
     SetRootComponent(CollisionComponent);
 
     CollisionComponent->InitCapsuleSize(50.f, 50.f);
@@ -23,9 +23,7 @@ AMTD_Projectile::AMTD_Projectile()
     CollisionComponent->SetEnableGravity(false);
     CollisionComponent->SetCanEverAffectNavigation(false);
 
-    CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
-
-    MovementComponent = CreateDefaultSubobject<UMTD_ProjectileMovementComponent>(TEXT("Movement Component"));
+    MovementComponent = CreateDefaultSubobject<UMTD_ProjectileMovementComponent>("Movement Component");
     MovementComponent->SetUpdatedComponent(GetRootComponent());
 }
 
@@ -45,6 +43,13 @@ void AMTD_Projectile::SetGameplayEffectDamageClass(const TSubclassOf<UMTD_Gamepl
     GameplayEffectDamageClass = GeClass;
 }
 
+void AMTD_Projectile::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+    
+    CollisionComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnCollisionHit);
+}
+
 void AMTD_Projectile::BeginPlay()
 {
     Super::BeginPlay();
@@ -56,13 +61,12 @@ void AMTD_Projectile::BeginPlay()
     GetWorldTimerManager().SetTimer(SelfDestroyTimerHandle, this, &ThisClass::OnSelfDestroy, SecondsToSelfDestroy);
 }
 
-void AMTD_Projectile::OnBeginOverlap(
+void AMTD_Projectile::OnCollisionHit(
     UPrimitiveComponent *HitComponent,
     AActor *OtherActor,
     UPrimitiveComponent *OtherComp,
-    int32 OtherBodyIndex,
-    bool bFromSweep,
-    const FHitResult &SweepResult)
+    FVector NormalImpulse,
+    const FHitResult &Hit)
 {
     const FGameplayEventData EventData = PrepareGameplayEventData(OtherActor);
     

@@ -6,13 +6,15 @@
 
 #include "MTD_EnemyController.generated.h"
 
-class UBehaviorTreeComponent;
-class UMTD_BalanceHitData;
 class AMTD_BaseEnemyCharacter;
+class UBehaviorTreeComponent;
 class UMovementComponent;
+class UMTD_BalanceHitData;
+class UMTD_EnemyData;
 
 UCLASS()
-class MTD_API AMTD_EnemyController : public AAIController
+class MTD_API AMTD_EnemyController
+    : public AAIController
 {
     GENERATED_BODY()
 
@@ -67,6 +69,9 @@ private:
 
     UPROPERTY()
     TObjectPtr<UMovementComponent> OwnerMovementComponent = nullptr;
+    
+    UPROPERTY()
+    TObjectPtr<const UMTD_EnemyData> EnemyData = nullptr;
 
     bool bAttack = false;
     FTimerHandle KnockbackTimerHandle;

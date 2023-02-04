@@ -15,6 +15,7 @@
 #include "Equipment/MTD_WeaponInstance.h"
 #include "Inventory/Items/MTD_WeaponItemData.h"
 #include "Inventory/MTD_InventoryItemInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/MTD_PlayerState.h"
 #include "Projectile/MTD_Projectile.h"
@@ -36,6 +37,25 @@ void UMTD_GameplayAbility_AttackRanged::FireProjectile()
 
     ComputeFirePoint(Parameters);
     SetupProjectile(Parameters);
+    
+    UGameplayStatics::FinishSpawningActor(Parameters.SpawnedProjectile, Parameters.ProjectileTransforms);
+}
+
+FName UMTD_GameplayAbility_AttackRanged::SelectCollisionProfileName(const EMTD_TeamId InstigatorTeamId) const
+{
+    switch (InstigatorTeamId)
+    {
+    case EMTD_TeamId::Player:
+    case EMTD_TeamId::Tower:
+    case EMTD_TeamId::Core:
+        return AllyProjectileCollisionProfileName;
+
+    case EMTD_TeamId::Enemy:
+        return EnemyProjectileCollisionProfileName;
+
+    default:
+        return NAME_None;
+    }
 }
 
 bool UMTD_GameplayAbility_AttackRanged::FormParameters(FMTD_Parameters &OutParameters) const
@@ -99,6 +119,7 @@ bool UMTD_GameplayAbility_AttackRanged::FormParameters(FMTD_Parameters &OutParam
 
     OutParameters.FirePointWorldPosition = OutParameters.WeaponInstance->GetFirePointWorldPosition();
     OutParameters.CharacterRotation = OutParameters.BaseCharacter->GetActorRotation();
+    OutParameters.ProjectileTransforms = FTransform(OutParameters.CharacterRotation, OutParameters.FirePointWorldPosition); 
 
     OutParameters.WeaponItemData = Cast<UMTD_WeaponItemData>(OutParameters.WeaponInstance->GetItemData());
     if (!IsValid(OutParameters.WeaponItemData))
@@ -128,6 +149,10 @@ bool UMTD_GameplayAbility_AttackRanged::FormParameters(FMTD_Parameters &OutParam
         MTDS_WARN("Team Component on Controller [%s] is invalid.", *OutParameters.CharacterController->GetName());
         return false;
     }
+    
+    // Select collision profile name
+    const EMTD_TeamId InstigatorTeamId = OutParameters.TeamComponent->GetMtdTeamId();
+    OutParameters.CollisionProfileName = SelectCollisionProfileName(InstigatorTeamId);
 
     OutParameters.bIsPlayer = (!OutParameters.MtdPlayerState->IsABot());
     if (OutParameters.bIsPlayer)
@@ -149,16 +174,10 @@ bool UMTD_GameplayAbility_AttackRanged::FormParameters(FMTD_Parameters &OutParam
 
 bool UMTD_GameplayAbility_AttackRanged::SpawnProjectile(FMTD_Parameters &Parameters) const
 {
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    SpawnParams.Owner = Parameters.BaseCharacter;
-    SpawnParams.Instigator = Parameters.BaseCharacter;
-    
-    auto Projectile = Cast<AMTD_Projectile>(Parameters.World->SpawnActor(
-        Parameters.ProjectileClass,
-        &Parameters.FirePointWorldPosition,
-        &Parameters.CharacterRotation, 
-        SpawnParams));
+    constexpr auto SpawnCollisionMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    auto Projectile = Parameters.World->SpawnActorDeferred<AMTD_Projectile>(Parameters.ProjectileClass,
+        Parameters.ProjectileTransforms, Parameters.BaseCharacter, Parameters.BaseCharacter, SpawnCollisionMethod);
 
     Parameters.SpawnedProjectile = Projectile;
     
@@ -201,21 +220,22 @@ FVector UMTD_GameplayAbility_AttackRanged::GetProjectileDirection(const FMTD_Par
         ((bDebugTrace) ? (EDrawDebugTrace::ForDuration) : (EDrawDebugTrace::None));
     const TArray<AActor*> ActorsToIgnore;
     
-    FHitResult HitResult;
-    UKismetSystemLibrary::LineTraceSingle(
+    TArray<FHitResult> HitResults;
+    UKismetSystemLibrary::LineTraceMulti(
         Parameters.World, TraceStart, TraceEnd, ETraceTypeQuery::TraceTypeQuery2, true, ActorsToIgnore,
-        DrawDebugTrace, HitResult, true);
+        DrawDebugTrace, HitResults, true);
 
-    if (((!HitResult.bBlockingHit)) || (ShouldTraceIgnore(HitResult.GetActor())))
+    for (const FHitResult &HitResult : HitResults)
     {
-        // There is nothing special to aim towards, use default camera forward vector
-        return Direction;
+        if (((HitResult.bBlockingHit)) && (!ShouldTraceIgnore(HitResult.GetActor())))
+        {
+            // Aim at the hitting point
+            const FVector Displacement = (HitResult.ImpactPoint - Parameters.FirePointWorldPosition);
+            Direction = Displacement.GetSafeNormal();
+            break;
+        }
     }
-
-    // Aim at the hitting point
-    const FVector Displacement = (HitResult.ImpactPoint - Parameters.FirePointWorldPosition);
-    Direction = Displacement.GetSafeNormal();
-
+    
     return Direction;
 }
 void UMTD_GameplayAbility_AttackRanged::ComputeFirePoint(FMTD_Parameters &Parameters) const
@@ -228,8 +248,8 @@ void UMTD_GameplayAbility_AttackRanged::ComputeFirePoint(FMTD_Parameters &Parame
 
 void UMTD_GameplayAbility_AttackRanged::SetupProjectileMovementParameters(const FMTD_Parameters &Parameters) const
 {
+    Parameters.ProjectileMovementComponent->InitialSpeed = Parameters.WeaponItemData->ProjectileSpeed;
     Parameters.ProjectileMovementComponent->MaxSpeed = Parameters.WeaponItemData->ProjectileSpeed;
-    Parameters.ProjectileMovementComponent->AddAcceleration(Parameters.ProjectileMovementComponent->MaxSpeed);
     Parameters.ProjectileMovementComponent->Direction = Parameters.ProjectileDirection;
 }
 
@@ -261,33 +281,12 @@ void UMTD_GameplayAbility_AttackRanged::SetupProjectileAsc(const FMTD_Parameters
     Parameters.SpawnedProjectile->InitializeAbilitySystem(Parameters.MtdAbilitySystemComponent);
 }
 
-FName SelectCollisionProfileName(const EMTD_TeamId InstigatorTeamId)
-{
-    switch (InstigatorTeamId)
-    {
-    case EMTD_TeamId::Player:
-    case EMTD_TeamId::Tower:
-    case EMTD_TeamId::Core:
-        return AllyProjectileCollisionProfileName;
-
-    case EMTD_TeamId::Enemy:
-        return EnemyProjectileCollisionProfileName;
-
-    default:
-        return NAME_None;
-    }
-}
-
 void UMTD_GameplayAbility_AttackRanged::SetupProjectileCollisionProfile(const FMTD_Parameters &Parameters) const
 {
     // Note: the collision profile must be setup at the very end because afterwards the projectile can immediately hit
     // something if the projectile has spawned inside something that has to collide with it. If not everything
     // initialization wise has taken place yet, it will never be used because the projectile has already impacted
     // something, hence the collision profile must be setup as late as possible.
-
-    // Select collision profile name
-    const EMTD_TeamId InstigatorTeamId = Parameters.TeamComponent->GetMtdTeamId();
-    const FName CollisionProfileName = SelectCollisionProfileName(InstigatorTeamId);
 
     // Get the collision component to apply the profile on
     auto CollisionComponent = Parameters.SpawnedProjectile->GetCollisionComponent();
@@ -298,7 +297,7 @@ void UMTD_GameplayAbility_AttackRanged::SetupProjectileCollisionProfile(const FM
     }
 
     // Change collision profile
-    CollisionComponent->SetCollisionProfileName(CollisionProfileName);
+    CollisionComponent->SetCollisionProfileName(Parameters.CollisionProfileName);
 }
 
 void UMTD_GameplayAbility_AttackRanged::SetupProjectile(const FMTD_Parameters &Parameters) const

@@ -66,9 +66,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
     int32 MeleeDamage = 0;
-    
-    UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
-    float BalanceDamage = 7.5f;
 
     UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
     int32 RangedDamage = 0;

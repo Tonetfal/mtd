@@ -118,7 +118,7 @@ protected:
 
 private:
     void OnFire(AActor *FireTarget);
-    AMTD_Projectile *SpawnProjectile();
+    AMTD_Projectile *SpawnProjectile(const FTransform &Transform);
 
     void SetupProjectile(AMTD_Projectile &Projectile, AActor *FireTarget);
     void SetupProjectileCollision(AMTD_Projectile &Projectile) const;

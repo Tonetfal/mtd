@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 #include "mtd.h"
+#include "MTD_CoreTypes.h"
 
 #include "MTD_GameplayAbility_AttackRanged.generated.h"
 
@@ -44,6 +45,7 @@ private:
         const UMTD_WeaponItemData *WeaponItemData = nullptr;
         const AController *CharacterController = nullptr;
         const UMTD_TeamComponent *TeamComponent = nullptr;
+        FName CollisionProfileName = NAME_None;
 
         AMTD_Projectile *SpawnedProjectile = nullptr;
         UMTD_ProjectileMovementComponent *ProjectileMovementComponent = nullptr;
@@ -51,6 +53,7 @@ private:
 
         FVector FirePointWorldPosition = FVector::ZeroVector;
         FRotator CharacterRotation = FRotator::ZeroRotator;
+        FTransform ProjectileTransforms = FTransform::Identity;
 
         const UCameraComponent *CameraComponent = nullptr;
         FVector CameraWorldPosition = FVector::ZeroVector;
@@ -66,6 +69,7 @@ protected:
 
 private:
     bool FormParameters(FMTD_Parameters &OutParameters) const;
+    FName SelectCollisionProfileName(const EMTD_TeamId InstigatorTeamId) const;
     bool SpawnProjectile(FMTD_Parameters &Parameters) const;
     bool ShouldTraceIgnore(const AActor *HitActor) const;
     FVector GetProjectileDirection(const FMTD_Parameters &Parameters) const;
