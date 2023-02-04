@@ -8,7 +8,14 @@
 
 UMTD_GameplayAbility_Attack::UMTD_GameplayAbility_Attack()
 {
-    AbilityTags.AddTag(FMTD_GameplayTags::Get().Gameplay_Ability_Attack_Melee);
+    UGameplayTagsManager::Get().CallOrRegister_OnDoneAddingNativeTagsDelegate(
+        FSimpleDelegate::CreateUObject(this, &ThisClass::OnDoneAddingNativeTags));
+}
+
+void UMTD_GameplayAbility_Attack::OnDoneAddingNativeTags()
+{
+    MainAbilityTag = FMTD_GameplayTags::Get().Gameplay_Ability_Attack_Melee;
+    Super::OnDoneAddingNativeTags();
 }
 
 bool UMTD_GameplayAbility_Attack::CanActivateAbility(

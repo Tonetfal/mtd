@@ -1,10 +1,10 @@
 ﻿#include "GameModes/MTD_TowerDefenseMode.h"
 
 #include "Character/MTD_BaseCharacter.h"
-#include "GameModes/MTD_Core.h"
-#include "Gameplay/MTD_WaveManager.h"
 #include "Gameplay/Levels/MTD_LevelDefinition.h"
 #include "Gameplay/Levels/MTD_LevelDifficultyDefinition.h"
+#include "Gameplay/MTD_WaveManager.h"
+#include "Gameplay/Objective/Core/MTD_Core.h"
 #include "Gameplay/Spawner/MTD_SpawnerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/MTD_GameInstance.h"
