@@ -1,9 +1,11 @@
 ﻿#include "Items/MTD_ManaToken.h"
 
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
 #include "Character/MTD_ManaComponent.h"
 #include "Items/MTD_TokenMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 bool AMTD_ManaToken::CanBeActivatedOn(APawn *Pawn) const
 {
@@ -13,28 +15,24 @@ bool AMTD_ManaToken::CanBeActivatedOn(APawn *Pawn) const
     }
 
     const UMTD_ManaComponent *ManaComponent = UMTD_ManaComponent::FindManaComponent(Pawn);
-    return !ManaComponent->IsManaFull();
+    return (!ManaComponent->IsManaFull());
 }
 
 void AMTD_ManaToken::OnActivate_Implementation(APawn *Pawn)
 {
-    Super::OnActivate_Implementation(Pawn);
-
-    // Note: The cue and other stuff should be done in BPs
-
-    check(Pawn);
-
-    auto Interface = Cast<IAbilitySystemInterface>(Pawn);
-    UAbilitySystemComponent *Asc = Interface->GetAbilitySystemComponent();
+    check(IsValid(Pawn));
     
+    // Note: The cue and other visuals should be implemented in BPs
+
     // Grant mana
-    Asc->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Additive, ManaAmount);
+    UAbilitySystemComponent *AbilitySystemComponent = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn);
+    AbilitySystemComponent->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Additive, ManaAmount);
+    
+    Super::OnActivate_Implementation(Pawn);
 }
 
 APawn *AMTD_ManaToken::FindNewTarget() const
 {
-    // Don't call the base implementation, but make a mana-based one
-    
     for (APawn *Pawn : DetectedPawns)
     {
         const UMTD_ManaComponent *ManaComponent = UMTD_ManaComponent::FindManaComponent(Pawn);
@@ -49,37 +47,14 @@ APawn *AMTD_ManaToken::FindNewTarget() const
 
 void AMTD_ManaToken::OnPawnAdded(APawn *Pawn)
 {
-    Super::OnPawnAdded(Pawn);
-    
     // Notify about the error as soon as possible
     ensureMsgf(IsValid(UMTD_ManaComponent::FindManaComponent(Pawn)),
         TEXT("Pawn [%s] does not have a UMTD_ManaComponent."), *Pawn->GetName());
     ensureMsgf(Cast<IAbilitySystemInterface>(Pawn), TEXT("Pawn [%s] does not implement IAbilitySystemInterface."),
         *Pawn->GetName());
-
-    if (bScanMode)
-    {
-        AddToListening(Pawn);
-    }
-    else if (!MovementComponent->HomingTargetComponent.IsValid())
-    {
-        EnableScan();
-    }
-}
-
-void AMTD_ManaToken::OnPawnRemoved(APawn *Pawn)
-{
-    // Don't call the base implementation
     
-    if (bScanMode)
-    {
-        if (DetectedPawns.IsEmpty())
-        {
-            DisableScan();
-        }
-        
-        RemoveFromListening(Pawn);
-    }
+    // Make the pawn be homing target if there was none, and it's OK
+    Super::OnPawnAdded(Pawn);
 }
 
 void AMTD_ManaToken::SetNewTarget(APawn *Pawn)
@@ -88,12 +63,8 @@ void AMTD_ManaToken::SetNewTarget(APawn *Pawn)
     {
         return;
     }
-    
-    if (MovementComponent->HomingTargetComponent.IsValid())
-    {
-        AActor *OldTarget = MovementComponent->HomingTargetComponent->GetOwner();
-        RemoveFromListening(OldTarget);
-    }
+
+    RemoveCurrentTargetFromListening();
     
     if (IsValid(Pawn))
     {
@@ -104,8 +75,8 @@ void AMTD_ManaToken::SetNewTarget(APawn *Pawn)
     Super::SetNewTarget(Pawn);
 }
 
-AMTD_ManaToken *SpawnManaToken(UWorld &World, const FTransform &SpawnTransform,
-    const TSubclassOf<AMTD_ManaToken> &TokenClass)
+AMTD_ManaToken *SpawnManaToken(UWorld &World, AActor *Owner, const FTransform &SpawnTransform,
+    const TSubclassOf<AMTD_ManaToken> &TokenClass, float TriggersIgnoreTime)
 {
     if (!TokenClass.Get())
     {
@@ -113,18 +84,22 @@ AMTD_ManaToken *SpawnManaToken(UWorld &World, const FTransform &SpawnTransform,
         return nullptr;
     }
     
-    FActorSpawnParameters Params;
-    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    constexpr auto CollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     
-    AActor *Actor = World.SpawnActor(TokenClass, &SpawnTransform, Params);
-    return Cast<AMTD_ManaToken>(Actor);
+    auto Mana = World.SpawnActorDeferred<AMTD_ManaToken>(TokenClass, SpawnTransform, Owner, nullptr, 
+        CollisionHandlingMethod);
+    Mana->IgnoreTriggersFor(TriggersIgnoreTime);
+    UGameplayStatics::FinishSpawningActor(Mana, SpawnTransform);
+    
+    return Mana;
 }
 
 TArray<AMTD_ManaToken *> AMTD_ManaToken::SpawnMana(
     AActor *Owner,
     const FTransform &SpawnTransform,
     int32 ManaAmount,
-    const TMap<int32, TSubclassOf<AMTD_ManaToken>> &ManaTokensTable)
+    const TMap<int32, TSubclassOf<AMTD_ManaToken>> &ManaTokensTable,
+    float TriggersIgnoreTime)
 {
     // Note: ManaTokensTable must be sorted from the smallest to the greatest in order to make this function work
     // correctly
@@ -181,7 +156,7 @@ TArray<AMTD_ManaToken *> AMTD_ManaToken::SpawnMana(
         }
 
         const TSubclassOf<AMTD_ManaToken> &ManaTokenClass = ManaTokensTable.FindChecked(CurrentTokenAmount);
-        AMTD_ManaToken *ManaToken = SpawnManaToken(*World, SpawnTransform, ManaTokenClass);
+        AMTD_ManaToken *ManaToken = SpawnManaToken(*World, Owner, SpawnTransform, ManaTokenClass, TriggersIgnoreTime);
         
         if (!IsValid(ManaToken))
         {
@@ -236,6 +211,26 @@ void AMTD_ManaToken::GiveStartVelocityToTokens(const TArray<AMTD_ManaToken *> &M
     }
 }
 
+void AMTD_ManaToken::OnManaChangeHandleScanCase(UMTD_ManaComponent *ManaComponent)
+{
+    check(IsValid(ManaComponent));
+
+    const float CurrentMana = ManaComponent->GetMana();
+    const float MaxMana = ManaComponent->GetMaxMana();
+
+    // Select the new target only if it has enough mana pool to store any positive amount of mana
+    if (MaxMana > CurrentMana)
+    {
+        AActor *ComponentOwner = ManaComponent->GetOwner();
+        check(IsValid(ComponentOwner));
+    
+        auto Pawn = CastChecked<APawn>(ComponentOwner);
+
+        DisableScan();
+        SetNewTarget(Pawn);
+    }
+}
+
 void AMTD_ManaToken::OnTargetManaAttributeChanged(UMTD_ManaComponent *ManaComponent, float OldValue, float NewValue,
     AActor* InInstigator)
 {
@@ -247,16 +242,7 @@ void AMTD_ManaToken::OnTargetManaAttributeChanged(UMTD_ManaComponent *ManaCompon
     // Handle scan case
     if (bScanMode)
     {
-        check(IsValid(ManaComponent));
-        
-        AActor *ComponentOwner = ManaComponent->GetOwner();
-        check(IsValid(ComponentOwner));
-        
-        auto Pawn = CastChecked<APawn>(ComponentOwner);
-
-        DisableScan();
-        SetNewTarget(Pawn);
-        
+        OnManaChangeHandleScanCase(ManaComponent);
         return;
     }
 
@@ -268,39 +254,74 @@ void AMTD_ManaToken::OnTargetManaAttributeChanged(UMTD_ManaComponent *ManaCompon
     }
 
     // If (MaxMana <= NewValue) then the target has full mana pool, hence stop following him and try to find a new one
+    RemoveCurrentTargetFromListening();
     APawn *NewTarget = FindNewTarget();
     SetNewTarget(NewTarget);
 
     // If there is no specific target, listen for everyone's mana
-    if ((!DetectedPawns.IsEmpty()) && (!IsValid(NewTarget)))
+    if (!IsValid(NewTarget))
     {
         EnableScan();
+    }
+}
+
+void AMTD_ManaToken::OnTargetMaxManaAttributeChanged(UMTD_ManaComponent *ManaComponent, float OldValue,
+    float NewValue, AActor *InInstigator)
+{
+    if (NewValue == OldValue)
+    {
+        return;
+    }
+    
+    if (bScanMode)
+    {
+        OnManaChangeHandleScanCase(ManaComponent);
+        return;
+    }
+
+    const float CurrentMana = ManaComponent->GetMana();
+    if (CurrentMana > NewValue)
+    {
+        // Current mana will notify us about the change because it'll be clamped by new max mana
+        return;
+    }
+
+    if (CurrentMana == NewValue)
+    {
+        // Current mana will not be changed since the new max mana is the same, but it also means that it cannot store
+        // any new mana, hence stop following this actor, and find a new one
+        RemoveCurrentTargetFromListening();
+        APawn *NewTarget = FindNewTarget();
+        SetNewTarget(NewTarget);
+
+        // If there is no specific target, listen for everyone's mana
+        if (!IsValid(NewTarget))
+        {
+            EnableScan();
+        }
     }
 }
 
 void AMTD_ManaToken::EnableScan()
 {
     ensure(!DetectedPawns.IsEmpty());
-    ensure(!bScanMode);
 
     for (APawn *Pawn : DetectedPawns)
     {
         AddToListening(Pawn);
     }
 
-    bScanMode = true;
+    Super::EnableScan();
 }
 
 void AMTD_ManaToken::DisableScan()
 {
-    ensure(bScanMode);
-    
     for (APawn *Pawn : DetectedPawns)
     {
         RemoveFromListening(Pawn);
     }
 
-    bScanMode = false;
+    Super::DisableScan();
 }
 
 void AMTD_ManaToken::AddToListening(AActor *Actor)
@@ -308,11 +329,10 @@ void AMTD_ManaToken::AddToListening(AActor *Actor)
     if (IsValid(Actor))
     {
         UMTD_ManaComponent *ManaComponent = UMTD_ManaComponent::FindManaComponent(Actor);
-        if (IsValid(ManaComponent))
-        {
-            ManaComponent->OnManaChangedDelegate.AddDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
-            ManaComponent->OnMaxManaChangedDelegate.AddDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
-        }
+        check(IsValid(ManaComponent));
+        
+        ManaComponent->OnManaChangedDelegate.AddDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
+        ManaComponent->OnMaxManaChangedDelegate.AddDynamic(this, &ThisClass::OnTargetMaxManaAttributeChanged);
     }
 }
 
@@ -321,10 +341,9 @@ void AMTD_ManaToken::RemoveFromListening(AActor *Actor)
     if (IsValid(Actor))
     {
         UMTD_ManaComponent *ManaComponent = UMTD_ManaComponent::FindManaComponent(Actor);
-        if (IsValid(ManaComponent))
-        {
-            ManaComponent->OnManaChangedDelegate.RemoveDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
-            ManaComponent->OnMaxManaChangedDelegate.RemoveDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
-        }
+        check(IsValid(ManaComponent));
+        
+        ManaComponent->OnManaChangedDelegate.RemoveDynamic(this, &ThisClass::OnTargetManaAttributeChanged);
+        ManaComponent->OnMaxManaChangedDelegate.RemoveDynamic(this, &ThisClass::OnTargetMaxManaAttributeChanged);
     }
 }

@@ -1,5 +1,8 @@
 #include "GameModes/MTD_GameModeBase.h"
 
+#include "AbilitySystem/Attributes/MTD_HealthSet.h"
+#include "AbilitySystem/Attributes/MTD_ManaSet.h"
+#include "AbilitySystemComponent.h"
 #include "Character/MTD_LevelComponent.h"
 #include "Inventory/Items/MTD_ItemDropManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -19,24 +22,44 @@ void AMTD_GameModeBase::PostActorCreated()
 
 void AMTD_GameModeBase::AddExp(int32 Exp, int32 PlayerIndex)
 {
-    const int32 Num = Players.Num();
-    if (!((PlayerIndex >= 0) && (PlayerIndex < Num)))
+    const AMTD_PlayerState *PlayerState = GetPlayerState(PlayerIndex);
+    if (!PlayerState)
     {
-        MTDS_WARN("Player Index [%d] is invalid.", PlayerIndex);
         return;
     }
     
-    const AMTD_PlayerState *Ps = Players[PlayerIndex];
-    if (!IsValid(Ps))
-    {
-        MTDS_WARN("MTD Player State on index [%d] is invalid.", PlayerIndex);
-        return;
-    }
-    
-    UMTD_LevelComponent *LevelComponent = Ps->GetLevelComponent();
+    UMTD_LevelComponent *LevelComponent = PlayerState->GetLevelComponent();
     check(IsValid(LevelComponent));
     
     LevelComponent->AddExp(Exp);
+}
+
+void AMTD_GameModeBase::AddHealth(int32 Health, int32 PlayerIndex)
+{
+    const AMTD_PlayerState *PlayerState = GetPlayerState(PlayerIndex);
+    if (!PlayerState)
+    {
+        return;
+    }
+
+    UAbilitySystemComponent *AbilitySystemComponent = PlayerState->GetAbilitySystemComponent();
+    check(IsValid(AbilitySystemComponent));
+
+    AbilitySystemComponent->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Additive, Health);
+}
+
+void AMTD_GameModeBase::AddMana(int32 Mana, int32 PlayerIndex)
+{
+    const AMTD_PlayerState *PlayerState = GetPlayerState(PlayerIndex);
+    if (!PlayerState)
+    {
+        return;
+    }
+
+    UAbilitySystemComponent *AbilitySystemComponent = PlayerState->GetAbilitySystemComponent();
+    check(IsValid(AbilitySystemComponent));
+
+    AbilitySystemComponent->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Additive, Mana);
 }
 
 void AMTD_GameModeBase::BroadcastExp(int32 Exp)
@@ -146,4 +169,23 @@ void AMTD_GameModeBase::OnHeroClassesChanged(const FGameplayTagContainer &HeroCl
     {
         ItemDropManager->AddHeroClasses(HeroClasses);
     }
+}
+
+AMTD_PlayerState *AMTD_GameModeBase::GetPlayerState(int32 PlayerIndex)
+{
+    const int32 Num = Players.Num();
+    if (!((PlayerIndex >= 0) && (PlayerIndex < Num)))
+    {
+        MTDS_WARN("Player Index [%d] is invalid.", PlayerIndex);
+        return nullptr;
+    }
+    
+    AMTD_PlayerState *PlayerState = Players[PlayerIndex];
+    if (!IsValid(PlayerState))
+    {
+        MTDS_WARN("MTD Player State on index [%d] is invalid.", PlayerIndex);
+        return nullptr;
+    }
+
+    return PlayerState;
 }

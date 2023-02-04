@@ -35,6 +35,12 @@ public:
     void AddExp(int32 Exp, int32 PlayerIndex = 0);
     
     UFUNCTION(Exec)
+    void AddHealth(int32 Health, int32 PlayerIndex = 0);
+    
+    UFUNCTION(Exec)
+    void AddMana(int32 Mana, int32 PlayerIndex = 0);
+    
+    UFUNCTION(Exec)
     void BroadcastExp(int32 Exp);
 
 public:
@@ -53,6 +59,8 @@ private:
     UFUNCTION()
     void OnRemovePlayer(AActor *Actor);
     void OnHeroClassesChanged(const FGameplayTagContainer &HeroClasses);
+
+    AMTD_PlayerState *GetPlayerState(int32 PlayerIndex);
 
 public:
     UPROPERTY(BlueprintAssignable)
