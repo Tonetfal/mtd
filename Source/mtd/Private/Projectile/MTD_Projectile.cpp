@@ -54,8 +54,8 @@ void AMTD_Projectile::BeginPlay()
 {
     Super::BeginPlay();
 
-    check(MovementComponent);
-    check(CollisionComponent);
+    check(IsValid(MovementComponent));
+    check(IsValid(CollisionComponent));
 
     FTimerHandle SelfDestroyTimerHandle;
     GetWorldTimerManager().SetTimer(SelfDestroyTimerHandle, this, &ThisClass::OnSelfDestroy, SecondsToSelfDestroy);
@@ -68,7 +68,8 @@ void AMTD_Projectile::OnCollisionHit(
     FVector NormalImpulse,
     const FHitResult &Hit)
 {
-    const FGameplayEventData EventData = PrepareGameplayEventData(OtherActor);
+    // const FHitResult HitResult = PrepareHitResult(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
+    const FGameplayEventData EventData = PrepareGameplayEventData(Hit);
     
     OnProjectilePreHit(EventData);
     OnProjectileHit(EventData);
@@ -209,23 +210,12 @@ void AMTD_Projectile::PrepareGameplayEffectSpecHandles(const FGameplayEventData 
     GameplayEffectsToGrantOnHit.Add(DamageSpec);
 }
 
-FGameplayEventData AMTD_Projectile::PrepareGameplayEventData(const AActor *HitActor) const
+FGameplayEventData AMTD_Projectile::PrepareGameplayEventData(const FHitResult &HitResult) const
 {
-    // For some reason sweep given by on overlap event doesn't contain crutial information about the transforms, hence
-    // manually fill some required information in here which is a bit inaccurate, but does the job
-    
-    const FVector ProjLocation = GetActorLocation();
-    const FVector OtherLocation = HitActor->GetActorLocation();
-
-    FHitResult HitResult;
-    HitResult.Location = ProjLocation;
-    HitResult.ImpactPoint = (ProjLocation - OtherLocation);
-    HitResult.ImpactNormal = FVector_NetQuantizeNormal(HitResult.ImpactPoint.GetUnsafeNormal());
-    
     FGameplayEventData EventData;
     EventData.ContextHandle = AbilitySystemComponent->MakeEffectContext();
     EventData.Instigator = GetOwner(); // Should be PlayerState
-    EventData.Target = HitActor;
+    EventData.Target = HitResult.GetActor();
     EventData.TargetData.Data.Add(
         TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(HitResult)));
 

@@ -65,7 +65,7 @@ protected:
 private:
     void SweepActorsAround(TArray<AActor *> &Actors) const;
     void PrepareGameplayEffectSpecHandles(const FGameplayEventData &EventData);
-    FGameplayEventData PrepareGameplayEventData(const AActor *HitActor) const;
+    FGameplayEventData PrepareGameplayEventData(const FHitResult &HitResult) const;
     FGameplayEffectSpecHandle GetBalanceDamageSpecHandle(const FVector KnockbackDirection,
         const FGameplayEffectContextHandle &EffectContext) const;
     FGameplayEffectSpecHandle GetDamageSpecHandle(const FGameplayEffectContextHandle &EffectContext) const;

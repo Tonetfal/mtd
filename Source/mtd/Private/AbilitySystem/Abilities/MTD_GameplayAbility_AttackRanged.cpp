@@ -222,7 +222,7 @@ FVector UMTD_GameplayAbility_AttackRanged::GetProjectileDirection(const FMTD_Par
     
     TArray<FHitResult> HitResults;
     UKismetSystemLibrary::LineTraceMulti(
-        Parameters.World, TraceStart, TraceEnd, ETraceTypeQuery::TraceTypeQuery2, true, ActorsToIgnore,
+        Parameters.World, TraceStart, TraceEnd, ETraceTypeQuery::TraceTypeQuery3, true, ActorsToIgnore,
         DrawDebugTrace, HitResults, true);
 
     for (const FHitResult &HitResult : HitResults)

@@ -22,7 +22,7 @@ void UMTD_HealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackD
     if (Data.EvaluatedData.Attribute == GetHealthAttribute())
     {
         const float HealthValue = GetHealth();
-        if ((HealthValue <= 0.f) && (!bOutOfHealth))
+        if (((HealthValue <= 0.f) && (!bOutOfHealth)))
         {
             if (OnOutOfHealthDelegate.IsBound())
             {
@@ -59,7 +59,8 @@ void UMTD_HealthSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
     if (Attribute == GetMaxHealthAttribute())
     {
         // Decrease current health if max health has decreased
-        if (GetHealth() > NewValue)
+        const float HealthValue = GetHealth();
+        if (HealthValue > NewValue)
         {
             UAbilitySystemComponent *AbilitySystem = GetOwningAbilitySystemComponentChecked();
 
@@ -67,7 +68,7 @@ void UMTD_HealthSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
         }
     }
 
-    if (bOutOfHealth && GetHealth() > 0.f)
+    if (((bOutOfHealth) && (GetHealth() > 0.f)))
     {
         bOutOfHealth = false;
     }
@@ -80,18 +81,14 @@ void UMTD_HealthSet::PostAttributeBaseChange(const FGameplayAttribute &Attribute
     if (Attribute == GetMaxHealthAttribute())
     {
         // Decrease current health if max health has decreased
-        if (GetHealth() > NewValue)
+        const float HealthValue = GetHealth();
+        if (HealthValue > NewValue)
         {
             UAbilitySystemComponent *AbilitySystem = GetOwningAbilitySystemComponentChecked();
 
             AbilitySystem->ApplyModToAttribute(GetHealthAttribute(), EGameplayModOp::Override, NewValue);
         }
     }
-
-    // if (bOutOfHealth && GetHealth() > 0.f)
-    // {
-    //     bOutOfHealth = false;
-    // }
 }
 
 void UMTD_HealthSet::ClampAttribute(const FGameplayAttribute &Attribute, float &NewValue) const

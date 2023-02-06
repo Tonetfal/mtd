@@ -25,17 +25,17 @@ public:
     const UMTD_CharacterRateDefinition *GetCharacterRateDefinition(int32 Wave) const;
 
 public:
-    /** Mob Difficulty value on wave 1. Will be scaled up with wave progression. */
+    /** Mob difficulty value on wave 1. Will be scaled up with wave progression. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float BaseDifficulty = 0.f;
 
     // @todo ItemQuality
     
-    /** Mob Quantity value on wave 1. Will be scaled up with wave progression. */
+    /** Mob quantity value on wave 1. Will be scaled up with wave progression. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float BaseQuantity = 0.f;
     
-    /** Wave Time value (in seconds) on wave 1. Will be scaled up with wave progression. */
+    /** Time in seconds that enemies will spawn for on wave 1. Will be scaled up with wave progression. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float BaseTime = 0.f;
 

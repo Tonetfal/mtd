@@ -78,7 +78,7 @@ void UMTD_DamageExecution::Execute_Implementation(
     const float DamageDone = (((DamageBase * DamageMultiplier) * Scale) + DamageAdditive);
 
     ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        UMTD_CombatSet::GetLastReceivedDamage_MetaAttribute(),
+        UMTD_HealthSet::GetLastLostHealth_MetaAttribute(),
         EGameplayModOp::Override,
         DamageDone));
     
