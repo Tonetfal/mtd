@@ -23,6 +23,11 @@ class MTD_API AMTD_PlayerState
     GENERATED_BODY()
 
 public:
+    DECLARE_MULTICAST_DELEGATE_OneParam(
+        FOnHeroClassesSetSignature,
+        const FGameplayTagContainer & /* HeroClasses */);
+
+public:
     AMTD_PlayerState();
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Player State")
@@ -57,8 +62,8 @@ public:
     const FGameplayTagContainer &GetHeroClasses() const;
     void ClearHeroClasses();
 
-private:
-    void RegisterCheatCommands();
+public:
+    FOnHeroClassesSetSignature OnHeroClassesSetDelegate;
 
 protected:
     UPROPERTY(VisibleAnywhere, Category="MTD|Components")
@@ -100,6 +105,7 @@ inline UMTD_LevelComponent *AMTD_PlayerState::GetLevelComponent() const
 inline void AMTD_PlayerState::SetHeroClasses(const FGameplayTagContainer &InHeroClasses)
 {
     HeroClasses = InHeroClasses;
+    OnHeroClassesSetDelegate.Broadcast(HeroClasses);
 }
 
 inline const FGameplayTagContainer &AMTD_PlayerState::GetHeroClasses() const

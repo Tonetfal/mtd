@@ -14,9 +14,14 @@ class UMTD_EquipmentManagerComponent;
 class UMTD_EquippableItemData;
 struct FMTD_EquipmentActorDefinition;
 
-#define APPLY_MOD_TO_ATTRIBUTE(SET, ATTRIBUTE, DATA) \
-    Asc->ApplyModToAttribute(UMTD_ ## SET ## Set::Get ## ATTRIBUTE ## Attribute(), \
-        EGameplayModOp::Additive, (DATA * Multiplier))
+#define MOD_ATTRIBUTE_BASE(SET, ATTRIBUTE, DATA) \
+    do \
+    { \
+        const float Base = Asc->GetNumericAttributeBase(UMTD_ ## SET ## Set::Get ## ATTRIBUTE ## Attribute()); \
+        const float Delta = (DATA * Multiplier); \
+        const float NewBase = (Base + Delta); \
+        Asc->SetNumericAttributeBase(UMTD_ ## SET ## Set::Get ## ATTRIBUTE ## Attribute(), NewBase); \
+    } while (0)
 
 /**
  * Equipment item spawned in the world and held by some character.
@@ -63,8 +68,8 @@ public:
     virtual void SpawnEquipmentActor(const FMTD_EquipmentActorDefinition &ActorToSpawn);
     virtual void DestroyEquipmentActor();
 
-    virtual void OnEquipped();
-    virtual void OnUnequipped();
+    virtual void OnEquipped(bool bModStats = true);
+    virtual void OnUnequipped(bool bModStats = true);
 
 protected:
     UFUNCTION(BlueprintImplementableEvent, Category="MTD|Equipment", meta=(DisplayName="OnEquipped"))

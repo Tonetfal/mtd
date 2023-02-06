@@ -33,7 +33,7 @@ void UMTD_HealthComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemCompone
     HealthSet = AbilitySystemComponent->GetSet<UMTD_HealthSet>();
     if (!HealthSet)
     {
-        MTDS_ERROR("Cannot initialize health component with NULL combat set on the ability system");
+        MTDS_ERROR("Cannot initialize health component with NULL health set on the ability system");
         return;
     }
 

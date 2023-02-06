@@ -1,8 +1,8 @@
 #include "Character/MTD_BaseCharacter.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
-#include "AbilitySystem/MTD_GameplayTags.h"
 #include "Character/MTD_BalanceComponent.h"
+#include "Character/MTD_CombatComponent.h"
 #include "Character/MTD_HealthComponent.h"
 #include "Character/MTD_HeroComponent.h"
 #include "Character/MTD_ManaComponent.h"
@@ -11,7 +11,6 @@
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Player/MTD_PlayerState.h"
 
 AMTD_BaseCharacter::AMTD_BaseCharacter()
@@ -26,6 +25,7 @@ AMTD_BaseCharacter::AMTD_BaseCharacter()
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>("MTD Health Component");
     ManaComponent = CreateDefaultSubobject<UMTD_ManaComponent>("MTD Mana Component");
     BalanceComponent = CreateDefaultSubobject<UMTD_BalanceComponent>("MTD Balance Component");
+    CombatComponent = CreateDefaultSubobject<UMTD_CombatComponent>("MTD Combat Component");
     
     PawnExtentionComponent->OnAbilitySystemInitialized_RegisterAndCall(
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
@@ -58,8 +58,6 @@ void AMTD_BaseCharacter::BeginPlay()
         auto MtdGm = CastChecked<AMTD_GameModeBase>(Gm);
         MtdGm->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
     }
-
-    ConstructHitboxMap();
 }
 
 void AMTD_BaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -76,10 +74,6 @@ void AMTD_BaseCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    if (bIsMeleeInProgress)
-    {
-        PerformHitboxTrace();
-    }
 }
 
 void AMTD_BaseCharacter::NotifyControllerChanged()
@@ -87,54 +81,6 @@ void AMTD_BaseCharacter::NotifyControllerChanged()
     Super::NotifyControllerChanged();
 
     PawnExtentionComponent->HandleControllerChanged();
-}
-
-void AMTD_BaseCharacter::AddMeleeHitboxes(const TArray<FName> &HitboxNicknames)
-{
-    for (const FName &Name : HitboxNicknames)
-    {
-        const auto Found = HitboxMap.Find(Name);
-        if (!Found)
-        {
-            continue;
-        }
-        
-        ActiveHitboxes.Add(Found->HitboxInfo);
-    }
-
-    bIsMeleeInProgress = !ActiveHitboxes.IsEmpty();
-}
-
-void AMTD_BaseCharacter::RemoveMeleeHitboxes(const TArray<FName> &HitboxNicknames)
-{
-    for (const FName &Name : HitboxNicknames)
-    {
-        const auto Found = HitboxMap.Find(Name);
-        if (!Found)
-        {
-            continue;
-        }
-
-        ActiveHitboxes.Remove(Found->HitboxInfo);
-    }
-
-    bIsMeleeInProgress = !ActiveHitboxes.IsEmpty();
-    if (!bIsMeleeInProgress)
-    {
-        ResetMeleeHitTargets();
-    }
-}
-
-void AMTD_BaseCharacter::DisableMeleeHitboxes()
-{
-    ActiveHitboxes.Empty();
-    ResetMeleeHitTargets();
-    bIsMeleeInProgress = false;
-}
-
-void AMTD_BaseCharacter::ResetMeleeHitTargets()
-{
-    MeleeHitTargets.Empty();
 }
 
 float AMTD_BaseCharacter::GetMovementDirectionAngle() const
@@ -155,53 +101,6 @@ float AMTD_BaseCharacter::GetMovementDirectionAngle() const
     return (Cross.IsZero()) ? (Degrees) : (Degrees * FMath::Sign(Cross.Z));
 }
 
-void AMTD_BaseCharacter::PerformHitboxTrace()
-{
-    ensure(bIsMeleeInProgress);
-    
-    const UWorld *World = GetWorld();
-    const FVector ActorLocation = GetActorLocation();
-    const FVector Forward = GetActorForwardVector();
-    const FRotator ForwardRot = Forward.Rotation();
-
-    const EDrawDebugTrace::Type DrawDebugTrace =
-        (bDebugMelee) ? (EDrawDebugTrace::ForDuration) : (EDrawDebugTrace::None);
-
-    for (const FMTD_MeleeHitSphereDefinition &HitboxEntry : ActiveHitboxes)
-    {
-        const FVector Offset = ForwardRot.RotateVector(HitboxEntry.Offset);
-        const FVector TraceLocation = ActorLocation + Offset;
-
-        TArray<FHitResult> OutHits;
-        UKismetSystemLibrary::SphereTraceMultiForObjects(
-            World, TraceLocation, TraceLocation, HitboxEntry.Radius, ObjectTypesToHit, false, MeleeHitTargets,
-            DrawDebugTrace, OutHits, false, FLinearColor::Red, FLinearColor::Green, DrawTime);
-
-        for (const FHitResult &Hit : OutHits)
-        {
-            PerformHit(Hit);
-        }
-    }
-}
-
-void AMTD_BaseCharacter::PerformHit(const FHitResult &Hit)
-{
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    
-    AActor *HitActor = Hit.GetActor();
-    MeleeHitTargets.Add(HitActor);
-
-    FGameplayEventData EventData;
-    EventData.ContextHandle = Asc->MakeEffectContext();
-    EventData.Instigator = GetPlayerState();
-    EventData.Target = HitActor;
-    EventData.TargetData.Data.Add(
-        TSharedPtr<FGameplayAbilityTargetData>(new FGameplayAbilityTargetData_SingleTargetHit(Hit)));
-
-    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
-    Asc->HandleGameplayEvent(GameplayTags.Gameplay_Event_MeleeHit, &EventData);
-}
-
 void AMTD_BaseCharacter::InitializeAttributes()
 {
     // Empty
@@ -212,44 +111,6 @@ void AMTD_BaseCharacter::SetupPlayerInputComponent(UInputComponent *PlayerInputC
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     PawnExtentionComponent->SetupPlayerInputComponent();
-}
-
-void AMTD_BaseCharacter::ConstructHitboxMap()
-{
-    HitboxMap.Empty();
-
-    if (HitboxData.IsEmpty())
-    {
-        MTD_WARN("Hitbox Data is empty.");
-        return;
-    }
-
-    int32 Index = 0;
-    for (const UMTD_MeleeHitboxData *Data : HitboxData)
-    {
-        if (!IsValid(Data))
-        {
-            MTD_WARN("Melee Hitbox Data (%d) is invalid.", Index);
-            Index++;
-            continue;
-        }
-        
-        if (Data->MeleeHitSpheres.IsEmpty())
-        {
-            MTD_WARN("Melee Hitbox Data [%s]'s Melee Hit Sphere array is empty.", *Data->GetName());
-            Index++;
-            continue;
-        }
-
-        for (const FMTD_MeleeHitSphereDefinition &HitDefinition : Data->MeleeHitSpheres)
-        {
-            FMTD_ActiveHitboxEntry HitboxEntry;
-            HitboxEntry.HitboxInfo = HitDefinition;
-            
-            HitboxMap.Add(HitDefinition.Nickname, HitboxEntry);
-        }
-        Index++;
-    }
 }
 
 void AMTD_BaseCharacter::FellOutOfWorld(const UDamageType &DamageType)

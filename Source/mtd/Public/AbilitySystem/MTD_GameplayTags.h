@@ -19,6 +19,8 @@ public:
     static void InitializeNativeTags();
     static FGameplayTag FindTagByString(FString TagString, bool bMatchPartialString = false);
 
+    static bool IsForAllHeroClasses(const FGameplayTagContainer& InTags);
+
 public:
     FGameplayTag Ability_ActivateFail_IsDead;
     FGameplayTag Ability_ActivateFail_Cooldown;
@@ -44,6 +46,7 @@ public:
     FGameplayTag InputTag_AutoRun;
 
     FGameplayTag Gameplay_Event_Death;
+    FGameplayTag Gameplay_Event_LevelUp;
     FGameplayTag Gameplay_Event_Knockback;
     FGameplayTag Gameplay_Event_RangeHit;
     FGameplayTag Gameplay_Event_MeleeHit;
@@ -53,6 +56,11 @@ public:
     FGameplayTag SetByCaller_Damage_Base;
     FGameplayTag SetByCaller_Damage_Additive;
     FGameplayTag SetByCaller_Damage_Multiplier;
+    
+    FGameplayTag SetByCaller_Balance_Damage;
+    FGameplayTag SetByCaller_KnockbackDirection_X;
+    FGameplayTag SetByCaller_KnockbackDirection_Y;
+    FGameplayTag SetByCaller_KnockbackDirection_Z;
 
     FGameplayTag Status_Death;
     FGameplayTag Status_Death_Dying;

@@ -16,9 +16,9 @@ AMTD_EnemyController::AMTD_EnemyController()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
 
-    BehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("Behavior Tree Component"));
-    Blackboard = CreateDefaultSubobject<UBlackboardComponent>(TEXT("Blackboard Component"));
-    Team = CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
+    BehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>("Behavior Tree Component");
+    Blackboard = CreateDefaultSubobject<UBlackboardComponent>("Blackboard Component");
+    Team = CreateDefaultSubobject<UMTD_TeamComponent>("MTD Team Component");
 
     bAttachToPawn = true;
     bWantsPlayerState = true;
@@ -116,15 +116,15 @@ void AMTD_EnemyController::OnStopAttacking()
 
 void AMTD_EnemyController::OnKnockback(const UMTD_BalanceHitData *HitData)
 {
-    check(HitData);
+    check(IsValid(HitData));
 
-    if (KnockbackTimerHandle.IsValid())
+    if (!KnockbackTimerHandle.IsValid())
     {
-        return;
+        GetBlackboardComponent()->SetValueAsBool(FName("Knockback"), true);
     }
 
-    GetBlackboardComponent()->SetValueAsBool(FName("Knockback"), true);
-    GetWorldTimerManager().SetTimer(KnockbackTimerHandle, this, &ThisClass::ResetKnockback, 0.01f, false);
+    GetWorldTimerManager().SetTimer(
+        KnockbackTimerHandle, this, &ThisClass::ResetKnockback, EnemyData->KnockbackTime, false);
 }
 
 void AMTD_EnemyController::ResetKnockback()
@@ -152,7 +152,7 @@ void AMTD_EnemyController::SetupKnockbacks(AMTD_BaseEnemyCharacter *Enemy)
     BalanceComponent->OnBalanceDownDelegate.AddDynamic(this, &ThisClass::OnKnockback);
 
     const auto EnemyExtensionComponent = UMTD_EnemyExtensionComponent::FindEnemyExtensionComponent(Enemy);
-    const auto EnemyData = EnemyExtensionComponent->GetEnemyData<UMTD_EnemyData>();
+    EnemyData = EnemyExtensionComponent->GetEnemyData<UMTD_EnemyData>();
     if (IsValid(EnemyData))
     {
         GetBlackboardComponent()->SetValueAsFloat(FName("KnockbackTime"), EnemyData->KnockbackTime);

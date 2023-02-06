@@ -6,12 +6,13 @@
 #include "MTD_MeleeEventsInterface.generated.h"
 
 UINTERFACE(MinimalAPI, Blueprintable)
-class UMTD_MeleeCharacterInterface : public UInterface
+class UMTD_MeleeCombatInterface
+    : public UInterface
 {
 	GENERATED_BODY()
 };
 
-class MTD_API IMTD_MeleeCharacterInterface
+class MTD_API IMTD_MeleeCombatInterface
 {
 	GENERATED_BODY()
 

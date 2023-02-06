@@ -117,7 +117,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="MTD|Cost")
     FScalableFloat ManaCost;
 
-private:
+protected:
     /**
      * Gameplay Tag that is used to determine animation montage to play. The tag will be added to AbilityTags as well.
      */
@@ -129,10 +129,12 @@ private:
         meta=(AllowPrivateAccess="true"))
     EMTD_AbilityActivationPolicy ActivationPolicy = EMTD_AbilityActivationPolicy::OnInputTriggered;
 
+    /** Flat damage amount to add on hit. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Damage",
         meta=(AllowPrivateAccess="true"))
     float DamageAdditive = 0.f;
 
+    /** Damage multiplier that can be used by further gameplay features. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Damage",
         meta=(AllowPrivateAccess="true"))
     float DamageMultiplier = 1.f;

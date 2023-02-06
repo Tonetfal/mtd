@@ -48,6 +48,7 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
     AddTag(InputTag_AutoRun, "InputTag.AutoRun", "Auto-run input.");
 
     AddTag(Gameplay_Event_Death, "Gameplay.Event.Death", "Event that fires on death.");
+    AddTag(Gameplay_Event_LevelUp, "Gameplay.Event.LevelUp", "Event that fires on level up.");
     AddTag(Gameplay_Event_Knockback, "Gameplay.Event.Knockback", "Event that fires on knockback.");
     AddTag(Gameplay_Event_RangeHit, "Gameplay.Event.RangeHit", "Event that fires on ranged weapon hit.");
     AddTag(Gameplay_Event_MeleeHit, "Gameplay.Event.MeleeHit", "Event that fires on melee weapon hit.");
@@ -59,6 +60,15 @@ void FMTD_GameplayTags::AddAllTags(UGameplayTagsManager &Manager)
     AddTag(SetByCaller_Damage_Additive, "SetByCaller.Damage.Additive",
         "SetByCaller tag used by damage gameplay effects.");
     AddTag(SetByCaller_Damage_Multiplier, "SetByCaller.Damage.Multiplier",
+        "SetByCaller tag used by damage gameplay effects.");
+        
+    AddTag(SetByCaller_Balance_Damage, "SetByCaller.Balance.Damage",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_X, "SetByCaller.KnockbackDirection.X",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_Y, "SetByCaller.KnockbackDirection.Y",
+        "SetByCaller tag used by damage gameplay effects.");
+    AddTag(SetByCaller_KnockbackDirection_Z, "SetByCaller.KnockbackDirection.Z",
         "SetByCaller tag used by damage gameplay effects.");
 
     AddTag(Status_Death, "Status.Death", "Target has the death status.");
@@ -115,4 +125,9 @@ FGameplayTag FMTD_GameplayTags::FindTagByString(FString TagString, bool bMatchPa
     }
 
     return Tag;
+}
+
+bool FMTD_GameplayTags::IsForAllHeroClasses(const FGameplayTagContainer &InTags)
+{
+    return InTags.HasTagExact(GameplayTags.Gameplay_Hero_All);
 }

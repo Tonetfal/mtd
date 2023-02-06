@@ -17,10 +17,13 @@ void UMTD_PlayerSet::PreAttributeChange(const FGameplayAttribute &Attribute, flo
     Super::PreAttributeChange(Attribute, NewValue);
 
     // Avoid using MaxTotalExp if cache didn't successfully
-    if (CacheExpRows())
+    if (Attribute == GetExperienceStatAttribute())
     {
-        // Disallow EXP go beyond the max value
-        NewValue = FMath::Clamp(NewValue, 0.f, MaxTotalExp);
+        if (CacheExpRows())
+        {
+            // Disallow EXP go beyond the max value
+            NewValue = FMath::Clamp(NewValue, 0.f, MaxTotalExp);
+        }
     }
 }
 

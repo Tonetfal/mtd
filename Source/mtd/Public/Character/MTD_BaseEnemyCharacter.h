@@ -25,9 +25,11 @@ public:
     AMTD_BaseEnemyCharacter();
 
     UBehaviorTree *GetBehaviorTree() const;
+    
+    //~AActor Interface
+    virtual void PreInitializeComponents() override;
 
 protected:
-    //~AActor Interface
     virtual void BeginPlay() override;
     //~End of AActor Interface
 
@@ -41,7 +43,6 @@ protected:
     void OnHealthChanged(UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
     virtual void OnHealthChanged_Implementation(
         UMTD_HealthComponent *InHealthComponent, float OldValue, float NewValue, AActor *InInstigator);
-
     
     //~IMTD_GameResultInterface Interface
     virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;
@@ -64,6 +65,9 @@ private:
     AActor *GetCheapiestActor(AActor *Lhs, AActor *Rhs) const;
 
     void UnlockRetarget();
+    void DropGoods();
+    void DropItem();
+    void DropExp();
     void DisableCollisions();
 
     UFUNCTION()

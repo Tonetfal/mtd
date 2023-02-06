@@ -20,6 +20,7 @@ UMTD_GameplayAbility::UMTD_GameplayAbility()
 
 void UMTD_GameplayAbility::OnDoneAddingNativeTags()
 {
+    // Add the main ability tag to ability tag container
     AbilityTags.AddTag(MainAbilityTag);
 }
 

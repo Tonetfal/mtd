@@ -3,6 +3,7 @@
 #include "AbilitySystem/Attributes/MTD_BuilderSet.h"
 #include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "AbilitySystem/MTD_GameplayTags.h"
 #include "System/MTD_GameInstance.h"
 
 UMTD_LevelComponent::UMTD_LevelComponent()
@@ -183,6 +184,8 @@ void UMTD_LevelComponent::OnLevelChanged(const FOnAttributeChangeData &ChangeDat
     
     OnLevelChangedDelegate.Broadcast(
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));
+    
+    SendLevelUpEvent();
 }
 
 void UMTD_LevelComponent::OnExperienceChanged(const FOnAttributeChangeData &ChangeData)
@@ -191,6 +194,29 @@ void UMTD_LevelComponent::OnExperienceChanged(const FOnAttributeChangeData &Chan
     
     OnExperienceChangedDelegate.Broadcast(
         this, ChangeData.OldValue, ChangeData.NewValue, GetInstigatorFromAttrChangeData(ChangeData));
+}
+
+void UMTD_LevelComponent::SendLevelUpEvent()
+{
+    if (!IsValid(AbilitySystemComponent))
+    {
+        return;
+    }
+
+    const AActor *Avatar = AbilitySystemComponent->GetAvatarActor();
+    if (!IsValid(Avatar))
+    {
+        return;
+    }
+
+    // Send the "Gameplay.Event.LevelUp" gameplay event through the owner's
+    // ability system. This can be used to trigger a level up gameplay ability.
+    FGameplayEventData Payload;
+    Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_LevelUp;
+    Payload.Target = AbilitySystemComponent->GetAvatarActor();
+    Payload.ContextHandle = AbilitySystemComponent->MakeEffectContext();;
+
+    AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
 #define MAP(x, y, z) UpgradeAttributesMapping.Add( \

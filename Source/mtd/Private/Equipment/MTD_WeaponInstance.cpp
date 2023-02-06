@@ -7,6 +7,20 @@
 #include "Inventory/Items/MTD_WeaponItemData.h"
 #include "Utility/MTD_Utility.h"
 
+FVector UMTD_WeaponInstance::GetFirePointWorldPosition() const
+{
+    if (((!IsValid(FirePointSocket)) && (!InitializeFirePoint())))
+    {
+        return FVector::ZeroVector;
+    }
+
+    FTransform Transform;
+    FirePointSocket->GetSocketTransform(Transform, WeaponMesh);
+
+    const FVector SocketLocation = Transform.GetLocation();
+    return SocketLocation;
+}
+
 void UMTD_WeaponInstance::ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc)
 {
     Super::ModStats_Internal(Multiplier, Asc);
@@ -17,23 +31,8 @@ void UMTD_WeaponInstance::ModStats_Internal(float Multiplier, UAbilitySystemComp
     const auto WeaponData = Cast<UMTD_WeaponItemData>(ItemData);
     check(WeaponData);
 
-    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageBase, WeaponData->MeleeDamage);
-    APPLY_MOD_TO_ATTRIBUTE(Combat, DamageRangedBase, WeaponData->RangedDamage);
-    APPLY_MOD_TO_ATTRIBUTE(Balance, Damage, WeaponData->BalanceDamage);
-}
-
-FVector UMTD_WeaponInstance::GetFirePointWorldPosition() const
-{
-    if ((!IsValid(FirePointSocket)) && (!InitializeFirePoint()))
-    {
-        return FVector::ZeroVector;
-    }
-
-    FTransform Transform;
-    FirePointSocket->GetSocketTransform(Transform, WeaponMesh);
-
-    const FVector SocketLocation = Transform.GetLocation();
-    return SocketLocation;
+    MOD_ATTRIBUTE_BASE(Combat, DamageBase, WeaponData->MeleeDamage);
+    MOD_ATTRIBUTE_BASE(Combat, DamageRangedBase, WeaponData->RangedDamage);
 }
 
 bool UMTD_WeaponInstance::InitializeFirePoint() const

@@ -14,6 +14,8 @@ class MTD_API UMTD_TeamComponent : public UActorComponent, public IGenericTeamAg
 public:
     UMTD_TeamComponent();
 
+    static UMTD_TeamComponent *FindTeamComponent(const AActor *Actor);
+
     void SetMtdTeamId(EMTD_TeamId Id);
     EMTD_TeamId GetMtdTeamId() const;
 
@@ -33,3 +35,8 @@ private:
         meta=(AllowPrivateAccess="true"))
     EMTD_TeamId TeamId = EMTD_TeamId::Unknown;
 };
+
+inline UMTD_TeamComponent *UMTD_TeamComponent::FindTeamComponent(const AActor *Actor)
+{
+    return ((IsValid(Actor)) ? (Actor->FindComponentByClass<UMTD_TeamComponent>()) : (nullptr));
+}

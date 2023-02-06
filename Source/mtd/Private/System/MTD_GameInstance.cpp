@@ -4,6 +4,7 @@
 #include "Engine/CurveTable.h"
 #include "Engine/DataTable.h"
 #include "Inventory/Items/MTD_ArmorItemData.h"
+#include "Inventory/Items/MTD_ItemDropManager.h"
 #include "Inventory/Items/MTD_MaterialItemData.h"
 #include "Inventory/Items/MTD_WeaponItemData.h"
 #include "MTD_CoreTypes.h"
@@ -19,6 +20,20 @@ void UMTD_GameInstance::Init()
     VerifyMaterialDataTable();
     VerifyLevelCurveTable();
     VerifyAttributePointsCurveTable();
+}
+
+void UMTD_GameInstance::OnStart()
+{
+    Super::OnStart();
+
+    UMTD_ItemDropManager::Construct();
+}
+
+void UMTD_GameInstance::Shutdown()
+{
+    Super::Shutdown();
+    
+    UMTD_ItemDropManager::Destroy();
 }
 
 void UMTD_GameInstance::VerifyBaseItemDataTable() const

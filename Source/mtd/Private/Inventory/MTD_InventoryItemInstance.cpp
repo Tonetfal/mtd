@@ -124,14 +124,14 @@ bool AMTD_InventoryItemInstance::Interact_Implementation(AMTD_BaseCharacter *Cha
     APlayerState *Ps = Character->GetPlayerState();
     check(IsValid(Ps));
     
-    auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(Ps);
-    check(IsValid(InventoryManagerComponent));
-
     bool bShouldDestroy;
     
     // Loot interaction
     if (bIsLootInteraction)
     {
+        auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(Ps);
+        check(IsValid(InventoryManagerComponent));
+
         const bool bAdded = InventoryManagerComponent->AddItem(ItemData);
         bShouldDestroy = bAdded;
         ensureAlways(bAdded);
@@ -141,25 +141,12 @@ bool AMTD_InventoryItemInstance::Interact_Implementation(AMTD_BaseCharacter *Cha
     else
     {
         auto EquipmentManagerComponent = UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(Ps);
-        check(EquipmentManagerComponent);
-        ensure(EquipmentManagerComponent->CanEquipItem(ItemData));
-        
-        auto EquipItemData = Cast<UMTD_EquippableItemData>(ItemData);
-        check(IsValid(EquipItemData));
+        check(IsValid(EquipmentManagerComponent));
 
-        const EMTD_EquipmentType EquipmentType = UMTD_InventoryBlueprintFunctionLibrary::GetEquipmentType(ItemData);
-        if (EquipmentManagerComponent->IsItemTypeEquipped(EquipmentType))
-        {
-            // Remove the current equipment, try to add it to the inventory; the item may be dropped on the floor
-            UMTD_EquippableItemData *UnequippedItemData = EquipmentManagerComponent->UnequipItemType(EquipmentType);
-            check(IsValid(UnequippedItemData));
-            
-            InventoryManagerComponent->AddItem(UnequippedItemData, true);
-        }
-        
-        // Previously CanEquipItem was checked along other validness things, hence it should never fail
-        const UMTD_EquipmentInstance *EquipmentInstance =  EquipmentManagerComponent->EquipItem(ItemData);
+        // Equip item
+        const UMTD_EquipmentInstance *EquipmentInstance = EquipmentManagerComponent->EquipItem(ItemData);
         const bool bEquipped = IsValid(EquipmentInstance);
+        
         bShouldDestroy = bEquipped;
         ensureAlways(bEquipped);
     }

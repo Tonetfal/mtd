@@ -17,6 +17,7 @@ class MTD_API UMTD_HealthSet : public UMTD_AttributeSet
 public:
     ATTRIBUTE_ACCESSORS(UMTD_HealthSet, Health);
     ATTRIBUTE_ACCESSORS(UMTD_HealthSet, MaxHealth);
+    ATTRIBUTE_ACCESSORS(UMTD_HealthSet, LastLostHealth_Meta);
 
 protected:
     virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData &Data) override;
@@ -25,6 +26,7 @@ protected:
     virtual void PreAttributeBaseChange(const FGameplayAttribute &Attribute, float &NewValue) const override;
     virtual void PreAttributeChange(const FGameplayAttribute &Attribute, float &NewValue) override;
     virtual void PostAttributeChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue) override;
+    virtual void PostAttributeBaseChange(const FGameplayAttribute &Attribute, float OldValue, float NewValue) const override;
 
     void ClampAttribute(const FGameplayAttribute &Attribute, float &NewValue) const;
 
@@ -37,6 +39,10 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData MaxHealth;
+
+    /** Meta attribute. The most recent amount of health lost (may be updated several times per frame). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayAttributeData LastLostHealth_Meta;
 
     bool bOutOfHealth = false;
 };

@@ -29,21 +29,23 @@ class UMTD_ProjectileData;
     } while(0)
 
 /** Attribute names used to retrieve data from curve tables. */
-const FName HealthAttributeName = FName("Health");
-const FName ManaAttributeName = FName("Mana");
-const FName BalanceResistAttributeName = FName("BalanceResist");
-const FName BalanceDamageAttributeName = FName("BalanceDamage");
+const FName HealthAttributeName = "TotalHealth";
+const FName HealthDeltaAttributeName = "DeltaHealth";
+const FName ManaAttributeName = "TotalMana";
+const FName ManaDeltaAttributeName = "DeltaMana";
+const FName BalanceDamageAttributeName = "BalanceDamage";
+const FName BalanceResistAttributeName = "BalanceResist";
 
-const FName DamageAttributeName = FName("Damage");
-const FName RangeAttributeName = FName("Range");
-const FName VisionDegreesAttributeName = FName("VisionDegrees");
-const FName FirerateAttributeName = FName("Firerate");
-const FName ProjectileSpeedAttributeName = FName("ProjectileSpeed");
+const FName DamageAttributeName = "Damage";
+const FName RangeAttributeName = "Range";
+const FName VisionDegreesAttributeName = "VisionDegrees";
+const FName FirerateAttributeName = "Firerate";
+const FName ProjectileSpeedAttributeName = "ProjectileSpeed";
 
-const FName HealthScaleAttributeName = FName("HealthScale");
-const FName DamageScaleScaleAttributeName = FName("DamageScale");
-const FName SpeedScaleScaleAttributeName = FName("SpeedScale");
-const FName ExpAttributeName = FName("Exp");
+const FName HealthScaleAttributeName = "HealthScale";
+const FName DamageScaleScaleAttributeName = "DamageScale";
+const FName SpeedScaleScaleAttributeName = "SpeedScale";
+const FName ExpAttributeName = "Exp";
 
 UCLASS(BlueprintType, Const, meta=(ShortTooltip="Data asset used to define a Player."))
 class MTD_API UMTD_PlayerData : public UDataAsset
@@ -109,6 +111,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float Speed = 0.f;
     
+    /** Experience an enemy will grant when killed. The value will be scaled depending on difficulty. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    float Experience = 0.f;
+    
     /** Amount of mana an enemy will drop on death. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float Mana = 0.f;
@@ -128,8 +134,4 @@ public:
     /** Seconds an enemy will be knockback for if lost balance. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     float KnockbackTime = 0.f;
-    
-    /** TEMPORARY. Values to scale enemy attributes with. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    TObjectPtr<UCurveTable> TemporaryAttributeTable = nullptr;
 };

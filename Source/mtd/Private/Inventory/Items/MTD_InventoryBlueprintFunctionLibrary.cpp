@@ -1,10 +1,10 @@
 ﻿#include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 
-#include "Inventory/MTD_InventoryItemInstance.h"
 #include "Inventory/Items/MTD_ArmorItemData.h"
 #include "Inventory/Items/MTD_BaseInventoryItemData.h"
 #include "Inventory/Items/MTD_MaterialItemData.h"
 #include "Inventory/Items/MTD_WeaponItemData.h"
+#include "Inventory/MTD_InventoryItemInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/MTD_GameInstance.h"
 
@@ -23,7 +23,7 @@ public:
 
 
 /**
- * Equippable item generation;
+ * Equippable item generation.
  */
 
 static void RandomizeEquippableItemData(FMTD_GenerationParameters &Params, UMTD_EquippableItemData &EquipItemData)
@@ -127,6 +127,12 @@ static void RandomizeWeaponItemData(FMTD_GenerationParameters &Params, UMTD_Weap
         if (FMTD_WeaponItemDataRow.ProjectileSpeedLimit > 0)
         {
             WeaponItemData.ProjectileSpeed = (FMath::FRand() * FMTD_WeaponItemDataRow.ProjectileSpeedLimit);
+        }
+        
+        if (FMTD_WeaponItemDataRow.bRadial)
+        {
+            WeaponItemData.bRadial = true;
+            WeaponItemData.RadialRange = (FMath::FRand() * FMTD_WeaponItemDataRow.RadialRangeLimit);
         }
     }
 }
@@ -264,6 +270,12 @@ static bool DispatchBaseItemData(FMTD_GenerationParameters &Params)
 static bool CreateGenerationParameters(FMTD_GenerationParameters &OutParams, UObject *WorldContextObject,
     int32 ItemID, float Difficulty)
 {
+    if (!IsValid(WorldContextObject))
+    {
+        MTD_WARN("World Context Object is invalid.");
+        return false;
+    }
+    
     const UWorld *World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
     if (!IsValid(World))
     {

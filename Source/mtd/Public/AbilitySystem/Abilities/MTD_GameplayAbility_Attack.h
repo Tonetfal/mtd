@@ -23,6 +23,8 @@ public:
     UMTD_GameplayAbility_Attack();
 
 protected:
+    virtual void OnDoneAddingNativeTags() override;
+    
     virtual bool CanActivateAbility(
         const FGameplayAbilitySpecHandle Handle,
         const FGameplayAbilityActorInfo *ActorInfo,

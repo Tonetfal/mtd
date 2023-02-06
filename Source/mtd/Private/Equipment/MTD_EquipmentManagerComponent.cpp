@@ -1,18 +1,73 @@
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 
-#include "AbilitySystemGlobals.h"
+#include "AbilitySystem/Attributes/MTD_BuilderSet.h"
+#include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 #include "AbilitySystem/MTD_AbilitySet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
-#include "AbilitySystem/Attributes/MTD_PlayerSet.h"
+#include "AbilitySystemGlobals.h"
 #include "Equipment/MTD_EquipmentDefinition.h"
 #include "Equipment/MTD_EquipmentInstance.h"
 #include "Inventory/Items/MTD_ArmorItemData.h"
 #include "Inventory/Items/MTD_BaseInventoryItemData.h"
 #include "Inventory/Items/MTD_EquippableItemData.h"
 #include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
-#include "Player/MTD_PlayerController.h"
+#include "Inventory/MTD_InventoryManagerComponent.h"
 #include "Player/MTD_PlayerState.h"
+
+namespace
+{
+
+struct FMTD_PlayerStats
+{
+public:
+    float PlayerHealth = 0.f;
+    float PlayerDamage = 0.f;
+    float PlayerSpeed = 0.f;
+    float TowerHealth = 0.f;
+    float TowerDamage = 0.f;
+    float TowerRange = 0.f;
+    float TowerSpeed = 0.f;
+};
+
+FMTD_PlayerStats ComputeStatDifference(const UMTD_EquippableItemData *OldItemData,
+    const UMTD_EquippableItemData *NewItemData)
+{
+    check(IsValid(OldItemData));
+    check(IsValid(NewItemData));
+
+    FMTD_PlayerStats Result;
+
+#define FIND_DIFFERENCE(x) Result. ## x = (NewItemData-> ## x - OldItemData-> ## x);
+    FIND_DIFFERENCE(PlayerHealth);
+    FIND_DIFFERENCE(PlayerDamage);
+    FIND_DIFFERENCE(PlayerSpeed);
+    
+    FIND_DIFFERENCE(TowerHealth);
+    FIND_DIFFERENCE(TowerDamage);
+    FIND_DIFFERENCE(TowerRange);
+    FIND_DIFFERENCE(TowerSpeed);
+#undef FIND_DIFFERENCE
+
+    return Result;
+}
+
+void ApplyStatDifference(UAbilitySystemComponent *Asc, const FMTD_PlayerStats &StatsDiff)
+{
+    check(IsValid(Asc));
+
+    constexpr float Multiplier = 1.f;
+    MOD_ATTRIBUTE_BASE(Player, HealthStat, StatsDiff.PlayerHealth);
+    MOD_ATTRIBUTE_BASE(Player, DamageStat, StatsDiff.PlayerDamage);
+    MOD_ATTRIBUTE_BASE(Player, SpeedStat, StatsDiff.PlayerDamage);
+    
+    MOD_ATTRIBUTE_BASE(Builder, HealthStat, StatsDiff.TowerHealth);
+    MOD_ATTRIBUTE_BASE(Builder, DamageStat, StatsDiff.TowerDamage);
+    MOD_ATTRIBUTE_BASE(Builder, RangeStat, StatsDiff.TowerRange);
+    MOD_ATTRIBUTE_BASE(Builder, SpeedStat, StatsDiff.TowerSpeed);
+}
+
+}
 
 UMTD_EquipmentManagerComponent::UMTD_EquipmentManagerComponent(const FObjectInitializer &ObjectInitializer)
     : UPawnComponent(ObjectInitializer)
@@ -34,8 +89,13 @@ void UMTD_EquipmentManagerComponent::UninitializeComponent()
 
 UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(UMTD_BaseInventoryItemData *ItemData)
 {
+    if (!IsValid(ItemData))
+    {
+        MTDS_WARN("Item Data is invalid.");
+        return nullptr;
+    }
+    
     AActor *Owner = GetOwner();
-    check(IsValid(ItemData));
     check(IsValid(Owner));
     
     // Check in-game logical conditions
@@ -52,7 +112,8 @@ UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(UMTD_BaseInven
         MTDS_WARN("Item [%s] is not equippable.", *ItemData->GetName());
         return nullptr;
     }
-    
+
+    // Get equipment type
     const EMTD_EquipmentType EquipmentType = UMTD_InventoryBlueprintFunctionLibrary::GetEquipmentType(ItemData);
 
     // Check for invalidness
@@ -61,17 +122,13 @@ UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(UMTD_BaseInven
         MTDS_WARN("Equipment is of invalid type.");
         return nullptr;
     }
-    
-    // Check if already equipment is already equipped
-    if (EquipmentInstances.Contains(EquipmentType))
-    {
-        MTDS_WARN("Equipment [%s] is already equipped.", *UEnum::GetValueAsString(EquipmentType));
-        return nullptr;
-    }
 
     // Access equipment item data
     auto EquipItemData = Cast<UMTD_EquippableItemData>(ItemData);
-    check(EquipItemData);
+    check(IsValid(EquipItemData));
+
+    // Try to swap items. Avoid calling GrantStats if previously unequipped an item
+    const bool bModStats = !(SwapItem(EquipmentType, EquipItemData));
 
     // Save the ability system component given data
     FMTD_AbilitySet_GrantedHandles GrantedHandles;
@@ -96,11 +153,11 @@ UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(UMTD_BaseInven
         if (IsValid(EquipDefAsset->AbilitySetToGrant))
         {
             auto MtdPs = Cast<AMTD_PlayerState>(Owner);
-            check(MtdPs);
+            check(IsValid(MtdPs));
             
             auto MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
-            check(MtdAsc);
-
+            check(IsValid(MtdAsc));
+            
             EquipDefAsset->AbilitySetToGrant->GiveToAbilitySystem(MtdAsc, &GrantedHandles, Owner);
         }
     }
@@ -116,8 +173,8 @@ UMTD_EquipmentInstance *UMTD_EquipmentManagerComponent::EquipItem(UMTD_BaseInven
     {
         EquipmentInstance->SpawnEquipmentActor(EquipDefAsset->ActorToSpawnDefinition);
     }
-    
-    EquipmentInstance->OnEquipped();
+
+    EquipmentInstance->OnEquipped(/* bModStats */ bModStats);
     EquipmentInstances.Add({ EquipmentType, EquipmentInstance });
 
     // Notify about the equipment
@@ -229,13 +286,13 @@ bool UMTD_EquipmentManagerComponent::CanEquipItem(UMTD_BaseInventoryItemData *It
     }
     
     // Check if item can be used by anyone
-    if (EquipmentHeroClasses.HasTag(GameplayTags.Gameplay_Hero_All))
+    if (FMTD_GameplayTags::IsForAllHeroClasses(EquipmentHeroClasses))
     {
         return true;
     }
 
     // Check if hero is marked as every class
-    if (CharacterHeroClasses.HasTag(GameplayTags.Gameplay_Hero_All))
+    if (FMTD_GameplayTags::IsForAllHeroClasses(CharacterHeroClasses))
     {
         return true;
     }
@@ -253,4 +310,47 @@ bool UMTD_EquipmentManagerComponent::IsItemTypeEquipped(EMTD_EquipmentType Equip
 {
     const bool bContains = EquipmentInstances.Contains(EquipmentType);
     return bContains;
+}
+
+bool UMTD_EquipmentManagerComponent::SwapItem(const EMTD_EquipmentType EquipmentType,
+    UMTD_EquippableItemData *NewEquipmentItemData)
+{
+    // Check if equipment type is already occupied
+    const TObjectPtr<UMTD_EquipmentInstance> *CurrentEquipmentInstance = EquipmentInstances.Find(EquipmentType);
+    if (!((CurrentEquipmentInstance) && (IsValid(*CurrentEquipmentInstance))))
+    {
+        // Item wasn't found or invalid
+        return false;
+    }
+    
+    MTDS_LOG("Equipment [%s] is already equipped, unequipping...", *UEnum::GetValueAsString(EquipmentType));
+
+    AActor *Owner = GetOwner();
+    check(IsValid(Owner));
+    
+    auto MtdPs = Cast<AMTD_PlayerState>(Owner);
+    check(IsValid(MtdPs));
+    
+    auto MtdAsc = MtdPs->GetMtdAbilitySystemComponent();
+    check(IsValid(MtdAsc));
+    
+    // Shorthand some expressions
+    UMTD_EquippableItemData *OldItemData = (*CurrentEquipmentInstance)->ItemData;
+    check(IsValid(OldItemData));
+    
+    // Find difference between new and old item
+    const FMTD_PlayerStats StatsDiff = ComputeStatDifference(OldItemData, NewEquipmentItemData);
+    
+    // Apply stat difference
+    ApplyStatDifference(MtdAsc, StatsDiff);
+    
+    // Unequip item, don't call TakeBackStats on old item
+    (*CurrentEquipmentInstance)->OnUnequipped(/* bModStats */ false);
+    
+    // Move item to the inventory if possible
+    UMTD_InventoryManagerComponent *InventoryManagerComponent = MtdPs->GetInventoryManagerComponent();
+    check(IsValid(InventoryManagerComponent));
+    InventoryManagerComponent->AddItem(OldItemData, true);
+
+    return true;
 }

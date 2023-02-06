@@ -8,7 +8,6 @@
 struct FDamageStatics
 {
     FGameplayEffectAttributeCaptureDefinition HealthDef;
-    FGameplayEffectAttributeCaptureDefinition LastReceivedDamage_MetaDef;
     FGameplayEffectAttributeCaptureDefinition BaseDamage_MetaDef;
     FGameplayEffectAttributeCaptureDefinition DamageAdditiveDef;
     FGameplayEffectAttributeCaptureDefinition DamageMultiplierDef;
@@ -17,7 +16,6 @@ struct FDamageStatics
     FDamageStatics()
     {
         HealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, Health, Target, false);
-        LastReceivedDamage_MetaDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, LastReceivedDamage_Meta, Target, false);
         BaseDamage_MetaDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, BaseDamageToUse_Meta, Source, true); 
         DamageAdditiveDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageAdditive, Source, true); 
         DamageMultiplierDef = CAPTURE_ATTRIBUTE(UMTD_CombatSet, DamageMultiplier, Source, true); 
@@ -34,7 +32,6 @@ static FDamageStatics &DamageStatics()
 UMTD_DamageExecution::UMTD_DamageExecution()
 {
     RelevantAttributesToCapture.Add(DamageStatics().HealthDef);
-    RelevantAttributesToCapture.Add(DamageStatics().LastReceivedDamage_MetaDef);
     RelevantAttributesToCapture.Add(DamageStatics().BaseDamage_MetaDef);
     RelevantAttributesToCapture.Add(DamageStatics().DamageAdditiveDef);
     RelevantAttributesToCapture.Add(DamageStatics().DamageMultiplierDef);
@@ -59,20 +56,29 @@ void UMTD_DamageExecution::Execute_Implementation(
     ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         DamageStatics().BaseDamage_MetaDef, EvaluationParams, DamageBase);
 
-    float DamageAdditive = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
-    float DamageMultiplier = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
+    const float DamageAdditive = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
+    const float DamageMultiplier = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
 
     float DamageStat = 0.f;
-    const bool bDamageStatFound = ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         DamageStatics().DamageStatDef, EvaluationParams, DamageStat);
+        
+    auto Formula = [] (float T)
+        {
+            T = FMath::Max(T, 0.f); // Avoid negative values
+            // constexpr float A = 50.f; // Scaling factor
+            // constexpr float B = 1.f; // Offset. Avoid decreasing damage
+            // constexpr float T0 = 1.f; // Midpoint
+            // constexpr float R = 0.002f; // Growth rate
+            // return ((A * (FMath::Exp(R * (T - T0)))) + B);
+            return (1.f + (T / 100.f));
+        };
 
-    // TODO: const float DamageMultiplier = SomeSmartMathFunction(DamageStat);
-    const float DamageDone =
-        (DamageBase + DamageAdditive) * DamageMultiplier *
-        ((bDamageStatFound) ? (1.f) /* the math function(DamageStat) */ : (1.f));
+    const float Scale = Formula(DamageStat);
+    const float DamageDone = (((DamageBase * DamageMultiplier) * Scale) + DamageAdditive);
 
     ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        UMTD_CombatSet::GetLastReceivedDamage_MetaAttribute(),
+        UMTD_HealthSet::GetLastLostHealth_MetaAttribute(),
         EGameplayModOp::Override,
         DamageDone));
     

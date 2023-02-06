@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "mtd.h"
 #include "Items/MTD_FloatingToken.h"
+#include "mtd.h"
 
 #include "MTD_ManaToken.generated.h"
 
@@ -9,7 +9,8 @@ class UMTD_GameplayEffect;
 class UMTD_ManaComponent;
 
 UCLASS()
-class MTD_API AMTD_ManaToken : public AMTD_FloatingToken
+class MTD_API AMTD_ManaToken
+    : public AMTD_FloatingToken
 {
     GENERATED_BODY()
 
@@ -19,7 +20,6 @@ protected:
     virtual APawn *FindNewTarget() const override;
 
     virtual void OnPawnAdded(APawn *Pawn) override;
-    virtual void OnPawnRemoved(APawn *Pawn) override;
     virtual void SetNewTarget(APawn *Pawn) override;
 
     UFUNCTION(BlueprintCallable)
@@ -27,7 +27,8 @@ protected:
         AActor *Owner,
         const FTransform &Transform,
         int32 ManaAmount,
-        const TMap<int32, TSubclassOf<AMTD_ManaToken>> &ManaTokensTable);
+        const TMap<int32, TSubclassOf<AMTD_ManaToken>> &ManaTokensTable,
+        float TriggersIgnoreTime = 0.f);
 
     UFUNCTION(BlueprintCallable)
     static void GiveStartVelocity(AMTD_ManaToken *ManaToken, const float BaseSpeed, const float MaxSpeedBonus);
@@ -35,28 +36,26 @@ protected:
     UFUNCTION(BlueprintCallable)
     static void GiveStartVelocityToTokens(const TArray<AMTD_ManaToken *> &ManaTokens, const float BaseSpeed,
         const float MaxSpeedBonus);
+    
+    virtual void EnableScan() override;
+    virtual void DisableScan() override;
+
+    virtual void AddToListening(AActor *Actor) override;
+    virtual void RemoveFromListening(AActor *Actor) override;
 
 private:
+    void OnManaChangeHandleScanCase(UMTD_ManaComponent *ManaComponent);
+    
     UFUNCTION()
     void OnTargetManaAttributeChanged(UMTD_ManaComponent *ManaComponent, float OldValue, float NewValue,
         AActor* InInstigator);
-
-    void EnableScan();
-    void DisableScan();
-
-    void AddToListening(AActor *Actor);
-    void RemoveFromListening(AActor *Actor);
+    
+    UFUNCTION()
+    void OnTargetMaxManaAttributeChanged(UMTD_ManaComponent *ManaComponent, float OldValue, float NewValue,
+        AActor* InInstigator);
 
 private:
-    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token", meta=(ClampMin="0.0",
-        ShortTooltip="Amount of mana the pawn will be granted."))
+    /** Amount of mana the pawn will be granted with. */
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token", meta=(ClampMin="0.0"))
     int32 ManaAmount = 1;
-
-    /// When enabled it means that all the detected (hence there must be at least one trigger) triggeres have full mana
-    /// pool, hence listened for mana attribute changes in order to target the one who has lost some mana. After that
-    /// the scan will be disabled.
-    bool bScanMode = false;
-
-    UPROPERTY(EditDefaultsOnly, Category="MTD|Mana Token")
-    TSubclassOf<UMTD_GameplayEffect> ManaModificationGameplayEffectClass = nullptr;
 };

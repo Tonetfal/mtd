@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
 #include "mtd.h"
@@ -14,12 +13,16 @@ class AMTD_Projectile;
 class UBoxComponent;
 class UMTD_AbilityAnimationSet;
 class UMTD_AbilitySystemComponent;
+class UMTD_BuilderSet;
+class UMTD_GameplayEffect;
 class UMTD_HealthComponent;
 class UMTD_HeroComponent;
 class UMTD_PawnExtensionComponent;
 class UMTD_TowerData;
 class USphereComponent;
 struct FGameplayEffectSpecHandle;
+struct FGameplayEventData;
+struct FOnAttributeChangeData;
 
 UCLASS()
 class MTD_API AMTD_Tower : public APawn, public IAbilitySystemInterface, public IMTD_GameResultInterface
@@ -27,13 +30,19 @@ class MTD_API AMTD_Tower : public APawn, public IAbilitySystemInterface, public 
     GENERATED_BODY()
 
 public:
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSignature);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE(
+        FDynamicMulticastSignature);
+    
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+        FOnLevelUpSignature,
+        int32, NewLevel,
+        int32, OldLevel);
 
 public:
     AMTD_Tower();
-    virtual void Tick(float DeltaTime) override;
 
     //~AActor interface
+    virtual void Tick(float DeltaTime) override;
     virtual void PreInitializeComponents() override;
     virtual void PostInitProperties() override;
     virtual void BeginPlay() override;
@@ -44,6 +53,12 @@ public:
     //~APawn interface
     virtual void NotifyControllerChanged() override;
     //~End of APawn interface
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category="MTD|Tower")
+    int32 GetCurrentLevel() const;
+    
+    UFUNCTION(BlueprintCallable, Category="MTD|Tower")
+    void AddLevel(int32 InDeltaLevel);
 
 protected:
     virtual void OnAbilitySystemInitialized();
@@ -92,13 +107,18 @@ protected:
 
     void InitializeAttributes();
 
+    UFUNCTION()
+    virtual void OnLevelUp(int32 NewLevel, int32 OldLevel);
+    
+    void SendLevelUpEvent();
+
     //~IMTD_GameResultInterface Interface
     virtual void OnGameTerminated_Implementation(EMTD_GameResult GameResult) override;
     //~End of IMTD_GameResultInterface Interface
 
 private:
     void OnFire(AActor *FireTarget);
-    AMTD_Projectile *SpawnProjectile();
+    AMTD_Projectile *SpawnProjectile(const FTransform &Transform);
 
     void SetupProjectile(AMTD_Projectile &Projectile, AActor *FireTarget);
     void SetupProjectileCollision(AMTD_Projectile &Projectile) const;
@@ -115,6 +135,12 @@ protected:
 private:
     void StartReloading();
     void OnReloadFinished();
+
+    void StartListeningForGameTerminated();
+    void StartListeningForRangeAttributeChanges();
+    void OnRangeAttributeChanged(const FOnAttributeChangeData &Attribute);
+    void CachePlayerAsc();
+    bool CheckTowerDataValidness() const;
 
     FVector GetTargetDistanceVector(const USceneComponent *Projectile, const USceneComponent *Target) const;
     FVector GetTargetDirection(const USceneComponent *Projectile, const USceneComponent *Target) const;
@@ -134,7 +160,10 @@ public:
 
 public:
     UPROPERTY(BlueprintAssignable)
-    FDynamicMulticastSignature OnAttributesChanged;
+    FDynamicMulticastSignature OnRangeAttributeChangedDelegate;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnLevelUpSignature OnLevelUpDelegate;
 
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
@@ -162,7 +191,10 @@ private:
     TObjectPtr<UMTD_TowerExtensionComponent> TowerExtensionComponent = nullptr;
 
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
-    float Level = 1.f;
+    float CurrentLevel = 1.f;
+    
+    UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
+    float MaxLevel = 5.f;
 
     /** Cached value retrieved from a curve table. */
     UPROPERTY(BlueprintReadWrite, Category="MTD|Tower", meta=(AllowPrivateAccess="true"))
@@ -191,6 +223,15 @@ private:
     bool bIsReloading = false;
 
     FTimerHandle ReloadTimerHandle;
+
+    UPROPERTY(EditDefaultsOnly, Category="MTD|Tower")
+    TSubclassOf<UMTD_GameplayEffect> TowerHealthAttributeScalingGeClass = nullptr;
+
+    UPROPERTY()
+    TObjectPtr<UAbilitySystemComponent> InstigatorAsc = nullptr;
+    
+    UPROPERTY()
+    TObjectPtr<const UMTD_BuilderSet> InstigatorBuilderSet = nullptr;
 };
 
 inline UMTD_HealthComponent *AMTD_Tower::GetHealthComponent() const

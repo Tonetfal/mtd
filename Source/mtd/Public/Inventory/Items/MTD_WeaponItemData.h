@@ -37,6 +37,13 @@ public:
     TObjectPtr<UMTD_EquipmentDefinitionAsset> EquipmentDefinitionAsset = nullptr;
 
     /**
+     * Parameters.
+     */
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Parameters")
+    bool bRadial = false;
+
+    /**
      * Limits.
      */
 
@@ -45,6 +52,9 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attribute Limits")
     float ProjectileSpeedLimit = 100000.f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attribute Limits")
+    float RadialRangeLimit = 500.f;
 };
 
 UCLASS()
@@ -67,9 +77,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Weapon")
     int32 MeleeDamage = 0;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Weapon")
-    float BalanceDamage = 7.5f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Ranged Weapon")
     int32 RangedDamage = 0;
@@ -79,4 +86,10 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Ranged Weapon")
     float ProjectileSpeed = 0.f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Ranged Weapon")
+    bool bRadial = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes|Ranged Weapon")
+    float RadialRange = 0.f;
 };

@@ -66,9 +66,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
     int32 MeleeDamage = 0;
-    
-    UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
-    float BalanceDamage = 7.5f;
 
     UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
     int32 RangedDamage = 0;
@@ -78,6 +75,12 @@ public:
     
     UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
     float ProjectileSpeed = 0.f;
+    
+    UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
+    bool bRadial = false;
+    
+    UPROPERTY(EditAnywhere, Category="Attributes|Weapon")
+    float RadialRange = 0.f;
 };
 
 USTRUCT()
