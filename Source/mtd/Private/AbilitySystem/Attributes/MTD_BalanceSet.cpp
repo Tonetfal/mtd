@@ -17,11 +17,13 @@ void UMTD_BalanceSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
         {
             if (OnBalanceDownDelegate.IsBound())
             {
+                // Prepare data to notify about
                 const FGameplayEffectContextHandle &EffectContext = Data.EffectSpec.GetEffectContext();
                 AActor *Instigator = EffectContext.GetOriginalInstigator();
                 AActor *Causer = EffectContext.GetEffectCauser();
-
                 const float DamageValue = Data.EvaluatedData.Magnitude;
+
+                // Notify about balance down
                 OnBalanceDownDelegate.Broadcast(Instigator, Causer, Data.EffectSpec, DamageValue);
             }
         }

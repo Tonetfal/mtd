@@ -13,12 +13,9 @@ struct FMTD_PlayerHealthStatics
 	FMTD_PlayerHealthStatics()
 	{
         // Recompute the max health when any of the following attributes changes
-		HealthStatDef = FGameplayEffectAttributeCaptureDefinition(
-		    UMTD_PlayerSet::GetHealthStatAttribute(), EGameplayEffectAttributeCaptureSource::Source, false);
-		HealthStatBonusDef = FGameplayEffectAttributeCaptureDefinition(
-		    UMTD_PlayerSet::GetHealthStat_BonusAttribute(), EGameplayEffectAttributeCaptureSource::Source, false);
-	    MaxHealthDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayEffectAttributeCaptureSource::Source, false);
+        HealthStatDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, HealthStat, Source, false);
+        HealthStatBonusDef = CAPTURE_ATTRIBUTE(UMTD_PlayerSet, HealthStat_Bonus, Source, false);
+        MaxHealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, MaxHealth, Source, false);
 	}
 };
 
@@ -30,6 +27,7 @@ static FMTD_PlayerHealthStatics &PlayerHealthStatics()
 
 UMTD_MMC_PlayerMaxHealth::UMTD_MMC_PlayerMaxHealth()
 {
+    // List capture attributes
 	RelevantAttributesToCapture.Add(PlayerHealthStatics().HealthStatDef);
 	RelevantAttributesToCapture.Add(PlayerHealthStatics().HealthStatBonusDef);
 	RelevantAttributesToCapture.Add(PlayerHealthStatics().MaxHealthDef);
@@ -51,16 +49,20 @@ float UMTD_MMC_PlayerMaxHealth::CalculateBaseMagnitude_Implementation(const FGam
 	EvaluationParameters.SourceTags = SourceTags;
 	EvaluationParameters.TargetTags = TargetTags;
 
+    // Get source's health stat
     float HealthStat;
     GetCapturedAttributeMagnitude(
         PlayerHealthStatics().HealthStatDef, Spec, EvaluationParameters, HealthStat);
     
+    // Get source's bonus health stat
     float HealthStatBonus;
     GetCapturedAttributeMagnitude(
         PlayerHealthStatics().HealthStatBonusDef, Spec, EvaluationParameters, HealthStatBonus);
 
     // Get base max health value instead of the current one
     const float MaxHealth = AbilitySystemComponent->GetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute());
+
+    // Sum up the health stats
     const float TotalHealthStat = (HealthStat + HealthStatBonus);
 
     auto Formula = [] (float T)
@@ -73,8 +75,12 @@ float UMTD_MMC_PlayerMaxHealth::CalculateBaseMagnitude_Implementation(const FGam
             // return ((A * (FMath::Exp(R * (T - T0)))) + B);
             return (1.f + (T / 100.f));
         };
+    
+    // Evaluate how much scale should be applied on health using the health stat
     const float Scale = Formula(TotalHealthStat);
-    const float FinalValue = (MaxHealth * Scale);
+    
+    // Scale up the health
+    const float MaxNewHealth = (MaxHealth * Scale);
 
-    return FinalValue;
+    return MaxNewHealth;
 }

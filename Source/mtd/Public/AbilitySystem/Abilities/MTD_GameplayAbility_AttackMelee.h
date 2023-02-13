@@ -6,10 +6,10 @@
 #include "MTD_GameplayAbility_AttackMelee.generated.h"
 
 /**
- * Gameplay Ability to perform a melee attack logic, such as causing a character to lose health or to get knockbacked.
+ * Gameplay ability to perform a melee attack logic, such as causing a character to lose health or to get knockbacked.
  *
- * Note: This is an abstract class because it lacks gameplay event listening. It should be done inside BPs. Without it
- * we don't know when to perform hit logic.
+ * Note: This is an abstract class because it lacks gameplay event listening, it should be done inside blueprints. 
+ * Without it we don't know when to perform hit logic.
  */
 UCLASS(Abstract)
 class MTD_API UMTD_GameplayAbility_AttackMelee
@@ -26,10 +26,27 @@ protected:
     void OnHit(const FGameplayEventData &Payload);
 
 private:
+    /**
+     * Create and setup a balance damage spec handle.
+     * @param   KnockbackDirection: knockback direction a character has to knockback towards.
+     * @param   EffectContext: gameplay effect context to create the balance damage spec with.
+     * @return  Gameplay effect spec handle to damage a character's balance.
+     */
     FGameplayEffectSpecHandle GetBalanceDamageSpecHandle(const FVector KnockbackDirection,
         const FGameplayEffectContextHandle &EffectContext) const;
+
+    /**
+     * Create and setup a damage spec handle.
+     * @param   EffectContext: gameplay effect context to create the damage spec with.
+     * @return  Gameplay effect spec handle to damage a character.
+     */
     FGameplayEffectSpecHandle GetDamageSpecHandle(const FGameplayEffectContextHandle &EffectContext) const;
-    
+
+    /**
+     * Compute what direction a target has to knockback towards.
+     * @param   TargetActor: the target that may be knockbacked.
+     * @return  Direction a target has to knockback towards.
+     */
     FVector ComputeKnockbackDirection(const AActor *TargetActor) const;
 
 protected:

@@ -1,46 +1,68 @@
 #pragma once
 
-#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "mtd.h"
 
 #include "MTD_InputConfig.generated.h"
 
 class UInputAction;
 
+/**
+ * Wrapper containing input action with its associated input tag.
+ */
 USTRUCT(BlueprintType)
 struct FMTD_InputAction
 {
     GENERATED_BODY()
 
 public:
+    /** Input action defining an input. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<const UInputAction> InputAction = nullptr;
 
+    /** Gameplay tag associated with an input action. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     FGameplayTag InputTag;
 };
 
+/**
+ * Input config containing all native and ability input actions with their associated input tags.
+ */
 UCLASS(BlueprintType, Const)
-class MTD_API UMTD_InputConfig : public UDataAsset
+class MTD_API UMTD_InputConfig
+    : public UDataAsset
 {
     GENERATED_BODY()
 
 public:
-    const UInputAction *FindNativeInputActionForTag(FGameplayTag InputTag) const;
-    const UInputAction *FindAbilityInputActionForTag(FGameplayTag InputTag) const;
+    /**
+     * Find an input action for a native ability given a tag.
+     * @param   InputTag: input tag to use for searching.
+     * @return  Found input action.
+     */
+    const UInputAction *FindNativeInputActionForTag(const FGameplayTag &InputTag) const;
+    
+    /**
+     * Find an input action for a custom ability given a tag.
+     * @param   InputTag: input tag to use for searching.
+     * @return  Found input action.
+     */
+    const UInputAction *FindAbilityInputActionForTag(const FGameplayTag &InputTag) const;
 
 public:
     /**
-     * List of input actions used by the owner. These input actions are mapped to a gameplay tag and must be manually
-     * bound.
+     * Input actions used for native abilities.
+     *
+     * They are intended to be manually bound.
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TArray<FMTD_InputAction> NativeInputActions;
 
     /**
-     * List of input actions used by the owner. These input actions are mapped to a gameplay tag and are automatically
-     * bound to abilities with matching input tags.
+     * Input actions used for abilities.
+     *
+     * They are intended to be automatically bound.
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TArray<FMTD_InputAction> AbilityInputActions;

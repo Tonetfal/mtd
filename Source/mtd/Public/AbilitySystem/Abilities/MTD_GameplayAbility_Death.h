@@ -5,8 +5,15 @@
 
 #include "MTD_GameplayAbility_Death.generated.h"
 
-UCLASS()
-class MTD_API UMTD_GameplayAbility_Death : public UMTD_GameplayAbility
+/**
+ * Gameplay ability that allows a character to die. Is fired automatically when Gameplay.Event.Death event is fired.
+ *
+ * Note: This is an abstract class because the default implementation lacks EndAbility condition, it should be defined
+ * inside blueprints instead.
+ */
+UCLASS(Abstract)
+class MTD_API UMTD_GameplayAbility_Death
+    : public UMTD_GameplayAbility
 {
     GENERATED_BODY()
     

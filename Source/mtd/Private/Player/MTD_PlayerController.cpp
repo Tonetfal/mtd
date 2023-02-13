@@ -7,7 +7,7 @@
 
 AMTD_PlayerController::AMTD_PlayerController()
 {
-    // Has to process input each tick
+    // Tick to process input
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
 
@@ -16,8 +16,8 @@ AMTD_PlayerController::AMTD_PlayerController()
 
 UMTD_AbilitySystemComponent *AMTD_PlayerController::GetMtdAbilitySystemComponent() const
 {
-    const AMTD_PlayerState *MtdPs = GetMtdPlayerState();
-    return (IsValid(MtdPs)) ? (MtdPs->GetMtdAbilitySystemComponent()) : (nullptr);
+    const AMTD_PlayerState *MtdPlayerState = GetMtdPlayerState();
+    return ((IsValid(MtdPlayerState)) ? (MtdPlayerState->GetMtdAbilitySystemComponent()) : (nullptr));
 }
 
 AMTD_PlayerState *AMTD_PlayerController::GetMtdPlayerState() const
@@ -33,33 +33,40 @@ AMTD_BasePlayerCharacter *AMTD_PlayerController::GetMtdPlayerCharacter() const
 void AMTD_PlayerController::AddYawInput(float Val)
 {
     Super::AddYawInput(Val);
+
+    // Save yaw input for SBS
     LastYaw = Val;
 }
 
 float AMTD_PlayerController::ConsumeLastYawRotation()
 {
+    // Return value
     const float Tmp = LastYaw;
+    
+    // Consume yaw
     LastYaw = 0.f;
+    
     return Tmp;
-}
-
-void AMTD_PlayerController::BeginPlay()
-{
-    Super::BeginPlay();
 }
 
 void AMTD_PlayerController::OnPossess(APawn *InPawn)
 {
     Super::OnPossess(InPawn);
+
+    auto PlayerCharacter = CastChecked<AMTD_BasePlayerCharacter>(InPawn);
+    
+    // Notify about possessing a player character
+    OnPossessDelegate.Broadcast(PlayerCharacter);
 }
 
-void AMTD_PlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)
+void AMTD_PlayerController::PostProcessInput(const float DeltaSeconds, const bool bGamePaused)
 {
-    UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
-    if (IsValid(MtdAsc))
+    UMTD_AbilitySystemComponent *MtdAbilitySystemComponent = GetMtdAbilitySystemComponent();
+    if (IsValid(MtdAbilitySystemComponent))
     {
-        MtdAsc->ProcessAbilityInput(DeltaTime, bGamePaused);
+        // Process ability inputs beforehand
+        MtdAbilitySystemComponent->ProcessAbilityInput(DeltaSeconds, bGamePaused);
     }
 
-    Super::PostProcessInput(DeltaTime, bGamePaused);
+    Super::PostProcessInput(DeltaSeconds, bGamePaused);
 }

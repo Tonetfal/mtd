@@ -23,7 +23,7 @@ public:
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
         FOnWaveStartSignature,
         int32, WaveNumber,
-        float, RemainingSeconds);
+        float, RemainingForceStartTime);
     
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
         FOnWaveEndSignature,
@@ -34,7 +34,7 @@ public:
     
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
         FOnWaveForceStartTimerTickSignature,
-        float, RemainingSeconds);
+        float, RemainingTime);
 
 public:
     void Initialize();

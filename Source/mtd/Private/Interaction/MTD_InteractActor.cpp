@@ -2,6 +2,7 @@
 
 AMTD_InteractActor::AMTD_InteractActor()
 {
+    // Nothing to tick for
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 }

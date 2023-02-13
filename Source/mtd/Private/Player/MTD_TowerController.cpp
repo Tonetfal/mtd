@@ -7,38 +7,36 @@
 
 AMTD_TowerController::AMTD_TowerController()
 {
+    // Nothing to tick for
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
-    TeamComponent = CreateDefaultSubobject<UMTD_TeamComponent>(TEXT("MTD Team Component"));
-
-    SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
-
-    PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
+    TeamComponent = CreateDefaultSubobject<UMTD_TeamComponent>("MTD Team Component");
+    SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("Sight Config");
+    PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
 
+    // Follow tower so others can see our team
     bAttachToPawn = true;
-    bWantsPlayerState = true;
-}
 
-void AMTD_TowerController::BeginPlay()
-{
-    Super::BeginPlay();
+    // Tower makes use of gameplay ability system, so PS is required since it contains it
+    bWantsPlayerState = true;
 }
 
 void AMTD_TowerController::OnPossess(APawn *InPawn)
 {
-    check(SightConfig);
-    check(PerceptionComponent);
+    check(IsValid(SightConfig));
+    check(IsValid(PerceptionComponent));
 
     Super::OnPossess(InPawn);
     
     // Cache before initing
     CacheTowerAttributes();
-    InitConfig();
+    InitSightConfig();
 
+    // Re-configure the perception component with new values, and update the stimuli
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->RequestStimuliListenerUpdate();
 
@@ -46,9 +44,34 @@ void AMTD_TowerController::OnPossess(APawn *InPawn)
     Tower->OnRangeAttributeChangedDelegate.AddDynamic(this, &ThisClass::UpdateSightAttributes);
 }
 
+void AMTD_TowerController::InitSightConfig()
+{
+    check(IsValid(SightConfig));
+
+    SightConfig->Implementation = UAISense_Sight::StaticClass();
+    SightConfig->SightRadius = SightRadius;
+    SightConfig->LoseSightRadius = LoseSightRadius;
+    SightConfig->PeripheralVisionAngleDegrees =
+        PeripheralVisionHalfAngleDegrees;
+    SightConfig->DetectionByAffiliation = DetectionByAffiliation;
+    SightConfig->AutoSuccessRangeFromLastSeenLocation =
+        AutoSuccessRangeFromLastSeenLocation;
+    SightConfig->PointOfViewBackwardOffset = PointOfViewBackwardOffset;
+    SightConfig->NearClippingRadius = NearClippingRadius;
+    SightConfig->SetMaxAge(MaxAge);
+}
+
+void AMTD_TowerController::CacheTowerAttributes()
+{
+    auto Tower = CastChecked<AMTD_Tower>(GetPawn());
+
+    SightRadius = Tower->GetScaledVisionRange();
+    PeripheralVisionHalfAngleDegrees = Tower->GetScaledVisionHalfDegrees();
+}
+
 AActor *AMTD_TowerController::GetFireTarget()
 {
-    if (!IsFireTargetStillVisible())
+    if (!IsFireTargetVisible())
     {
         FireTarget = SearchForFireTarget();
     }
@@ -57,17 +80,29 @@ AActor *AMTD_TowerController::GetFireTarget()
 
 void AMTD_TowerController::SetVisionRange(float Range)
 {
+    if (SightConfig->SightRadius == Range)
+    {
+        return;
+    }
+    
     SightConfig->SightRadius = Range;
     SightConfig->LoseSightRadius = Range;
 
+    // Re-configure the perception component with new values, and update the stimuli
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->RequestStimuliListenerUpdate();
 }
 
-void AMTD_TowerController::SetPeripheralVisionHalfAngleDegrees(float Degrees)
+void AMTD_TowerController::SetPeripheralVisionHalfAngleDegrees(float HalfDegrees)
 {
-    SightConfig->PeripheralVisionAngleDegrees = Degrees;
-
+    if (SightConfig->PeripheralVisionAngleDegrees == HalfDegrees)
+    {
+        return;
+    }
+    
+    SightConfig->PeripheralVisionAngleDegrees = HalfDegrees;
+    
+    // Re-configure the perception component with new values, and update the stimuli
     PerceptionComponent->ConfigureSense(*SightConfig);
     PerceptionComponent->RequestStimuliListenerUpdate();
 }
@@ -79,9 +114,9 @@ void AMTD_TowerController::UpdateSightAttributes()
     SetPeripheralVisionHalfAngleDegrees(PeripheralVisionHalfAngleDegrees);
 }
 
-bool AMTD_TowerController::IsFireTargetStillVisible() const
+bool AMTD_TowerController::IsFireTargetVisible() const
 {
-    if ((!IsValid(FireTarget)) || (!IsValid(GetPawn())))
+    if (!((IsValid(FireTarget)) && (IsValid(GetPawn()))))
     {
         return false;
     }
@@ -111,12 +146,13 @@ bool AMTD_TowerController::IsFireTargetStillVisible() const
     return bCanBeSeen;
 }
 
-AActor *AMTD_TowerController::SearchForFireTarget()
+AActor *AMTD_TowerController::SearchForFireTarget() const
 {
     TArray<AActor *> PerceivedActors;
     PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
 
-    return FindClosestActor(PerceivedActors);
+    AActor *ClosestActor = FindClosestActor(PerceivedActors);
+    return ClosestActor;
 }
 
 AActor *AMTD_TowerController::FindClosestActor(const TArray<AActor *> &Actors) const
@@ -129,53 +165,26 @@ AActor *AMTD_TowerController::FindClosestActor(const TArray<AActor *> &Actors) c
     const AActor *OurPawn = GetPawn();
     if (!IsValid(OurPawn))
     {
-        MTDS_WARN("We are dangling");
         return nullptr;
     }
 
-    const FVector OutLoc = OurPawn->GetActorLocation();
-    const float OurLen = OutLoc.Length();
+    const FVector OurPosition = OurPawn->GetActorLocation();
+    AActor *ClosestActor = nullptr;
+    float ClosestDistanceSq = 0.f;
 
-    AActor *ClosestActor = Actors[0];
-    float ClosestDistance = FMath::Abs(OurLen - ClosestActor->GetActorLocation().Length());
-
-    for (AActor *Actor :Actors)
+    // Iterate through all actors, and check distance between our tower and current actor 
+    for (AActor *Actor : Actors)
     {
-        const FVector OtherLoc = Actor->GetActorLocation();
-        const float OtherLen = OtherLoc.Length();
-        const float Distance = FMath::Abs(OurLen - OtherLen);
+        const FVector OtherPosition = Actor->GetActorLocation();
+        const FVector DistanceVector = (OurPosition - OtherPosition);
+        const float DistanceSq = DistanceVector.SquaredLength();
 
-        if (ClosestDistance > Distance)
+        if (((!ClosestActor) || (ClosestDistanceSq > DistanceSq)))
         {
-            ClosestDistance = Distance;
+            ClosestDistanceSq = DistanceSq;
             ClosestActor = Actor;
         }
     }
 
     return ClosestActor;
-}
-
-void AMTD_TowerController::InitConfig()
-{
-    check(SightConfig);
-
-    SightConfig->Implementation = UAISense_Sight::StaticClass();
-    SightConfig->SightRadius = SightRadius;
-    SightConfig->LoseSightRadius = LoseSightRadius;
-    SightConfig->PeripheralVisionAngleDegrees =
-        PeripheralVisionHalfAngleDegrees;
-    SightConfig->DetectionByAffiliation = DetectionByAffiliation;
-    SightConfig->AutoSuccessRangeFromLastSeenLocation =
-        AutoSuccessRangeFromLastSeenLocation;
-    SightConfig->PointOfViewBackwardOffset = PointOfViewBackwardOffset;
-    SightConfig->NearClippingRadius = NearClippingRadius;
-    SightConfig->SetMaxAge(MaxAge);
-}
-
-void AMTD_TowerController::CacheTowerAttributes()
-{
-    auto Tower = CastChecked<AMTD_Tower>(GetPawn());
-
-    SightRadius = Tower->GetScaledVisionRange();
-    PeripheralVisionHalfAngleDegrees = Tower->GetScaledVisionHalfDegrees();
 }

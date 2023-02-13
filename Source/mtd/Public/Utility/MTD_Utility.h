@@ -40,6 +40,9 @@ public:
         const FMTD_PathFindingContext &Context);
 };
 
+/**
+ * Context used to use path finding algorythms.
+ */
 USTRUCT()
 struct FMTD_PathFindingContext
 {

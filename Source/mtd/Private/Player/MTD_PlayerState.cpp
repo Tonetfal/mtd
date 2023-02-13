@@ -5,7 +5,9 @@
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
+#include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_LevelComponent.h"
+#include "Character/MTD_PawnExtensionComponent.h"
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "Inventory/MTD_InventoryManagerComponent.h"
 #include "Player/MTD_PlayerController.h"
@@ -46,50 +48,49 @@ UAbilitySystemComponent *AMTD_PlayerState::GetAbilitySystemComponent() const
     return GetMtdAbilitySystemComponent();
 }
 
-void AMTD_PlayerState::GrantAbility(TSubclassOf<UGameplayAbility> AbilityClass, int32 Level, int32 InputCode)
+void AMTD_PlayerState::PostInitializeComponents()
 {
-    if ((IsValid(AbilitySystemComponent)) && (IsValid(AbilityClass)))
-    {
-        auto Ability = AbilityClass->GetDefaultObject<UGameplayAbility>();
+    Super::PostInitializeComponents();
+    
+    check(IsValid(AbilitySystemComponent));
 
-        if (IsValid(Ability))
-        {
-            const FGameplayAbilitySpec AbilitySpec(Ability, Level, InputCode);
-            AbilitySystemComponent->GiveAbility(AbilitySpec);
-        }
-    }
-}
+    // Set avatar
+    AbilitySystemComponent->InitAbilityActorInfo(this, GetPawn());
 
-void AMTD_PlayerState::ActivateAbility(int32 InputCode)
-{
-    if (!IsValid(AbilitySystemComponent))
+    if (IsABot())
     {
         return;
     }
 
-    AbilitySystemComponent->AbilityLocalInputPressed(InputCode);
-}
-
-void AMTD_PlayerState::PreInitializeComponents()
-{
-    Super::PreInitializeComponents();
-}
-
-void AMTD_PlayerState::PostInitializeComponents()
-{
-    Super::PostInitializeComponents();
-
-    check(AbilitySystemComponent);
-    AbilitySystemComponent->InitAbilityActorInfo(this, GetPawn());
-
-    if (!IsABot())
+    AMTD_PlayerController *MtdPlayerController = GetMtdPlayerController();
+    if (!IsValid(MtdPlayerController))
     {
-        // Initialize LevelComponent the next tick because it makes use of PlayerSet that is assigned a little bit later
-        GetWorldTimerManager().SetTimerForNextTick(
-            [this]()
-            {
-                LevelComponent->InitializeWithAbilitySystem(AbilitySystemComponent);
-            }
-        );
+        MTDS_WARN("MTD player controller is invalid.");
+        return;
     }
+
+    // Listen for on possess event
+    MtdPlayerController->OnPossessDelegate.AddDynamic(this, &ThisClass::OnControllerPossessed);
+}
+
+void AMTD_PlayerState::OnControllerPossessed(AMTD_BasePlayerCharacter *PlayerCharacter)
+{
+    auto PawnExtComp = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(PlayerCharacter);
+    if (!IsValid(PawnExtComp))
+    {
+        MTDS_ERROR("Owner [%s] must have pawn extension component.", *GetNameSafe(PlayerCharacter));
+        return;
+    }
+
+    // Call some custom initialization when ability system has been initialized by other components
+    PawnExtComp->OnAbilitySystemInitialized_RegisterAndCall(
+        FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
+}
+
+void AMTD_PlayerState::OnAbilitySystemInitialized()
+{
+    ensure(!IsABot());
+    
+    // Initialize level component
+    LevelComponent->InitializeWithAbilitySystem(AbilitySystemComponent);
 }

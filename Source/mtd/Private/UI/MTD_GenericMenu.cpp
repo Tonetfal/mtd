@@ -16,7 +16,7 @@ void UMTD_GenericMenu::CreateWidget(TSubclassOf<UUserWidget> UserWidgetClass)
 {
     if (!UserWidgetClass)
     {
-        MTDS_WARN("User Widget Class is NULL.");
+        MTDS_WARN("User widget class is NULL.");
         return;
     }
 
@@ -65,14 +65,14 @@ void UMTD_GenericMenu::MenuButtonPress(UCommonButtonBase *Button, bool bSelected
         const auto FoundUserWidgetClass = ButtonsMapping.Find(Button);
         if (!FoundUserWidgetClass)
         {
-            MTDS_WARN("Could not found User Widget Class for button [%s].", *Button->GetName());
+            MTDS_WARN("Could not found user widget class for button [%s].", *Button->GetName());
             return;
         }
 
         const auto UserWidgetClass = *FoundUserWidgetClass;
         if (!UserWidgetClass)
         {
-            MTDS_WARN("User Widget Class for button [%s] is NULL.", *Button->GetName());
+            MTDS_WARN("User widget class for button [%s] is NULL.", *Button->GetName());
             return;
         }
         
@@ -89,7 +89,7 @@ FMargin UMTD_GenericMenu::ComputePadding() const
     FMargin Margin;
     if (!IsValid(SizeWidget))
     {
-        MTDS_WARN("Size Widget is invalid.");
+        MTDS_WARN("Size widget is invalid.");
         return Margin;
     }
 

@@ -4,12 +4,23 @@
 
 float UMTD_MMC_ManaCost::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
 {
-    const UGameplayAbility *Ability = Spec.GetContext().GetAbilityInstance_NotReplicated();
+    const FGameplayEffectContextHandle &EffectContext = Spec.GetContext();
+    const UGameplayAbility *Ability = EffectContext.GetAbilityInstance_NotReplicated();
     if (!IsValid(Ability))
     {
-        return 0.0f;
+        return 0.f;
     }
-
-    const auto MtdAbility = CastChecked<UMTD_GameplayAbility>(Ability);
-    return MtdAbility->ManaCost.GetValueAtLevel(Ability->GetAbilityLevel());
+    
+    const auto MtdAbility = Cast<UMTD_GameplayAbility>(Ability);
+    if (!IsValid(MtdAbility))
+    {
+        MTDS_WARN("Failed to cast gameplay ability to MTD gameplay ability.");
+        return 0.f;
+    }
+    
+    // Calculate cooldown duration using the ability level
+    const int32 AbilityLevel = Ability->GetAbilityLevel();
+    const float ManaCost = MtdAbility->ManaCost.GetValueAtLevel(AbilityLevel);
+    
+    return ManaCost;
 }

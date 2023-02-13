@@ -74,11 +74,15 @@ FGameplayEffectSpecHandle UMTD_GameplayAbility_AttackMelee::GetBalanceDamageSpec
         return SpecHandle;
     }
 
+    // Create the GE spec handle
     const UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo_Checked();
     SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffectBalanceDamageInstantClass, 1.f, EffectContext);
+
+    // Prepare some data
+    const FMTD_GameplayTags &Tags = FMTD_GameplayTags::Get();
     const float BalanceDamage = AbilitySystemComponent->GetNumericAttribute(UMTD_BalanceSet::GetDamageAttribute());
     
-    const FMTD_GameplayTags &Tags = FMTD_GameplayTags::Get();
+    // Setup the GE
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_KnockbackDirection_X, KnockbackDirection.X);
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_KnockbackDirection_Y, KnockbackDirection.Y);
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_KnockbackDirection_Z, KnockbackDirection.Z);
@@ -97,11 +101,15 @@ FGameplayEffectSpecHandle UMTD_GameplayAbility_AttackMelee::GetDamageSpecHandle(
         return SpecHandle;
     }
 
+    // Create the GE spec handle
     const UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo_Checked();
     SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffectDamageInstantClass, 1.f, EffectContext);
-    const float DamageBase = AbilitySystemComponent->GetNumericAttribute(UMTD_CombatSet::GetDamageBaseAttribute());
 
+    // Prepare some data
+    const float DamageBase = AbilitySystemComponent->GetNumericAttribute(UMTD_CombatSet::GetDamageBaseAttribute());
     const FMTD_GameplayTags &Tags = FMTD_GameplayTags::Get();
+
+    // Setup the GE
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_Damage_Base, DamageBase);
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive, DamageAdditive);
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier, DamageMultiplier);
@@ -116,6 +124,7 @@ FVector UMTD_GameplayAbility_AttackMelee::ComputeKnockbackDirection(const AActor
     const AActor *AvatarActor = GetAvatarActorFromActorInfo();
     check(IsValid(AvatarActor));
 
+    // Find displacment vector between two point vectors and normalize it
     const FVector A = TargetActor->GetActorLocation();
     const FVector B = AvatarActor->GetActorLocation();
     const FVector Displacement = (A - B);

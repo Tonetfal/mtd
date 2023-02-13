@@ -6,7 +6,9 @@
 #include "MTD_MMC_TowerMaxHealth.generated.h"
 
 /**
- * Gameplay Modification Magnitude Calculation class to calculate Tower Max Health.
+ * Gameplay modification magnitude calculation class to calculate tower max health.
+ *
+ * Makes use of health and builder sets.
  */
 UCLASS()
 class MTD_API UMTD_MMC_TowerMaxHealth

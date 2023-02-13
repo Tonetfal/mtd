@@ -5,7 +5,8 @@
 #include "MTD_LevelDefinition.generated.h"
 
 class ALevelInstance;
-class UMTD_CharacterRateDefinition;
+class AMTD_ManaToken;
+class UMTD_FoeRateDefinition;
 class UMTD_LevelDifficultyDefinition;
 
 /**
@@ -22,7 +23,7 @@ enum class EMTD_LevelDifficulty : uint8
 };
 
 /**
- * Data Asset defining a single level. It represents a playable level.
+ * Data asset defining a single level. It represents a playable level.
  */
 UCLASS(BlueprintType, Const)
 class MTD_API UMTD_LevelDefinition
@@ -35,34 +36,31 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     FName Name = "None";
 
-    /** The map this level takes placee on. */
+    /** Map this level takes place on. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     FSoftObjectPath Map;
 
     /**
-     * If difficulty level is supposed to force start a wave after some time, this value will be used at the very first
-     * one.
+     * Time in seconds first wave will be force started after. May not be used
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    int32 FirstWaveForceStartSeconds = 60.f;
+    int32 FirstWaveForceStartTime = 60.f;
     
     /**
-     * If difficulty level is supposed to force start a wave after some time, this value will be used at any wave except
-     * the very first one.
+     * Time in seconds a wave, except the first one, will be force started after. May not be used
      */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    int32 RegularWaveForceStartSeconds = 30.f;
+    int32 RegularWaveForceStartTime = 30.f;
 
-    /** Amount of maximum health a single core will have. */
+    /** Maximum health a single core has. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     int32 CoreHealth = 1000;
 
-    /** Amount of mana a chest has. */
-    // @todo split this into a set of tokens instead of tokenizing the value which may lead to a one big token
+    /** Mana tokens a chest drops on opening. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    int32 ManaChest = 50.f;
+    TMap<TSubclassOf<AMTD_ManaToken>, int32> ChestManaTokens;
 
-    /** All the difficulties the level can be played on. */
+    /** All difficulties a level can be played on. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TMap<EMTD_LevelDifficulty, TObjectPtr<UMTD_LevelDifficultyDefinition>> Difficulties;
 };

@@ -4,19 +4,18 @@
 
 UMTD_TeamComponent::UMTD_TeamComponent()
 {
+    // Nothing to tick for
     PrimaryComponentTick.bStartWithTickEnabled = false;
     PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UMTD_TeamComponent::SetMtdTeamId(EMTD_TeamId Id)
 {
-    uint8 IdInt = static_cast<int8>(Id);
-    if (IdInt >= static_cast<int8>(EMTD_TeamId::Count))
-    {
-        IdInt = static_cast<int8>(EMTD_TeamId::Unknown);
-    }
-
+    // Set team ID
+    const uint8 IdInt = static_cast<int8>(Id);
     TeamId = Id;
+
+    // Set generic team ID
     SetGenericTeamId(FGenericTeamId(IdInt));
 }
 
@@ -42,21 +41,25 @@ void UMTD_TeamComponent::SetGenericTeamId(const FGenericTeamId &Id)
     auto OwnerTeamAgent = Cast<IGenericTeamAgentInterface>(Owner);
     if (!OwnerTeamAgent)
     {
-        MTDS_WARN("[%s] does not inherit IGenericTeamAgentInterface", *Owner->GetName());
+        MTDS_WARN("Failed to cast [%s] to IGenericTeamAgentInterface.", *Owner->GetName());
         return;
     }
     OwnerTeamAgent->SetGenericTeamId(Id);
 }
 
-ETeamAttitude::Type UMTD_TeamComponent::GetTeamAttitudeTowards(const AActor &Other) const
+ETeamAttitude::Type UMTD_TeamComponent::GetTeamAttitudeTowards(const AActor &OtherActor) const
 {
-    const auto OtherTeam = FMTD_Utility::GetActorComponent<UMTD_TeamComponent>(&Other);
-    if (IsValid(OtherTeam))
+    // Return neutral by default
+    ETeamAttitude::Type TeamAttitude = ETeamAttitude::Neutral;
+
+    // Try to get attitude towards the passed actor
+    const auto OtherTeamAgent = Cast<IGenericTeamAgentInterface>(&OtherActor);
+    if (OtherTeamAgent)
     {
-        return FGenericTeamId::GetAttitude(GetGenericTeamId(), OtherTeam->GetGenericTeamId());
+        TeamAttitude = FGenericTeamId::GetAttitude(GetGenericTeamId(), OtherTeamAgent->GetGenericTeamId());
     }
 
-    return IGenericTeamAgentInterface::GetTeamAttitudeTowards(Other);
+    return TeamAttitude;
 }
 
 void UMTD_TeamComponent::BeginPlay()
@@ -65,7 +68,7 @@ void UMTD_TeamComponent::BeginPlay()
 
     if (TeamId == EMTD_TeamId::Unknown)
     {
-        MTDS_WARN("[%s] does not belong to any team", *GetNameSafe(GetOwner()));
+        MTDS_WARN("[%s] does not belong to any team.", *GetNameSafe(GetOwner()));
     }
 
     SetMtdTeamId(TeamId);

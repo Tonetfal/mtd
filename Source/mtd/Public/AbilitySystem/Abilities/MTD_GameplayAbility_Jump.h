@@ -5,14 +5,16 @@
 
 #include "MTD_GameplayAbility_Jump.generated.h"
 
+/**
+ * Gameplay ability that allows a character to jump.
+ */
 UCLASS()
-class MTD_API UMTD_GameplayAbility_Jump : public UMTD_GameplayAbility
+class MTD_API UMTD_GameplayAbility_Jump
+    : public UMTD_GameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UMTD_GameplayAbility_Jump();
-	
 	virtual bool CanActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo *ActorInfo,
@@ -33,6 +35,10 @@ public:
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
 
+    /**
+     * Delegate to fire when OnLanded delegate on CMC is fired.
+	 * @param   Hit: result describing the landing that resulted in a valid landing spot.
+     */
 	UFUNCTION()
 	virtual void OnAnimMontageEnded(const FHitResult &Hit);
 };

@@ -6,21 +6,49 @@
 class UGameplayTagsManager;
 
 /**
- *	Singleton containing native gameplay tags.
+ * Singleton container of native gameplay tags.
+ * 
+ * Note: Gameplay tags should NOT be used before InitializeNativeTags on this class is called.
  */
 struct FMTD_GameplayTags
 {
 public:
-    static const FMTD_GameplayTags &Get()
-    {
-        return GameplayTags;
-    }
+    /**
+     * Singleton instance getter.
+     */
+    static const FMTD_GameplayTags &Get();
 
+    /**
+     * Initialize all the native tags declared by this struct. Should be called only once after gameplay tags manager
+     * has been created.
+     */
     static void InitializeNativeTags();
-    static FGameplayTag FindTagByString(FString TagString, bool bMatchPartialString = false);
 
+    /**
+     * Check whether the given container contains Gameplay.Hero.All or not.
+     * @return  If true, given container contains Gameplay.Hero.All, false otherwise.
+     */
     static bool IsForAllHeroClasses(const FGameplayTagContainer& InTags);
 
+    /**
+     * Add a gameplay tag to the native gameplay tags container.
+     * @param   OutTag: added gameplay tag reference.
+     * @param   TagName: name to give to the added gameplay tag.
+     * @param   TagComment: comment to give to the added gameplay tag.
+     */
+    static void AddTag(FGameplayTag &OutTag, const ANSICHAR *TagName, const ANSICHAR *TagComment);
+
+private:
+    /**
+     * Add all gameplay tags contained inside this class.
+     */
+    void AddAllTags();
+
+
+private:
+    /** Singleton instance of this class. */
+    static FMTD_GameplayTags GameplayTags;
+    
 public:
     FGameplayTag Ability_ActivateFail_IsDead;
     FGameplayTag Ability_ActivateFail_Cooldown;
@@ -63,27 +91,9 @@ public:
     FGameplayTag SetByCaller_KnockbackDirection_Z;
 
     FGameplayTag Status_Death;
-    FGameplayTag Status_Death_Dying;
-    FGameplayTag Status_Death_Dead;
-
-    FGameplayTag Movement_Mode_Walking;
-    FGameplayTag Movement_Mode_NavWalking;
-    FGameplayTag Movement_Mode_Falling;
-    FGameplayTag Movement_Mode_Swimming;
-    FGameplayTag Movement_Mode_Flying;
-    FGameplayTag Movement_Mode_Custom;
-
-    TMap<uint8, FGameplayTag> MovementModeTagMap;
-    TMap<uint8, FGameplayTag> CustomMovementModeTagMap;
-
-public:
-    static void AddTag(FGameplayTag &OutTag, const ANSICHAR *TagName, const ANSICHAR *TagComment);
-
-protected:
-    void AddAllTags(UGameplayTagsManager &Manager);
-    void AddMovementModeTag(FGameplayTag &OutTag, const ANSICHAR *TagName, uint8 MovementMode);
-    void AddCustomMovementModeTag(FGameplayTag &OutTag, const ANSICHAR *TagName, uint8 CustomMovementMode);
-
-private:
-    static FMTD_GameplayTags GameplayTags;
 };
+
+inline const FMTD_GameplayTags &FMTD_GameplayTags::Get()
+{
+    return GameplayTags;
+}

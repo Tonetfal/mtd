@@ -11,9 +11,9 @@ struct FGameplayEffectSpec;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(
     FAttributeEventSignature,
-    AActor* /*EffectInstigator*/,
-    AActor* /*EffectCauser*/,
-    const FGameplayEffectSpec& /*EffectSpec*/,
+    AActor * /*EffectInstigator*/,
+    AActor * /*EffectCauser*/,
+    const FGameplayEffectSpec & /*EffectSpec*/,
     float /*EffectMagnitude*/);
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
@@ -31,8 +31,9 @@ DECLARE_MULTICAST_DELEGATE_FourParams(
 /**
  * Default attribute set used in this project.
  */
-UCLASS(meta=(ToolTip="Default attribute set used in this project."))
-class MTD_API UMTD_AttributeSet : public UAttributeSet
+UCLASS()
+class MTD_API UMTD_AttributeSet
+    : public UAttributeSet
 {
     GENERATED_BODY()
 };

@@ -6,11 +6,11 @@
 #include "MTD_CombatSet.generated.h"
 
 /**
- * Attribute set that defines all the required data for weapons and abilities to impact a character.
- * Should be only used to communicate how much of something has to be modified on a target.
+ * Attribute set containing all the owner's damage related attributes.
  */
 UCLASS()
-class MTD_API UMTD_CombatSet : public UMTD_AttributeSet
+class MTD_API UMTD_CombatSet
+    : public UMTD_AttributeSet
 {
     GENERATED_BODY()
 

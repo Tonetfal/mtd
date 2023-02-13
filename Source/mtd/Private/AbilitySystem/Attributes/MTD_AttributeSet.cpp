@@ -4,7 +4,7 @@
 
 AActor *GetInstigatorFromAttrChangeData(const FOnAttributeChangeData &ChangeData)
 {
-    if (ChangeData.GEModData != nullptr)
+    if (ChangeData.GEModData)
     {
         const FGameplayEffectContextHandle &EffectContext = ChangeData.GEModData->EffectSpec.GetEffectContext();
         return EffectContext.GetOriginalInstigator();

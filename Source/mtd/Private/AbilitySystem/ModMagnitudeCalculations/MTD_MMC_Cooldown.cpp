@@ -3,17 +3,25 @@
 #include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
 #include "AbilitySystemComponent.h"
 
-UMTD_MMC_Cooldown::UMTD_MMC_Cooldown()
-{
-}
-
 float UMTD_MMC_Cooldown::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
 {
-    const auto Ability = Cast<UMTD_GameplayAbility>(Spec.GetContext().GetAbilityInstance_NotReplicated());
+    const FGameplayEffectContextHandle &EffectContext = Spec.GetContext();
+    const UGameplayAbility *Ability = EffectContext.GetAbilityInstance_NotReplicated();
     if (!IsValid(Ability))
     {
         return 0.f;
     }
+    
+    const auto MtdAbility = Cast<UMTD_GameplayAbility>(Ability);
+    if (!IsValid(MtdAbility))
+    {
+        MTDS_WARN("Failed to cast gameplay ability to MTD gameplay ability.");
+        return 0.f;
+    }
 
-    return Ability->CooldownDuration.GetValueAtLevel(Ability->GetAbilityLevel());
+    // Calculate cooldown duration using the ability level
+    const int32 AbilityLevel = Ability->GetAbilityLevel();
+    const float CooldownDuration = MtdAbility->CooldownDuration.GetValueAtLevel(AbilityLevel);
+    
+    return CooldownDuration;
 }

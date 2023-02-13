@@ -7,50 +7,37 @@
 
 UMTD_BalanceComponent::UMTD_BalanceComponent()
 {
+    // Nothing to tick for
     PrimaryComponentTick.bCanEverTick = false;
     PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UMTD_BalanceComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc)
+void UMTD_BalanceComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *InAbilitySystemComponent)
 {
-    const AActor *Owner = GetOwner();
-    check(Owner);
-
-    if (AbilitySystemComponent)
-    {
-        MTDS_ERROR("Balance component for owner [%s] has already been initilized with an ability system",
-            *Owner->GetName());
-        return;
-    }
-
-    AbilitySystemComponent = Asc;
+    Super::InitializeWithAbilitySystem(InAbilitySystemComponent);
     if (!AbilitySystemComponent)
     {
-        MTDS_ERROR("Cannot initilize balance component for owner [%s] with a NULL ability system", *Owner->GetName());
         return;
     }
 
+    // Cache the balance set to avoid searching for it in ability system component every time it's needed
     BalanceSet = AbilitySystemComponent->GetSet<UMTD_BalanceSet>();
-    if (!BalanceSet)
+    if (!IsValid(BalanceSet))
     {
-        MTDS_ERROR("Cannot initialize balance component with NULL combat set on the ability system");
+        MTDS_ERROR("Cannot initialize balance component with NULL balance set on the ability system.");
         return;
     }
 
+    // Listen for balance down events
     BalanceSet->OnBalanceDownDelegate.AddUObject(this, &ThisClass::OnBalanceDown);
 }
 
 void UMTD_BalanceComponent::UninitializeFromAbilitySystem()
 {
+    // Nullify ability system related data
     BalanceSet = nullptr;
-    AbilitySystemComponent = nullptr;
-}
-
-void UMTD_BalanceComponent::OnUnregister()
-{
-    UninitializeFromAbilitySystem();
-
-    Super::OnUnregister();
+    
+    Super::UninitializeFromAbilitySystem();
 }
 
 void UMTD_BalanceComponent::OnBalanceDown(
@@ -59,7 +46,7 @@ void UMTD_BalanceComponent::OnBalanceDown(
     const FGameplayEffectSpec &DamageEffectSpec,
     float DamageMagnitude)
 {
-    if ((!IsValid(AbilitySystemComponent)) || (!IsValid(BalanceSet)))
+    if (((!IsValid(AbilitySystemComponent)) || (!IsValid(BalanceSet))))
     {
         return;
     }
@@ -67,14 +54,14 @@ void UMTD_BalanceComponent::OnBalanceDown(
     // Store all knockback related data inside UMTD_BalanceHitData
     auto HitData = NewObject<UMTD_BalanceHitData>();
     HitData->BalanceDamage = DamageMagnitude;
-    HitData->KnockbackDirection = {
+    HitData->KnockBackDirection = {
         BalanceSet->GetKnockbackDirectionX_Meta(),
         BalanceSet->GetKnockbackDirectionY_Meta(),
         BalanceSet->GetKnockbackDirectionZ_Meta()
     };
 
-    // Send the "Gameplay.Event.Knockback" gameplay event through the owner's
-    // ability system. This can be used to trigger a death gameplay ability.
+    // Send the "Gameplay.Event.Knockback" gameplay event through the owner's ability system.
+    // This can be used to trigger a death gameplay ability.
     FGameplayEventData Payload;
     Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_Knockback;
     Payload.Instigator = DamageInstigator;
@@ -86,7 +73,9 @@ void UMTD_BalanceComponent::OnBalanceDown(
     Payload.TargetTags = *DamageEffectSpec.CapturedTargetTags.GetAggregatedTags();
     Payload.EventMagnitude = DamageMagnitude;
 
+    // Send a gameplay event containing different balance related data
     AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 
+    // Notify about balance down
     OnBalanceDownDelegate.Broadcast(HitData);
 }

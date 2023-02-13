@@ -24,7 +24,7 @@ void UMTD_ManaSet::PostAttributeChange(const FGameplayAttribute &Attribute, floa
 
     if (Attribute == GetMaxManaAttribute())
     {
-        // Decrease current mana if max mana has decreased
+        // Clamp current health with new max health in mind
         if (GetMana() > NewValue)
         {
             UAbilitySystemComponent *AbilitySystem = GetOwningAbilitySystemComponentChecked();
@@ -38,10 +38,12 @@ void UMTD_ManaSet::ClampAttribute(const FGameplayAttribute &Attribute, float &Ne
 {
     if (Attribute == GetManaAttribute())
     {
+        // Range [0, MaxMana]
         NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
     }
     else if (Attribute == GetMaxManaAttribute())
     {
+        // Range [1, MAX_FLOAT]
         NewValue = FMath::Max(NewValue, 1.f);
     }
 }

@@ -1,13 +1,12 @@
 #include "Character/MTD_Tower.h"
 
-#include "AbilitySystem/Abilities/MTD_GameplayAbility.h"
+#include "AbilitySystem/Attributes/MTD_BalanceSet.h"
+#include "AbilitySystem/Attributes/MTD_BuilderSet.h"
+#include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Effects/MTD_GameplayEffect.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystemGlobals.h"
-#include "AbilitySystem/Attributes/MTD_BalanceSet.h"
-#include "AbilitySystem/Attributes/MTD_BuilderSet.h"
-#include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
 #include "Character/MTD_HealthComponent.h"
@@ -18,7 +17,6 @@
 #include "Components/SphereComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Kismet/DataTableFunctionLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "Player/MTD_PlayerState.h"
 #include "Player/MTD_TowerController.h"
 #include "Projectile/MTD_Projectile.h"
@@ -27,14 +25,15 @@
 
 AMTD_Tower::AMTD_Tower()
 {
+    // Tower should tick, but only after told so
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
+    // Use MTD_TowerController as the default AI controller class
     AIControllerClass = AMTD_TowerController::StaticClass();
 
     CollisionComponent = CreateDefaultSubobject<UBoxComponent>("Collision Component");
     SetRootComponent(CollisionComponent);
-
     CollisionComponent->SetCollisionProfileName(TowerCollisionProfileName);
     CollisionComponent->SetSimulatePhysics(false);
     CollisionComponent->SetEnableGravity(false);
@@ -42,7 +41,6 @@ AMTD_Tower::AMTD_Tower()
 
     NavVolumeComponent = CreateDefaultSubobject<UBoxComponent>("Navigation Volume Component");
     NavVolumeComponent->SetupAttachment(GetRootComponent());
-
     NavVolumeComponent->SetCollisionProfileName("NoCollision");
     NavVolumeComponent->SetSimulatePhysics(false);
     NavVolumeComponent->SetEnableGravity(false);
@@ -51,7 +49,6 @@ AMTD_Tower::AMTD_Tower()
 
     ProjectileSpawnPosition = CreateDefaultSubobject<USphereComponent>("Projectile Spawn Position");
     ProjectileSpawnPosition->SetupAttachment(GetRootComponent());
-
     ProjectileSpawnPosition->SetCollisionProfileName("NoCollision");
     ProjectileSpawnPosition->SetSimulatePhysics(false);
     ProjectileSpawnPosition->SetEnableGravity(false);
@@ -59,14 +56,12 @@ AMTD_Tower::AMTD_Tower()
 
     MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh Component");
     MeshComponent->SetupAttachment(GetRootComponent());
-
     MeshComponent->SetCollisionProfileName("NoCollision");
     MeshComponent->SetSimulatePhysics(false);
     MeshComponent->SetEnableGravity(false);
     MeshComponent->SetCanEverAffectNavigation(false);
 
     PawnExtentionComponent = CreateDefaultSubobject<UMTD_PawnExtensionComponent>("MTD Pawn Extension Component");
-
     PawnExtentionComponent->OnAbilitySystemInitialized_RegisterAndCall(
         FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::OnAbilitySystemInitialized));
     PawnExtentionComponent->OnAbilitySystemUninitialized_Register(
@@ -74,8 +69,9 @@ AMTD_Tower::AMTD_Tower()
 
     HeroComponent = CreateDefaultSubobject<UMTD_HeroComponent>("MTD Hero Component");
     HealthComponent = CreateDefaultSubobject<UMTD_HealthComponent>("MTD Health Component");
-    TowerExtensionComponent = CreateDefaultSubobject<UMTD_TowerExtensionComponent>("MTD Tower Extension Component");
-
+    
+    // Listen for death events. For some reason if these are added outside the constructor the delegates are added
+    // twice, hence they're added in here instead
     HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
     HealthComponent->OnDeathFinished.AddDynamic(this, &ThisClass::OnDeathFinished);
 
@@ -84,76 +80,197 @@ AMTD_Tower::AMTD_Tower()
     Tags.Add(FMTD_Tags::Tower);
 }
 
+void AMTD_Tower::InitializeAttributes()
+{
+    // @todo: think how to pass get the scaled range instead
+    // Dispatch the Attribute Table regardless the ASC presence due SBS. The SBS may spawn a tower without a controller,
+    // hence the ASC will not be initialized. However, the reason SBS may spawn it is because it needs to retrieve
+    // vision related data along the owner player stats. The spawned tower will have PlayerCharacter as Owner and its
+    // PlayerState as Instigator.
+
+    ReadTableBaseValues(CurrentLevel);
+
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        // Avoid logging due the reason written above
+        return;
+    }
+
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), BaseHealth);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_BalanceSet::GetDamageAttribute(), BalanceDamage);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), 100.f);
+
+    // Apply health scaling after max health has been set
+    ApplyTowerHealthScaling();
+
+    // Notify about range attribute change
+    OnRangeAttributeChangedDelegate.Broadcast();
+    
+    MTDS_VERBOSE("Attributes have been initialized.");
+}
+
+void AMTD_Tower::ReadTableBaseValues(int32 InLevel)
+{
+    ensure(InLevel >= 0);
+    ensure(InLevel <= MaxLevel);
+
+    if (!IsValid(TowerData))
+    {
+        MTDS_WARN("Tower data is invalid.");
+        return;
+    }
+
+    // Intermediate variable
+    float Value;
+
+    // Read each value from attribute table using the given level
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, DamageAttributeName, InLevel, Value);
+    BaseDamage = Value;
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, RangeAttributeName, InLevel, Value);
+    BaseVisionRange = Value;
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, VisionDegreesAttributeName, InLevel, Value);
+    BaseVisionHalfDegrees = (Value / 2.f);
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, FirerateAttributeName, InLevel, Value);
+    BaseFirerate = Value;
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, ProjectileSpeedAttributeName, InLevel, Value);
+    BaseProjectileSpeed = Value;
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, BalanceDamageAttributeName, InLevel, Value);
+    BalanceDamage = Value;
+    
+    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, InLevel, Value);
+    BaseHealth = Value;
+}
+
+void AMTD_Tower::ApplyTowerHealthScaling()
+{
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        MTDS_WARN("Ability system component is invalid.");
+        return;
+    }
+    
+    if (!IsValid(InstigatorAbilitySystemComponent))
+    {
+        MTDS_WARN("Instigator ability system component is invalid.");
+        return;
+    }
+
+    if (!TowerHealthAttributeScalingGeClass)
+    {
+        MTDS_WARN("Tower health attribute scaling gameplay effect class is NULL.");
+        return;
+    }
+
+    // Create context to pass tower actor
+    FGameplayEffectContextHandle EffectContext = InstigatorAbilitySystemComponent->MakeEffectContext();
+    EffectContext.AddActors({ this }, true);
+
+    if (!EffectContext.IsValid())
+    {
+        MTDS_WARN("Failed to create an effect context.");
+        return;
+    }
+
+    // Create GE spec with the created context
+    const FGameplayEffectSpecHandle &Spec = InstigatorAbilitySystemComponent->MakeOutgoingSpec(
+        TowerHealthAttributeScalingGeClass, 1.f, EffectContext);
+
+    if (!Spec.IsValid())
+    {
+        MTDS_WARN("Failed to create an outgoing spec for tower health attribute scaling gameplay effect.");
+        return;
+    }
+    
+    // Apply max health scaling
+    InstigatorAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, AbilitySystemComponent);
+
+    // Spec will be applied later on, hence delay the heal
+    GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::MaxHealthRestore));
+}
+
+void AMTD_Tower::MaxHealthRestore()
+{
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        return;
+    }
+    
+    // Max health may change, hence get the value to heal the tower up
+    const float MaxHealth = AbilitySystemComponent->GetNumericAttribute(UMTD_HealthSet::GetMaxHealthAttribute());
+
+    // Start with full health
+    AbilitySystemComponent->ApplyModToAttribute(
+        UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, MaxHealth);
+}
+
 void AMTD_Tower::BeginPlay()
 {
     Super::BeginPlay();
 
-    CachePlayerAsc();
-    StartListeningForGameTerminated();
-    StartListeningForRangeAttributeChanges();
+    // Run all initialization logic
+    CacheInstigatorAbilitySystemComponent();
+    ListenForGameTerminated();
+    ListenForRangeAttributeChanges();
+
     if (!CheckTowerDataValidness())
     {
+        // Avoid enabling ticking, which will run all main tower logic
         return;
     }
     
     InitializeAttributes();
     
-    // Disabled by default
+    // All initialization has run successfully: Enable ticking, which is disabled by default
     SetActorTickEnabled(true);
 }
 
-void AMTD_Tower::Tick(float DeltaTime)
+void AMTD_Tower::Tick(float DeltaSeconds)
 {
-    Super::Tick(DeltaTime);
+    Super::Tick(DeltaSeconds);
 
-#ifdef WITH_EDITOR
-    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
-    ensure(TowerData);
-    ensure(TowerData->ProjectileData);
-#endif
-
-    if (((bIsReloading) || (!IsValid(Controller))))
+    if (bIsReloading)
     {
+        // We're on reload
+        return;
+    }
+    
+    if (!IsValid(TowerController))
+    {
+        MTDS_WARN("Controller is invalid. Disabling ticking.");
+        SetActorTickEnabled(false);
         return;
     }
 
-    auto TowerController = CastChecked<AMTD_TowerController>(Controller);
+    // Get a target to fire at
     AActor *FireTarget = TowerController->GetFireTarget();
-
     if (!IsValid(FireTarget))
     {
         return;
     }
 
-    OnFire(FireTarget);
-}
-
-void AMTD_Tower::PreInitializeComponents()
-{
-    Super::PreInitializeComponents();
-
-    OnLevelUpDelegate.AddDynamic(this, &ThisClass::OnLevelUp);
-}
-
-void AMTD_Tower::PostInitProperties()
-{
-    Super::PostInitProperties();
-}
-
-void AMTD_Tower::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-    Super::EndPlay(EndPlayReason);
-}
-
-void AMTD_Tower::Reset()
-{
-    Super::Reset();
+    // Fire projectile at that target
+    FireProjectile(FireTarget);
 }
 
 void AMTD_Tower::NotifyControllerChanged()
 {
     Super::NotifyControllerChanged();
 
+    if (IsValid(Controller))
+    {
+        // Save controller as MTD tower controller to avoid casting base controller many times
+        TowerController = CastChecked<AMTD_TowerController>(Controller);
+    }
+
+    // Notify pawn extension component about controller change
     PawnExtentionComponent->HandleControllerChanged();
 }
 
@@ -164,29 +281,57 @@ int32 AMTD_Tower::GetCurrentLevel() const
 
 void AMTD_Tower::AddLevel(int32 InDeltaLevel)
 {
+    if (InDeltaLevel < 1)
+    {
+        MTDS_WARN("Delta level [%d] must be a positive number.", InDeltaLevel);
+        return;
+    }
+    
     if (CurrentLevel == MaxLevel)
     {
         MTDS_WARN("Cannot add any level because current level [%d] is the maximum one.", CurrentLevel);
         return;
     }
 
+    // Clamp value if required
     const int32 MaxDeltaLevel = (MaxLevel - CurrentLevel);
     const int32 DeltaLevel = FMath::Min(InDeltaLevel, MaxDeltaLevel);
     if (InDeltaLevel != DeltaLevel)
     {
-        MTDS_WARN("Delta Level [%d] is decreased to [%d].", InDeltaLevel, DeltaLevel);
+        MTDS_WARN("Delta level [%d] has been decreased to [%d].", InDeltaLevel, DeltaLevel);
     }
 
+    // Perform main level up logic
     const int32 OldLevel = CurrentLevel;
     CurrentLevel = (CurrentLevel + DeltaLevel);
-    OnLevelUpDelegate.Broadcast(CurrentLevel, OldLevel);
+    OnLevelUp(CurrentLevel, OldLevel);
 
+    // Send gameplay event
     SendLevelUpEvent();
+
+    // Notify about level up
+    OnLevelUpDelegate.Broadcast(CurrentLevel, OldLevel);
 }
 
-void AMTD_Tower::FellOutOfWorld(const UDamageType &DamageType)
+void AMTD_Tower::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
 {
-    HealthComponent->SelfDestruct(true);
+    // Avoid running the logic when game terminates
+    SetActorTickEnabled(false);
+}
+
+AMTD_PlayerState *AMTD_Tower::GetMtdPlayerState() const
+{
+    return CastChecked<AMTD_PlayerState>(GetPlayerState(), ECastCheckedType::NullAllowed);
+}
+
+UMTD_AbilitySystemComponent *AMTD_Tower::GetMtdAbilitySystemComponent() const
+{
+    return PawnExtentionComponent->GetMtdAbilitySystemComponent();
+}
+
+UAbilitySystemComponent *AMTD_Tower::GetAbilitySystemComponent() const
+{
+    return GetMtdAbilitySystemComponent();
 }
 
 float AMTD_Tower::GetScaledDamage_Implementation() const
@@ -194,6 +339,7 @@ float AMTD_Tower::GetScaledDamage_Implementation() const
     float Scale = 1.f;
     if (IsValid(InstigatorBuilderSet))
     {
+        // Evaluate scaling given damage total stat attribute
         const float DamageStat = InstigatorBuilderSet->GetDamageStat();
         const float DamageStatBonus = InstigatorBuilderSet->GetDamageStat_Bonus();
         const float TotalDamageStat = (DamageStat + DamageStatBonus);
@@ -214,6 +360,7 @@ float AMTD_Tower::GetScaledFirerate_Implementation() const
     float Scale = 1.f;
     if (IsValid(InstigatorBuilderSet))
     {
+        // Evaluate scaling given speed total stat attribute
         const float SpeedStat = InstigatorBuilderSet->GetSpeedStat();
         const float SpeedStatBonus = InstigatorBuilderSet->GetSpeedStat_Bonus();
         const float TotalSpeedStat = (SpeedStat + SpeedStatBonus);
@@ -234,6 +381,7 @@ float AMTD_Tower::GetScaledVisionRange_Implementation() const
     float Scale = 1.f;
     if (IsValid(InstigatorBuilderSet))
     {
+        // Evaluate scaling given range total stat attribute
         const float RangeStat = InstigatorBuilderSet->GetRangeStat();
         const float RangeStatBonus = InstigatorBuilderSet->GetRangeStat_Bonus();
         const float TotalRangeStat = (RangeStat + RangeStatBonus);
@@ -259,6 +407,7 @@ float AMTD_Tower::GetScaledProjectileSpeed_Implementation() const
     float Scale = 1.f;
     if (IsValid(InstigatorBuilderSet))
     {
+        // Evaluate scaling given speed total stat attribute
         const float SpeedStat = InstigatorBuilderSet->GetSpeedStat();
         const float SpeedStatBonus = InstigatorBuilderSet->GetSpeedStat_Bonus();
         const float TotalSpeedStat = (SpeedStat + SpeedStatBonus);
@@ -276,100 +425,19 @@ float AMTD_Tower::GetScaledProjectileSpeed_Implementation() const
 
 float AMTD_Tower::GetReloadTime_Implementation() const
 {
-    // Fire 'BaseFirerate' times per second
+    // Fire 'BaseFirerate' times per second, i.e. if firerate is 10, then reload time will be 6 seconds,
+    // hence maximum 10 projectiles will be fired
     const float Firerate = GetScaledFirerate();
-    return (Firerate == 0.f) ? (60.f) : (60.f / Firerate);
-}
-
-void AMTD_Tower::InitializeAttributes()
-{
-    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
-    if (!IsValid(TowerData))
-    {
-        MTDS_WARN("Tower Data is invalid.");
-        return;
-    }
-
-    // Dispatch the Attribute Table regardless the ASC presence due SBS. The SBS may spawn a tower without a controller,
-    // hence the ASC will not be initialized. However, the reason SBS may spawn it is because it needs to retrieve
-    // vision related data along the owner player stats. The spawned tower will have PlayerCharacter as Owner and its
-    // PlayerState as Instigator.
-
-    float Value;
-
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, DamageAttributeName, CurrentLevel, Value);
-    BaseDamage = Value;
-    
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, RangeAttributeName, CurrentLevel, Value);
-    BaseVisionRange = Value;
-    
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, VisionDegreesAttributeName, CurrentLevel, Value);
-    BaseVisionHalfDegrees = (Value / 2.f);
-    
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, FirerateAttributeName, CurrentLevel, Value);
-    BaseFirerate = Value;
-    
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, ProjectileSpeedAttributeName, CurrentLevel, Value);
-    BaseProjectileSpeed = Value;
-    
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, BalanceDamageAttributeName, CurrentLevel, Value);
-    BalanceDamage = Value;
-
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
-    {
-        // Avoid logging due the reason written above
-        return;
-    }
-
-    // Find max health value intable
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, CurrentLevel, Value);
-    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
-
-    if (IsValid(InstigatorAsc))
-    {
-        // Apply max health scaling
-        InstigatorAsc->ApplyGameplayEffectToTarget(TowerHealthAttributeScalingGeClass.GetDefaultObject(), Asc, 1.f);
-
-        // Max health may change, hence get the value to heal the tower up
-        Value = Asc->GetNumericAttribute(UMTD_HealthSet::GetMaxHealthAttribute());
-    }
-    else
-    {
-        MTDS_WARN("Instigator Ability System Component is invalid.");
-    }
-
-    // Start with full health
-    Asc->ApplyModToAttribute(UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Type::Override, Value);
-    
-    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetDamageAttribute(), BalanceDamage);
-
-    // Towers ignore any balance damage
-    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), 100.f);
-    
-    OnRangeAttributeChangedDelegate.Broadcast();
-    MTDS_VERBOSE("Attributes have been initialized.");
+    return ((Firerate == 0.f) ? (60.f) : (60.f / Firerate));
 }
 
 void AMTD_Tower::OnLevelUp(int32 NewLevel, int32 OldLevel)
 {
-    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
-    if (!IsValid(TowerData))
-    {
-        MTDS_WARN("Tower Data is invalid.");
-        return;
-    }
-    
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
-    {
-        MTDS_WARN("Ability System Component is invalid.");
-        return;
-    }
+    // Read attribute table with the new level
+    ReadTableBaseValues(NewLevel);
 
-    float Value;
-    EVALUTE_ATTRIBUTE(TowerData->AttributeTable, HealthAttributeName, CurrentLevel, Value);
-    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
+    // Heal tower up on level up
+    MaxHealthRestore();
 }
 
 void AMTD_Tower::SendLevelUpEvent()
@@ -386,29 +454,20 @@ void AMTD_Tower::SendLevelUpEvent()
         return;
     }
 
-    // Send the "Gameplay.Event.LevelUp" gameplay event through the owner's
-    // ability system. This can be used to trigger a level up gameplay ability.
+    // Send the "Gameplay.Event.LevelUp" gameplay event through the owner's ability system.
+    // This can be used to trigger a level up gameplay ability.
     FGameplayEventData Payload;
     Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_LevelUp;
     Payload.Target = AbilitySystemComponent->GetAvatarActor();
     Payload.ContextHandle = AbilitySystemComponent->MakeEffectContext();;
 
+    // Send a gameplay event
     AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
-void AMTD_Tower::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
+void AMTD_Tower::FireProjectile(AActor *FireTarget)
 {
-    IMTD_GameResultInterface::OnGameTerminated_Implementation(GameResult);
-    DetachFromControllerPendingDestroy();
-}
-
-void AMTD_Tower::OnFire(AActor *FireTarget)
-{
-    if (!IsValid(TowerExtensionComponent->GetTowerData<UMTD_TowerData>()))
-    {
-        return;
-    }
-
+    // Create a projectile
     const FTransform Transform = ProjectileSpawnPosition->GetComponentTransform();
     AMTD_Projectile *Projectile = SpawnProjectile(Transform);
     if (!IsValid(Projectile))
@@ -416,60 +475,69 @@ void AMTD_Tower::OnFire(AActor *FireTarget)
         return;
     }
 
+    // Setup and finilize the projectile
     SetupProjectile(*Projectile, FireTarget);
-    UGameplayStatics::FinishSpawningActor(Projectile, Transform);
-    
+    Projectile->FinishSpawning(Transform, true);
+
+    // Start reloading after a successful fire
     StartReloading();
 }
 
 void AMTD_Tower::StartReloading()
 {
-    check(!bIsReloading);
+    ensure(!bIsReloading);
 
+    // Change state
     bIsReloading = true;
 
+    // Setup an event to notify about reload finish
     const float ReloadTime = GetReloadTime();
     GetWorldTimerManager().SetTimer(ReloadTimerHandle, this, &ThisClass::OnReloadFinished, ReloadTime, false);
 }
 
 void AMTD_Tower::OnReloadFinished()
 {
-    check(bIsReloading);
+    ensure(bIsReloading);
 
+    // Change state
     bIsReloading = false;
 }
 
-void AMTD_Tower::StartListeningForGameTerminated()
+void AMTD_Tower::ListenForGameTerminated()
 {
     UWorld *World = GetWorld();
     AGameModeBase *GameMode = World->GetAuthGameMode();
     if (IsValid(GameMode))
     {
         auto MtdGameMode = CastChecked<AMTD_GameModeBase>(GameMode);
+
+        // Listen for game terminated event
         MtdGameMode->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
     }
 }
 
-void AMTD_Tower::StartListeningForRangeAttributeChanges()
+void AMTD_Tower::ListenForRangeAttributeChanges()
 {
-    if (!IsValid(InstigatorAsc))
+    if (!IsValid(InstigatorAbilitySystemComponent))
     {
         MTDS_WARN("Instigator's Ability System Component is invalid.");
         return;
     }
 
-    InstigatorAsc->GetGameplayAttributeValueChangeDelegate(
+    // Listen for range attribute changes
+    InstigatorAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_BuilderSet::GetRangeStatAttribute()).AddUObject(this, &ThisClass::OnRangeAttributeChanged);
-    InstigatorAsc->GetGameplayAttributeValueChangeDelegate(
+    InstigatorAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_BuilderSet::GetRangeStat_BonusAttribute()).AddUObject(this, &ThisClass::OnRangeAttributeChanged);
 }
 
 void AMTD_Tower::OnRangeAttributeChanged(const FOnAttributeChangeData &Attribute)
 {
+    // Notify about range attribute change
     OnRangeAttributeChangedDelegate.Broadcast();
 }
 
-void AMTD_Tower::CachePlayerAsc()
+void AMTD_Tower::CacheInstigatorAbilitySystemComponent()
 {
     const APawn *PawnInstigator = GetInstigator();
     if (!IsValid(PawnInstigator))
@@ -485,14 +553,17 @@ void AMTD_Tower::CachePlayerAsc()
         return;
     }
 
-    InstigatorAsc = PlayerCharacter->GetAbilitySystemComponent();
-    if (!IsValid(InstigatorAsc))
+    // Cache instigator ASC to avoid searching for it every time it's needed
+    InstigatorAbilitySystemComponent = PlayerCharacter->GetAbilitySystemComponent();
+    if (!IsValid(InstigatorAbilitySystemComponent))
     {
         MTDS_WARN("Ability System Component on PawnInstigator [%s] is invalid.", *PawnInstigator->GetName());
         return;
     }
 
-    const UAttributeSet *AttributeSet = InstigatorAsc->GetAttributeSet(UMTD_BuilderSet::StaticClass());
+    // Cache builder set to avoid searching for it every time it's needed
+    const UAttributeSet *AttributeSet =
+        InstigatorAbilitySystemComponent->GetAttributeSet(UMTD_BuilderSet::StaticClass());
     if (!IsValid(AttributeSet))
     {
         MTDS_WARN("Builder Set on PawnInstigator [%s] is invalid.", *PawnInstigator->GetName());
@@ -504,28 +575,27 @@ void AMTD_Tower::CachePlayerAsc()
 
 bool AMTD_Tower::CheckTowerDataValidness() const
 {
-    const auto Data = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
-    if (!IsValid(Data))
+    if (!IsValid(TowerData))
     {
-        MTDS_WARN("TowerData is invalid.");
+        MTDS_WARN("Tower datais invalid.");
         return false;
     }
     
-    if (!IsValid(Data->AttributeTable))
+    if (!IsValid(TowerData->AttributeTable))
     {
-        MTDS_WARN("AttributeTable on TowerData [%s] is invalid.", *Data->GetName());
+        MTDS_WARN("Attribute table on tower data [%s] is invalid.", *TowerData->GetName());
         return false;
     }
     
-    if (!IsValid(Data->ProjectileData))
+    if (!IsValid(TowerData->ProjectileData))
     {
-        MTDS_WARN("ProjectileData on TowerData [%s] is invalid.", *Data->GetName());
+        MTDS_WARN("Projectile data on tower data [%s] is invalid.", *TowerData->GetName());
         return false;
     }
     
-    if (!Data->ProjectileData->ProjectileClass)
+    if (!TowerData->ProjectileData->ProjectileClass)
     {
-        MTDS_WARN("ProjectileClass on ProjectileData [%s] is invalid.", *Data->ProjectileData->GetName());
+        MTDS_WARN("Projectile class on projectile data [%s] is invalid.", *TowerData->ProjectileData->GetName());
         return false;
     }
 
@@ -538,18 +608,20 @@ bool AMTD_Tower::CheckTowerDataValidness() const
     return true;
 }
 
-FVector AMTD_Tower::GetTargetDistanceVector(const USceneComponent *Projectile, const USceneComponent *Target) const
+/**
+ * Get direction from first argument towards the second one.
+ * @param   Lhs: scene component the direction vector tail is located at.
+ * @param   Rhs: scene component the direction vector tip is pointing at.
+ * @return  Direction vector from Lhs to Rhs.
+ */
+static FVector GetDirectionTowards(const USceneComponent *Lhs, const USceneComponent *Rhs)
 {
-    const FVector P0 = Projectile->GetComponentLocation();
-    const FVector P1 = Target->GetComponentLocation();
-    const FVector DistanceVector = P1 - P0;
-
-    return DistanceVector;
-}
-
-FVector AMTD_Tower::GetTargetDirection(const USceneComponent *Projectile, const USceneComponent *Target) const
-{
-    const FVector DistanceVector = GetTargetDistanceVector(Projectile, Target);
+    check(IsValid(Lhs));
+    check(IsValid(Rhs));
+    
+    const FVector P0 = Lhs->GetComponentLocation();
+    const FVector P1 = Rhs->GetComponentLocation();
+    const FVector DistanceVector = (P1 - P0);
     const FVector Direction = DistanceVector.GetSafeNormal();
 
     return Direction;
@@ -558,22 +630,32 @@ FVector AMTD_Tower::GetTargetDirection(const USceneComponent *Projectile, const 
 AMTD_Projectile *AMTD_Tower::SpawnProjectile(const FTransform &Transform)
 {
     UWorld *World = GetWorld();
-    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
+    check(IsValid(World));
+    
+    check(IsValid(TowerData));
+    
     const UMTD_ProjectileData *ProjectileData = TowerData->ProjectileData;
-    constexpr auto SpawnCollisionMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    check(IsValid(ProjectileData));
+
+    constexpr auto CollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     
     auto Projectile = World->SpawnActorDeferred<AMTD_Projectile>(
-        ProjectileData->ProjectileClass, Transform, this, this, SpawnCollisionMethod);
+        ProjectileData->ProjectileClass, Transform, this, this, CollisionHandlingMethod);
+    
+    if (!IsValid(Projectile))
+    {
+        MTDS_WARN("Failed to spawn a projectile.");
+    }
+    
     return Projectile;
 }
 
 void AMTD_Tower::SetupProjectile(AMTD_Projectile &Projectile, AActor *FireTarget)
 {
     Projectile.InitializeAbilitySystem(GetAbilitySystemComponent());
-    
+
     SetupProjectileCollision(Projectile);
     SetupProjectileMovement(Projectile, FireTarget);
-    SetupProjectileHitCallback();
     SetupProjectileGameplayEffectClasses(Projectile);
 
     Projectile.BalanceDamage = BalanceDamage;
@@ -590,22 +672,27 @@ void AMTD_Tower::SetupProjectileCollision(AMTD_Projectile &Projectile) const
 void AMTD_Tower::SetupProjectileMovement(AMTD_Projectile &Projectile, AActor *FireTarget) const
 {
     UMTD_ProjectileMovementComponent *MovementComponent = Projectile.GetMovementComponent();
+    check(IsValid(MovementComponent));
 
-    const FVector Direction = GetTargetDirection(Projectile.GetRootComponent(), FireTarget->GetRootComponent());
+    const FVector Direction = GetDirectionTowards(Projectile.GetRootComponent(), FireTarget->GetRootComponent());
     const float Speed = GetScaledProjectileSpeed();
+    USceneComponent *TargetRoot = FireTarget->GetRootComponent();
 
     MovementComponent->InitialSpeed = Speed;
     MovementComponent->MaxSpeed = Speed;
     MovementComponent->Direction = Direction;
-    MovementComponent->HomingTargetComponent = FireTarget->GetRootComponent();
+    MovementComponent->HomingTargetComponent = TargetRoot;
 }
 
 void AMTD_Tower::SetupProjectileGameplayEffectClasses(AMTD_Projectile &Projectile) const
 {
-    const auto TowerData = TowerExtensionComponent->GetTowerData<UMTD_TowerData>();
+    check(IsValid(TowerData));
+    
     const UMTD_ProjectileData *ProjectileData = TowerData->ProjectileData;
+    check(IsValid(ProjectileData));
     
     Projectile.Damage = GetScaledDamage();
+    Projectile.DamageAdditive = 0.f;
     Projectile.DamageMultiplier = 1.f;
 
     for (const TSubclassOf<UMTD_GameplayEffect> &Ge : ProjectileData->GameplayEffectsToGrantClasses)
@@ -614,29 +701,12 @@ void AMTD_Tower::SetupProjectileGameplayEffectClasses(AMTD_Projectile &Projectil
     }
 }
 
-void AMTD_Tower::SetupProjectileHitCallback()
-{
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
-    
-    FGameplayEventMulticastDelegate Delegate;
-    Delegate.AddUObject(this, &ThisClass::OnProjectileHit);
-    
-    Asc->GenericGameplayEventCallbacks.Add(GameplayTags.Gameplay_Event_RangeHit, Delegate);
-}
-
-void AMTD_Tower::OnProjectileHit(const FGameplayEventData *EventData)
-{
-    check(EventData);
-    K2_OnProjectileHit(*EventData);
-}
-
 void AMTD_Tower::OnAbilitySystemInitialized()
 {
-    UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
-    check(MtdAsc);
+    UMTD_AbilitySystemComponent *MtdAbilitySystemComponent = GetMtdAbilitySystemComponent();
+    check(IsValid(MtdAbilitySystemComponent));
 
-    HealthComponent->InitializeWithAbilitySystem(MtdAsc);
+    HealthComponent->InitializeWithAbilitySystem(MtdAbilitySystemComponent);
 }
 
 void AMTD_Tower::OnAbilitySystemUninitialized()
@@ -644,32 +714,12 @@ void AMTD_Tower::OnAbilitySystemUninitialized()
     HealthComponent->UninitializeFromAbilitySystem();
 }
 
-void AMTD_Tower::DestroyDueToDeath()
-{
-    DetachFromControllerPendingDestroy();
-    SetLifeSpan(0.1f);
-
-    Uninit();
-}
-
-void AMTD_Tower::Uninit()
-{
-    // Uninit if we are still the avatar; we could be kicked from ASC if someone else owned it instead
-    const UMTD_AbilitySystemComponent *Asc = GetMtdAbilitySystemComponent();
-    if (IsValid(Asc))
-    {
-        if (Asc->GetAvatarActor() == this)
-        {
-            PawnExtentionComponent->UninitializeAbilitySystem();
-        }
-    }
-
-    SetActorHiddenInGame(true);
-}
-
 void AMTD_Tower::OnDeathStarted_Implementation(AActor *OwningActor)
 {
+    // Avoid running main logic when dead
     SetActorTickEnabled(false);
+
+    // Avoid colliding with anything after death
     DisableCollision();
 }
 
@@ -684,17 +734,29 @@ void AMTD_Tower::DisableCollision()
     CollisionComponent->SetCollisionResponseToChannels(ECR_Ignore);
 }
 
-AMTD_PlayerState *AMTD_Tower::GetMtdPlayerState() const
+void AMTD_Tower::FellOutOfWorld(const UDamageType &DamageType)
 {
-    return CastChecked<AMTD_PlayerState>(GetPlayerState(), ECastCheckedType::NullAllowed);
+    HealthComponent->SelfDestruct(true);
 }
 
-UMTD_AbilitySystemComponent *AMTD_Tower::GetMtdAbilitySystemComponent() const
+void AMTD_Tower::DestroyDueToDeath()
 {
-    return PawnExtentionComponent->GetMtdAbilitySystemComponent();
+    Uninit();
+    DetachFromControllerPendingDestroy();
+    SetLifeSpan(0.1f);
 }
 
-UAbilitySystemComponent *AMTD_Tower::GetAbilitySystemComponent() const
+void AMTD_Tower::Uninit()
 {
-    return GetMtdAbilitySystemComponent();
+    // Uninit if we are still the avatar; we could be kicked from ASC if someone else owned it instead
+    const UMTD_AbilitySystemComponent *AbilitySystemComponent = GetMtdAbilitySystemComponent();
+    if (IsValid(AbilitySystemComponent))
+    {
+        if (AbilitySystemComponent->GetAvatarActor() == this)
+        {
+            PawnExtentionComponent->UninitializeAbilitySystem();
+        }
+    }
+
+    SetActorHiddenInGame(true);
 }
