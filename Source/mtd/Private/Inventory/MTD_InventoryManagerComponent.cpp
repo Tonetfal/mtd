@@ -10,6 +10,7 @@
 
 UMTD_InventoryManagerComponent::UMTD_InventoryManagerComponent()
 {
+    // Nothing to tick for
     PrimaryComponentTick.bCanEverTick = false;
     PrimaryComponentTick.bStartWithTickEnabled = false;
 }
@@ -18,7 +19,7 @@ bool UMTD_InventoryManagerComponent::CanAddItem(const UMTD_BaseInventoryItemData
 {
     if (!IsValid(ItemData))
     {
-        MTDS_WARN("Base Inventory Item Data is invalid.");
+        MTDS_WARN("Item data is invalid.");
         return false;
     }
     
@@ -35,13 +36,13 @@ bool UMTD_InventoryManagerComponent::CanAddItem(const UMTD_BaseInventoryItemData
     }
 }
 
-bool UMTD_InventoryManagerComponent::AddItem(UMTD_BaseInventoryItemData *ItemData,
+EMTD_InventoryResult UMTD_InventoryManagerComponent::AddItem(UMTD_BaseInventoryItemData *ItemData,
     bool bDropIfNotEnoughSpace /* = false */)
 {
     if (!IsValid(ItemData))
     {
-        MTDS_WARN("Inventory Item Data is invalid.");
-        return false;
+        MTDS_WARN("Item data is invalid.");
+        return EMTD_InventoryResult::Failed;
     }
 
     if (!CanAddItem(ItemData))
@@ -49,15 +50,23 @@ bool UMTD_InventoryManagerComponent::AddItem(UMTD_BaseInventoryItemData *ItemDat
         if (!bDropIfNotEnoughSpace)
         {
             MTDS_WARN("Item [%s] cannot be added to inventory.", *ItemData->GetName());
+            
+            return EMTD_InventoryResult::Failed;
         }
         else
         {
             MTDS_WARN("Item [%s] cannot be added to inventory. It will dropped on the floor.", *ItemData->GetName());
-            DropItem(ItemData);
+
+            // Spawn the item
+            AMTD_BaseCharacter *MtdCharacter = GetCharacter();
+            const AMTD_InventoryItemInstance *ItemInstance =
+                UMTD_InventoryBlueprintFunctionLibrary::CreateItemInstance(MtdCharacter, ItemData);
+            
+            return ((IsValid(ItemInstance)) ? (EMTD_InventoryResult::Dropped) : (EMTD_InventoryResult::Failed));
         }
-        return false;
     }
-    
+
+    // Add the item
     switch (ItemData->ItemType)
     {
     case EMTD_InventoryItemType::III_Armor: 
@@ -71,67 +80,54 @@ bool UMTD_InventoryManagerComponent::AddItem(UMTD_BaseInventoryItemData *ItemDat
         break;
     default:
         MTDS_WARN("Unknown item type [%s].", *UEnum::GetValueAsString(ItemData->ItemType));
-        return false;
+        return EMTD_InventoryResult::Failed;
     }
 
     // Notify about the event
     OnItemAddedDelegate.Broadcast(ItemData);
     
-    MTDS_LOG("Item [%s] has been added to inventory list.", *ItemData->Name.ToString());
-    return true;
+    MTDS_LOG("Item [%s] has been added to inventory.", *ItemData->Name.ToString());
+    return EMTD_InventoryResult::Added;
 }
 
 bool UMTD_InventoryManagerComponent::RemoveItem(UMTD_BaseInventoryItemData *ItemData)
 {
     if (!IsValid(ItemData))
     {
-        MTDS_WARN("Inventory Item Data is invalid.");
-        return false;;
+        MTDS_WARN("Item data is invalid.");
+        return false;
     }
 
     const int32 RemovedAmount = InventoryEntries.Remove(ItemData);
     if (RemovedAmount == 0)
     {
-        MTDS_WARN("Item [%s] is not contained inside the Inventory ManagerComponent.", *ItemData->GetName());
+        MTDS_WARN("Item [%s] is not present in inventory.", *ItemData->GetName());
         return false;
     }
 
     // Notify about the event
     OnItemRemovedDelegate.Broadcast(ItemData);
 
-    MTDS_LOG("Removed [%d] items from inventory.", RemovedAmount);
+    MTDS_LOG("Item [%d] has been removed from inventory.", RemovedAmount);
     return true;
 }
 
 AMTD_InventoryItemInstance *UMTD_InventoryManagerComponent::DropItem(UMTD_BaseInventoryItemData *ItemData)
 {
-    if (!IsValid(ItemData))
+    // Try to remove the item
+    if (!RemoveItem(ItemData))
     {
-        MTDS_WARN("Item Data is invalid.");
-        return nullptr;
-    }
-    
-    const AActor *Owner = GetOwner();
-    if (!IsValid(Owner))
-    {
-        MTDS_WARN("Owner is invalid.");
         return nullptr;
     }
 
-    const auto MtdPs = Cast<AMTD_PlayerState>(Owner);
-    check(MtdPs);
+    // Use character as the world context in order to spawn the item at his transforms
+    AMTD_BaseCharacter *MtdCharacter = GetCharacter();
 
-    AMTD_BasePlayerCharacter *MtdCharacter = MtdPs->GetMtdPlayerCharacter();
+    // Spawn the item
     AMTD_InventoryItemInstance *ItemInstance = UMTD_InventoryBlueprintFunctionLibrary::CreateItemInstance(
         MtdCharacter, ItemData);
 
-    if (!IsValid(ItemInstance))
-    {
-        MTDS_WARN("Failed to spawn Item Instance on Character [%s].", *GetNameSafe(MtdCharacter));
-        return nullptr;
-    }
-
-    MTDS_LOG("Item [%s] has been dropped [%s].", *ItemData->GetName(), *ItemInstance->GetName());
+    MTDS_LOG("Item [%s] has been dropped [%s].", *ItemData->GetName(), *GetNameSafe(ItemInstance));
     return ItemInstance;
 }
 
@@ -165,9 +161,11 @@ bool UMTD_InventoryManagerComponent::IsEmpty() const
     return (RemainingSlots != 0);
 }
 
-TArray<const UMTD_BaseInventoryItemData*> UMTD_InventoryManagerComponent::GetAllInstancesItemID(int32 ItemID) const
+TArray<const UMTD_BaseInventoryItemData*> UMTD_InventoryManagerComponent::FindItemsOfID(int32 ItemID) const
 {
-    TArray<const UMTD_BaseInventoryItemData*> Result;
+    TArray<const UMTD_BaseInventoryItemData *> Result;
+    
+    // Iterate through each entry and compare the item ID
     for (const UMTD_BaseInventoryItemData *ItemData : InventoryEntries)
     {
         if (IsValid(ItemData))
@@ -182,29 +180,35 @@ TArray<const UMTD_BaseInventoryItemData*> UMTD_InventoryManagerComponent::GetAll
     return Result;
 }
 
-TArray<UMTD_BaseInventoryItemData*> UMTD_InventoryManagerComponent::GetAllInstancesItemID(int32 ItemID)
+TArray<UMTD_BaseInventoryItemData*> UMTD_InventoryManagerComponent::FindItemsOfID(int32 ItemID)
 {
-    const auto ThisConst = static_cast<const UMTD_InventoryManagerComponent*>(this);
-    TArray<const UMTD_BaseInventoryItemData*> ConstInstances = ThisConst->GetAllInstancesItemID(ItemID);
-    TArray<UMTD_BaseInventoryItemData*> Instances;
-
-    for (const UMTD_BaseInventoryItemData *ConstItemData : ConstInstances)
+    TArray<UMTD_BaseInventoryItemData *> Result;
+    
+    // Iterate through each entry and compare the item ID
+    for (UMTD_BaseInventoryItemData *ItemData : InventoryEntries)
     {
-        const auto ItemData = const_cast<UMTD_BaseInventoryItemData*>(ConstItemData);
-        Instances.Push(ItemData);
+        if (IsValid(ItemData))
+        {
+            if (ItemData->ItemID == ItemID)
+            {
+                // Store if ID match
+                Result.Push(ItemData);
+            }
+        }
     }
-
-    return Instances;
+    
+    return Result;
 }
 
-const UMTD_MaterialItemData *UMTD_InventoryManagerComponent::GetStackableItemEntry(int32 ItemID) const
+const UMTD_MaterialItemData *UMTD_InventoryManagerComponent::FindIncompleteStackableItemEntryOfID(int32 ItemID) const
 {
-    TArray<const UMTD_BaseInventoryItemData*> MaterialInstances = GetAllInstancesItemID(ItemID);
-    for (const auto It : MaterialInstances)
-    {
-        const auto MaterialItemData = Cast<UMTD_MaterialItemData>(It);
-        check(MaterialItemData);
+    // Get all stackable entries with given ID
+    TArray<const UMTD_BaseInventoryItemData *> MaterialInstances = FindItemsOfID(ItemID);
 
+    // Iterate through each entry, and return the first whose max capacity is not reached
+    for (const auto Item : MaterialInstances)
+    {
+        const auto MaterialItemData = CastChecked<UMTD_MaterialItemData>(Item);
         if (MaterialItemData->MaxAmount > MaterialItemData->CurrentAmount)
         {
             return MaterialItemData;
@@ -214,20 +218,23 @@ const UMTD_MaterialItemData *UMTD_InventoryManagerComponent::GetStackableItemEnt
     return nullptr;
 }
 
-UMTD_MaterialItemData *UMTD_InventoryManagerComponent::GetStackableItemEntry(int32 ItemID)
+UMTD_MaterialItemData *UMTD_InventoryManagerComponent::FindIncompleteStackableItemEntryOfID(int32 ItemID)
 {
-    return const_cast<UMTD_MaterialItemData*>(
-        (static_cast<const UMTD_InventoryManagerComponent*>(this))->GetStackableItemEntry(ItemID));
+    // Cast ownself to const, call const method version, cast consteness away from the result
+    return const_cast<UMTD_MaterialItemData *>(
+        (static_cast<const UMTD_InventoryManagerComponent *>(this))->FindIncompleteStackableItemEntryOfID(ItemID));
 }
 
-const UMTD_BaseInventoryItemData *UMTD_InventoryManagerComponent::FindItemID(int32 ItemID) const
+const UMTD_BaseInventoryItemData *UMTD_InventoryManagerComponent::FindItemOfID(int32 ItemID) const
 {
+    // Iterate through each entry and compare the item ID
     for (const UMTD_BaseInventoryItemData *ItemData : InventoryEntries)
     {
         if (IsValid(ItemData))
         {
             if (ItemData->ItemID == ItemID)
             {
+                // Return if ID match
                 return ItemData;
             }
         }
@@ -236,41 +243,58 @@ const UMTD_BaseInventoryItemData *UMTD_InventoryManagerComponent::FindItemID(int
     return nullptr;
 }
 
-UMTD_BaseInventoryItemData *UMTD_InventoryManagerComponent::FindItemID(int32 ItemID)
+UMTD_BaseInventoryItemData *UMTD_InventoryManagerComponent::FindItemOfID(int32 ItemID)
 {
+    // Cast ownself to const, call const method version, cast consteness away from the result
     return const_cast<UMTD_BaseInventoryItemData*>(
-        (static_cast<const UMTD_InventoryManagerComponent*>(this))->FindItemID(ItemID));
+        (static_cast<const UMTD_InventoryManagerComponent*>(this))->FindItemOfID(ItemID));
 }
 
 bool UMTD_InventoryManagerComponent::ContainsItemID(int32 ItemID) const
 {
-    const UMTD_BaseInventoryItemData *ItemData = FindItemID(ItemID);
-    return IsValid(ItemData);
+    const UMTD_BaseInventoryItemData *ItemData = FindItemOfID(ItemID);
+    const bool bFound = IsValid(ItemData);
+    return bFound;
 }
 
 bool UMTD_InventoryManagerComponent::CanStackItem(int32 ItemID) const
 {
-    const UMTD_BaseInventoryItemData *StackableItemEntry = GetStackableItemEntry(ItemID);
-    return IsValid(StackableItemEntry);
+    const UMTD_BaseInventoryItemData *StackableItemEntry = FindIncompleteStackableItemEntryOfID(ItemID);
+    const bool bCanStack = IsValid(StackableItemEntry);
+    return bCanStack;
+}
+
+AMTD_BaseCharacter *UMTD_InventoryManagerComponent::GetCharacter() const
+{
+    const AActor *Owner = GetOwner();
+    if (!IsValid(Owner))
+    {
+        return nullptr;
+    }
+
+    const auto MtdPlayerState = CastChecked<AMTD_PlayerState>(Owner);
+    AMTD_BasePlayerCharacter *MtdCharacter = MtdPlayerState->GetMtdPlayerCharacter();
+
+    return MtdCharacter;
 }
 
 void UMTD_InventoryManagerComponent::AddWeaponItem(UMTD_BaseInventoryItemData *ItemData)
 {
-    check(ItemData);
+    check(IsValid(ItemData));
     InventoryEntries.Push(ItemData);
 }
 
 void UMTD_InventoryManagerComponent::AddArmorItem(UMTD_BaseInventoryItemData *ItemData)
 {
-    check(ItemData);
+    check(IsValid(ItemData));
     InventoryEntries.Push(ItemData);
 }
 
 void UMTD_InventoryManagerComponent::AddMaterialItem(UMTD_BaseInventoryItemData *ItemData)
 {
-    check(ItemData);
-    UMTD_MaterialItemData *StackableItemEntry = GetStackableItemEntry(ItemData->ItemID);
-
+    check(IsValid(ItemData));
+    
+    UMTD_MaterialItemData *StackableItemEntry = FindIncompleteStackableItemEntryOfID(ItemData->ItemID);
     if (!IsValid(StackableItemEntry))
     {
         // Make a new entry
@@ -280,6 +304,6 @@ void UMTD_InventoryManagerComponent::AddMaterialItem(UMTD_BaseInventoryItemData 
         StackableItemEntry = Cast<UMTD_MaterialItemData>(ItemData);
     }
     
-    // Increase the count
+    // Increase the counter
     StackableItemEntry->CurrentAmount++;
 }

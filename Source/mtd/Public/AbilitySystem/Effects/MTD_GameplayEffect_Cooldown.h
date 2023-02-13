@@ -5,8 +5,12 @@
 
 #include "MTD_GameplayEffect_Cooldown.generated.h"
 
+/**
+ * Cooldown gameplay effect used to apply a cooldown on an ability.
+ */
 UCLASS()
-class MTD_API UMTD_GameplayEffect_Cooldown : public UGameplayEffect
+class MTD_API UMTD_GameplayEffect_Cooldown
+    : public UGameplayEffect
 {
 	GENERATED_BODY()
 

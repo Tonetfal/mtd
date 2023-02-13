@@ -3,25 +3,25 @@
 #include "Character/MTD_LevelComponent.h"
 #include "System/MTD_GameInstance.h"
 
-#define MAP(x) BonusAttributeReplicationMapping.Add(Get ## x ## Stat_BonusAttribute(), Get ## x ## StatAttribute())
 UMTD_PlayerSet::UMTD_PlayerSet()
 {
+    // Bind corresponding attribute (Health -> BonusHealth, Damage -> BonusDamage, ...)
+#define MAP(x) BonusAttributeReplicationMapping.Add(Get ## x ## Stat_BonusAttribute(), Get ## x ## StatAttribute())
     MAP(Damage);
     MAP(Health);
     MAP(Speed);
-}
 #undef MAP
+}
 
 void UMTD_PlayerSet::PreAttributeChange(const FGameplayAttribute &Attribute, float &NewValue)
 {
     Super::PreAttributeChange(Attribute, NewValue);
 
-    // Avoid using MaxTotalExp if cache didn't successfully
-    if (Attribute == GetExperienceStatAttribute())
+    if (Attribute == GetLevelExperienceAttribute())
     {
         if (CacheExpRows())
         {
-            // Disallow EXP go beyond the max value
+            // EXP values range [0, MaxTotalExp]
             NewValue = FMath::Clamp(NewValue, 0.f, MaxTotalExp);
         }
     }
@@ -31,39 +31,37 @@ void UMTD_PlayerSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
 {
     Super::PostAttributeChange(Attribute, OldValue, NewValue);
 
-    if (Attribute == GetExperienceStatAttribute())
+    if (Attribute == GetLevelExperienceAttribute())
     {
         // Avoid running level up logic at max level
         if (!bIsMaxLevel)
         {
-            if (CacheExpRows())
-            {
-                TryLevelUp(NewValue);
-            }
+            TryLevelUp(NewValue);
         }
     }
 
-    else if (Attribute == GetLevelStatAttribute())
+    else if (Attribute == GetLevelAttribute())
     {
         if (!bIsMaxLevel)
         {
-            // Avoid using MaxLevel if cache didn't successfully
-            if (CacheExpRows())
+            if (NewValue == MaxLevel)
             {
-                if (NewValue == MaxLevel)
-                {
-                    bIsMaxLevel = true;
-                    OnMaxLevelDelegate.Broadcast();
-                }
+                bIsMaxLevel = true;
+
+                // Notify about reaching to max level
+                OnMaxLevelDelegate.Broadcast();
             }
         }
     }
 
+    // Check if changed attribute is a bonus one
     else if (const auto &MappedValue = BonusAttributeReplicationMapping.Find(Attribute))
     {
+        // Get the base attribute data, i.e. if HealthBonus has been changed, this will get Health attribute
         FGameplayAttributeData *AttributeData = MappedValue->GetGameplayAttributeData(this);
         check(AttributeData);
         
+        // Modify the base attribute by the bonus attribute delta
         const float Delta = (NewValue - OldValue);
         const float CurrentValue = AttributeData->GetCurrentValue();
         const float FinalValue = (CurrentValue + Delta);
@@ -73,10 +71,18 @@ void UMTD_PlayerSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
 
 void UMTD_PlayerSet::TryLevelUp(int32 TotalExp)
 {
+    if (!CacheExpRows())
+    {
+        return;
+    }
+    
     check(TotalExpLevelRow);
     ensure(!bIsMaxLevel);
-    
-    const int32 OriginalLevel = LevelStat.GetCurrentValue();
+
+    // Save level before leveling up logic
+    const int32 OriginalLevel = Level.GetCurrentValue();
+
+    // Save current level in here. Might be changed throughout the function
     int32 NewLevel = OriginalLevel;
 
     // Try to level up as many times as it's possible
@@ -85,7 +91,7 @@ void UMTD_PlayerSet::TryLevelUp(int32 TotalExp)
         const int32 NextLevel = (NewLevel + 1);
         if (!TotalExpLevelRow->KeyExistsAtTime(NextLevel))
         {
-            // There is no next level, hence current one is the max one
+            // There is no next level, hence current one should be the max one
             break;
         }
         
@@ -95,14 +101,15 @@ void UMTD_PlayerSet::TryLevelUp(int32 TotalExp)
             // There is not enough EXP to level up to next level
             break;
         }
-        
+
+        // Level up
         NewLevel = NextLevel;
     } while(true);
 
     // Set the value only if it changed
     if (NewLevel > OriginalLevel)
     {
-        SetLevelStat(NewLevel);
+        SetLevel(NewLevel);
     }
 }
 
@@ -143,9 +150,9 @@ bool UMTD_PlayerSet::CacheExpRows()
         return false;
     }
 
+    // Cache found values to avoid accessing everything above every time EXP changes
     ExpLevelRow = ExpFoundRow;
     TotalExpLevelRow = TotalExpFoundRow;
-
     MaxLevel = TotalExpFoundRow->GetNumKeys();
     MaxTotalExp = TotalExpFoundRow->Eval(MaxLevel);
     

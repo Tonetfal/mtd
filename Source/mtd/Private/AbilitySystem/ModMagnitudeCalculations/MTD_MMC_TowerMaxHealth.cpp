@@ -1,8 +1,10 @@
 #include "AbilitySystem/ModMagnitudeCalculations/MTD_MMC_TowerMaxHealth.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_BuilderSet.h"
+#include "Character/MTD_Tower.h"
 
 struct FMTD_TowerHealthStatics
 {
@@ -13,12 +15,9 @@ struct FMTD_TowerHealthStatics
 	FMTD_TowerHealthStatics()
 	{
         // Recompute the max health when any of the following attributes changes
-		HealthStatDef = FGameplayEffectAttributeCaptureDefinition(
-		    UMTD_BuilderSet::GetHealthStatAttribute(), EGameplayEffectAttributeCaptureSource::Source, false);
-		HealthStatBonusDef = FGameplayEffectAttributeCaptureDefinition(
-		    UMTD_BuilderSet::GetHealthStat_BonusAttribute(), EGameplayEffectAttributeCaptureSource::Source, false);
-	    MaxHealthDef = FGameplayEffectAttributeCaptureDefinition(
-            UMTD_HealthSet::GetMaxHealthAttribute(), EGameplayEffectAttributeCaptureSource::Target, false);
+        HealthStatDef = CAPTURE_ATTRIBUTE(UMTD_BuilderSet, HealthStat, Source, false);
+        HealthStatBonusDef = CAPTURE_ATTRIBUTE(UMTD_BuilderSet, HealthStat_Bonus, Source, false);
+        MaxHealthDef = CAPTURE_ATTRIBUTE(UMTD_HealthSet, MaxHealth, Source, false);
 	}
 };
 
@@ -30,6 +29,7 @@ static FMTD_TowerHealthStatics &TowerHealthStatics()
 
 UMTD_MMC_TowerMaxHealth::UMTD_MMC_TowerMaxHealth()
 {
+    // List capture attributes
 	RelevantAttributesToCapture.Add(TowerHealthStatics().HealthStatDef);
 	RelevantAttributesToCapture.Add(TowerHealthStatics().HealthStatBonusDef);
 	RelevantAttributesToCapture.Add(TowerHealthStatics().MaxHealthDef);
@@ -37,10 +37,21 @@ UMTD_MMC_TowerMaxHealth::UMTD_MMC_TowerMaxHealth()
 
 float UMTD_MMC_TowerMaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec &Spec) const
 {
-    const UAbilitySystemComponent *AbilitySystemComponent = Spec.GetContext().GetInstigatorAbilitySystemComponent();
-    if (!IsValid(AbilitySystemComponent))
+    const TArray<TWeakObjectPtr<AActor>> Actors = Spec.GetContext().GetActors();
+    if (Actors.IsEmpty())
     {
-        MTDS_WARN("Ability System Component is invalid.");
+        MTDS_WARN("Actors list is empty.");
+        return 0.f;
+    }
+
+    check(Actors[0].IsValid());
+    ensure(TSubclassOf<AMTD_Tower>(Actors[0]->GetClass())->IsChildOf(AMTD_Tower::StaticClass()));
+    
+    const UAbilitySystemComponent *TowerAbilitySystemComponent =
+        UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actors[0].Get());
+    if (!IsValid(TowerAbilitySystemComponent))
+    {
+        MTDS_WARN("Tower ability system component is invalid.");
         return 0.f;
     }
 
@@ -50,17 +61,22 @@ float UMTD_MMC_TowerMaxHealth::CalculateBaseMagnitude_Implementation(const FGame
 	FAggregatorEvaluateParameters EvaluationParameters;
 	EvaluationParameters.SourceTags = SourceTags;
 	EvaluationParameters.TargetTags = TargetTags;
-
+    
+    // Get source's health stat
     float HealthStat;
     GetCapturedAttributeMagnitude(
         TowerHealthStatics().HealthStatDef, Spec, EvaluationParameters, HealthStat);
     
+    // Get source's bonus health stat
     float HealthStatBonus;
     GetCapturedAttributeMagnitude(
         TowerHealthStatics().HealthStatBonusDef, Spec, EvaluationParameters, HealthStatBonus);
 
     // Get base max health value instead of the current one
-    const float MaxHealth = AbilitySystemComponent->GetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute());
+    const float MaxHealth = TowerAbilitySystemComponent->GetNumericAttributeBase(
+        UMTD_HealthSet::GetMaxHealthAttribute());
+
+    // Sum up the health stats
     const float TotalHealthStat = (HealthStat + HealthStatBonus);
 
     auto Formula = [] (float T)
@@ -73,8 +89,12 @@ float UMTD_MMC_TowerMaxHealth::CalculateBaseMagnitude_Implementation(const FGame
             // return ((A * (FMath::Exp(R * (T - T0)))) + B);
             return (1.f + (T / 100.f));
         };
+    
+    // Evaluate how much scale should be applied on health using the health stat
     const float Scale = Formula(TotalHealthStat);
-    const float FinalValue = (MaxHealth * Scale);
+    
+    // Scale up the health
+    const float MaxNewHealth = (MaxHealth * Scale);
 
-    return FinalValue;
+    return MaxNewHealth;
 }

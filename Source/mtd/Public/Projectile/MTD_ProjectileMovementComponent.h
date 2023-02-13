@@ -5,8 +5,16 @@
 
 #include "MTD_ProjectileMovementComponent.generated.h"
 
-UCLASS(meta=(ToolTip="Default projectile movement component class used in this project."))
-class MTD_API UMTD_ProjectileMovementComponent : public UMovementComponent
+/**
+ * Default projectile movement component class used in this project.
+ *
+ * Too lazy to document this one.
+ *
+ * @see AMTD_Projectile
+ */
+UCLASS()
+class MTD_API UMTD_ProjectileMovementComponent
+    : public UMovementComponent
 {
     GENERATED_BODY()
 

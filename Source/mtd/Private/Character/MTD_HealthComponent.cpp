@@ -7,29 +7,20 @@
 
 UMTD_HealthComponent::UMTD_HealthComponent()
 {
+    // Nothing to tick for
     PrimaryComponentTick.bCanEverTick = false;
     PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UMTD_HealthComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc)
+void UMTD_HealthComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *InAbilitySystemComponent)
 {
-    const AActor *Owner = GetOwner();
-    check(Owner);
-
-    if (AbilitySystemComponent)
-    {
-        MTDS_ERROR("Health component for owner [%s] has already been initilized with an ability system",
-            *Owner->GetName());
-        return;
-    }
-
-    AbilitySystemComponent = Asc;
+    Super::InitializeWithAbilitySystem(InAbilitySystemComponent);
     if (!AbilitySystemComponent)
     {
-        MTDS_ERROR("Cannot initilize health component for owner [%s] with a NULL ability system", *Owner->GetName());
         return;
     }
 
+    // Cache the health set to avoid searching for it in ability system component every time it's needed
     HealthSet = AbilitySystemComponent->GetSet<UMTD_HealthSet>();
     if (!HealthSet)
     {
@@ -37,36 +28,41 @@ void UMTD_HealthComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemCompone
         return;
     }
 
+    // Listen for health and max health attribute changes
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_HealthSet::GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_HealthSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
 
+    // Listen for out of health event on health set
     HealthSet->OnOutOfHealthDelegate.AddUObject(this, &ThisClass::OnOutOfHealth);
 
+    // Notify about initial values
     OnHealthChangedDelegate.Broadcast(this, HealthSet->GetHealth(), HealthSet->GetHealth(), nullptr);
     OnMaxHealthChangedDelegate.Broadcast(this, HealthSet->GetMaxHealth(), HealthSet->GetMaxHealth(), nullptr);
 }
 
 void UMTD_HealthComponent::UninitializeFromAbilitySystem()
 {
-    if (HealthSet)
+    if (IsValid(HealthSet))
     {
         HealthSet->OnOutOfHealthDelegate.RemoveAll(this);
     }
 
+    // Nullify ability system related data
     HealthSet = nullptr;
-    AbilitySystemComponent = nullptr;
+
+    Super::UninitializeFromAbilitySystem();
 }
 
 float UMTD_HealthComponent::GetHealth() const
 {
-    return (IsValid(HealthSet)) ? (HealthSet->GetHealth()) : (0.f);
+    return ((IsValid(HealthSet)) ? (HealthSet->GetHealth()) : (0.f));
 }
 
 float UMTD_HealthComponent::GetMaxHealth() const
 {
-    return (IsValid(HealthSet)) ? (HealthSet->GetMaxHealth()) : (0.f);
+    return ((IsValid(HealthSet)) ? (HealthSet->GetMaxHealth()) : (0.f));
 }
 
 float UMTD_HealthComponent::GetHealthNormilized() const
@@ -76,100 +72,88 @@ float UMTD_HealthComponent::GetHealthNormilized() const
         const float Health = HealthSet->GetHealth();
         const float MaxHealth = HealthSet->GetMaxHealth();
 
-        return (MaxHealth > 0.f) ? (Health / MaxHealth) : (0.f);
+        return ((MaxHealth > 0.f) ? (Health / MaxHealth) : (0.f));
     }
     return 0.f;
 }
 
 void UMTD_HealthComponent::StartDeath()
 {
+    // Avoid starting death process if we are already dead
     if (DeathState != EMTD_DeathState::NotDead)
     {
         return;
     }
 
+    // Start dying
     DeathState = EMTD_DeathState::DeathStarted;
 
     AActor *Owner = GetOwner();
     check(IsValid(Owner));
 
+    // Notify about death start
     OnDeathStarted.Broadcast(Owner);
 }
 
 void UMTD_HealthComponent::FinishDeath()
 {
+    // Avoid finishing death process if it isn't in process
     if (DeathState != EMTD_DeathState::DeathStarted)
     {
         return;
     }
 
+    // Finish dying
     DeathState = EMTD_DeathState::DeathFinished;
 
     AActor *Owner = GetOwner();
     check(IsValid(Owner));
 
+    // Notify about death finish
     OnDeathFinished.Broadcast(Owner);
 }
 
 void UMTD_HealthComponent::SelfDestruct(bool bFeelOutOfWorld)
 {
-    if (DeathState == EMTD_DeathState::NotDead && IsValid(AbilitySystemComponent))
+    if (DeathState == EMTD_DeathState::NotDead)
     {
-        // TODO: Implement me
-    }
-}
-
-void UMTD_HealthComponent::OnUnregister()
-{
-    UninitializeFromAbilitySystem();
-
-    Super::OnUnregister();
-}
-
-void UMTD_HealthComponent::ClearGameplayTags()
-{
-    if (!IsValid(AbilitySystemComponent))
-    {
+        MTDS_LOG("Already dead.");
         return;
     }
 
-    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        MTDS_WARN("Ability system component is invalid.");
+        return;
+    }
 
-    AbilitySystemComponent->SetLooseGameplayTagCount(GameplayTags.Status_Death_Dying, 0);
-    AbilitySystemComponent->SetLooseGameplayTagCount(GameplayTags.Status_Death_Dead, 0);
+    // Multiply own health by 0, so that it will be 0
+    AbilitySystemComponent->ApplyModToAttribute(
+        UMTD_HealthSet::GetHealthAttribute(), EGameplayModOp::Multiplicitive, 0.f);
 }
 
 void UMTD_HealthComponent::OnHealthChanged(const FOnAttributeChangeData &ChangeData)
 {
-    OnHealthChangedDelegate.Broadcast(
-        this,
-        ChangeData.OldValue,
-        ChangeData.NewValue,
+    OnHealthChangedDelegate.Broadcast(this, ChangeData.OldValue, ChangeData.NewValue,
         GetInstigatorFromAttrChangeData(ChangeData));
 }
 
 void UMTD_HealthComponent::OnMaxHealthChanged(const FOnAttributeChangeData &ChangeData)
 {
-    OnMaxHealthChangedDelegate.Broadcast(
-        this,
-        ChangeData.OldValue,
-        ChangeData.NewValue,
+    OnMaxHealthChangedDelegate.Broadcast(this, ChangeData.OldValue, ChangeData.NewValue,
         GetInstigatorFromAttrChangeData(ChangeData));
 }
 
-void UMTD_HealthComponent::OnOutOfHealth(
-    AActor *DamageInstigator,
-    AActor *DamageCauser,
-    const FGameplayEffectSpec &DamageEffectSpec,
-    float DamageMagnitude)
+void UMTD_HealthComponent::OnOutOfHealth(AActor *DamageInstigator, AActor *DamageCauser,
+    const FGameplayEffectSpec &DamageEffectSpec, float DamageMagnitude)
 {
     if (!IsValid(AbilitySystemComponent))
     {
         return;
     }
 
-    // Send the "Gameplay.Event.Death" gameplay event through the owner's
-    // ability system. This can be used to trigger a death gameplay ability.
+    // Send the "Gameplay.Event.Death" gameplay event through the owner's ability system.
+    // This can be used to trigger a death gameplay ability.
     FGameplayEventData Payload;
     Payload.EventTag = FMTD_GameplayTags::Get().Gameplay_Event_Death;
     Payload.Instigator = DamageInstigator;
@@ -180,5 +164,6 @@ void UMTD_HealthComponent::OnOutOfHealth(
     Payload.TargetTags = *DamageEffectSpec.CapturedTargetTags.GetAggregatedTags();
     Payload.EventMagnitude = DamageMagnitude;
 
+    // Send a gameplay event containing different death related data
     AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }

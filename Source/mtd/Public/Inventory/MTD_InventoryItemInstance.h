@@ -9,8 +9,9 @@
 class UBoxComponent;
 
 /**
- * Actor instance of an existing item in world. The actor is a frontend means to use items that have been dropped on the
- * floor.
+ * Actor instance of an existing item in world.
+ * 
+ * It's a frontend means to use items that have been dropped on the floor.
  */
 UCLASS()
 class MTD_API AMTD_InventoryItemInstance
@@ -23,7 +24,11 @@ public:
 
 public:
     AMTD_InventoryItemInstance();
-    
+
+    /**
+     * Set item data the instance has to visualize.
+     * @param   InItemData: item data to set.
+     */
     void SetItemData(UMTD_BaseInventoryItemData *InItemData);
 
     //~IMTD_Interactle Interface
@@ -34,16 +39,20 @@ protected:
     //~End of IMTD_Interactle Interface
     
     //~End of AActor Interface
+    virtual void OnConstruction(const FTransform &Transform) override;
     virtual void BeginPlay() override;
     //~End of AActor Interface
 
 private:
+    /** Object mesh. */
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UStaticMeshComponent> StaticMeshComponent = nullptr;
-    
+
+    /** Object collision box. */
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="MTD|Components", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UBoxComponent> BoxComponent = nullptr;
 
+    /** Backend item. */
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true", ExposeOnSpawn))
     TObjectPtr<UMTD_BaseInventoryItemData> ItemData = nullptr;
 };

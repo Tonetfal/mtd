@@ -5,16 +5,6 @@
 #include "GameplayEffectExtension.h"
 #include "GameplayEffectTypes.h"
 
-bool UMTD_HealthSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData &Data)
-{
-    if (!Super::PreGameplayEffectExecute(Data))
-    {
-        return false;
-    }
-
-    return true;
-}
-
 void UMTD_HealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData &Data)
 {
     Super::PostGameplayEffectExecute(Data);
@@ -22,18 +12,23 @@ void UMTD_HealthSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackD
     if (Data.EvaluatedData.Attribute == GetHealthAttribute())
     {
         const float HealthValue = GetHealth();
+        
+        // Check if owner should die
         if (((HealthValue <= 0.f) && (!bOutOfHealth)))
         {
             if (OnOutOfHealthDelegate.IsBound())
             {
+                // Prepare data to send about death
                 const FGameplayEffectContextHandle &EffectContext = Data.EffectSpec.GetEffectContext();
                 AActor *Instigator = EffectContext.GetOriginalInstigator();
                 AActor *Causer = EffectContext.GetEffectCauser();
 
+                // Notify about death
                 OnOutOfHealthDelegate.Broadcast(Instigator, Causer, Data.EffectSpec, Data.EvaluatedData.Magnitude);
             }
         }
 
+        // Update death state
         bOutOfHealth = (HealthValue <= 0.f);
     }
 }
@@ -58,7 +53,7 @@ void UMTD_HealthSet::PostAttributeChange(const FGameplayAttribute &Attribute, fl
 
     if (Attribute == GetMaxHealthAttribute())
     {
-        // Decrease current health if max health has decreased
+        // Clamp current health with new max health in mind
         const float HealthValue = GetHealth();
         if (HealthValue > NewValue)
         {
@@ -80,7 +75,7 @@ void UMTD_HealthSet::PostAttributeBaseChange(const FGameplayAttribute &Attribute
     
     if (Attribute == GetMaxHealthAttribute())
     {
-        // Decrease current health if max health has decreased
+        // Clamp current health with new max health in mind
         const float HealthValue = GetHealth();
         if (HealthValue > NewValue)
         {
@@ -95,10 +90,12 @@ void UMTD_HealthSet::ClampAttribute(const FGameplayAttribute &Attribute, float &
 {
     if (Attribute == GetHealthAttribute())
     {
+        // Range [0, MaxHealth]
         NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
     }
     else if (Attribute == GetMaxHealthAttribute())
     {
+        // Range [1, MAX_FLOAT]
         NewValue = FMath::Max(NewValue, 1.f);
     }
 }

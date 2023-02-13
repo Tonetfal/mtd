@@ -10,6 +10,7 @@
 
 AMTD_GameModeBase::AMTD_GameModeBase()
 {
+    // Nothing to tick for
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 }
@@ -17,7 +18,9 @@ AMTD_GameModeBase::AMTD_GameModeBase()
 void AMTD_GameModeBase::PostActorCreated()
 {
     Super::PostActorCreated();
-    StartListeningForPlayers();
+
+    // Listen for players as soon as possible
+    ListenForPlayers();
 }
 
 void AMTD_GameModeBase::AddExp(int32 Exp, int32 PlayerIndex)
@@ -65,16 +68,16 @@ void AMTD_GameModeBase::AddMana(int32 Mana, int32 PlayerIndex)
 void AMTD_GameModeBase::BroadcastExp(int32 Exp)
 {
     int32 Index = 0;
-    for (const AMTD_PlayerState *Ps : Players)
+    for (const AMTD_PlayerState *PlayerState : Players)
     {
-        if (!IsValid(Ps))
+        if (!IsValid(PlayerState))
         {
-            MTDS_WARN("MTD Player State on index [%d] is invalid.", Index);
+            MTDS_WARN("Player (%d) is invalid.", Index);
             Index++;
             return;
         }
     
-        UMTD_LevelComponent *LevelComponent = Ps->GetLevelComponent();
+        UMTD_LevelComponent *LevelComponent = PlayerState->GetLevelComponent();
         check(IsValid(LevelComponent));
     
         LevelComponent->AddExp(Exp);
@@ -84,12 +87,13 @@ void AMTD_GameModeBase::BroadcastExp(int32 Exp)
 
 AActor *AMTD_GameModeBase::GetGameTarget(APawn *Client) const
 {
+    // To override
     return nullptr;
 }
 
 void AMTD_GameModeBase::TerminateGame(EMTD_GameResult Reason)
 {
-    // Avoid dispatching if already did
+    // Avoid terminating if already did
     if (bGameOver)
     {
         return;
@@ -103,12 +107,15 @@ void AMTD_GameModeBase::TerminateGame(EMTD_GameResult Reason)
     {
         MTD_LOG("Terminate game due lose");
     }
-    
+
+    // Save game state
     bGameOver = true;
+
+    // Notify about game termination
     OnGameTerminatedDelegate.Broadcast(Reason);
 }
 
-void AMTD_GameModeBase::StartListeningForPlayers()
+void AMTD_GameModeBase::ListenForPlayers()
 {
     const UWorld *World = GetWorld();
     check(IsValid(World));
@@ -134,37 +141,39 @@ void AMTD_GameModeBase::OnActorSpawned(AActor *Actor)
         return;
     }
 
-    OnAddPlayer(Actor);
+    OnAddPlayer(PlayerState);
 }
 
-void AMTD_GameModeBase::OnAddPlayer(AActor *Actor)
+void AMTD_GameModeBase::OnAddPlayer(AMTD_PlayerState *InPlayerState)
 {
-    check(IsValid(Actor));
-    check(Actor->IsA(AMTD_PlayerState::StaticClass()));
-    
-    auto PlayerState = Cast<AMTD_PlayerState>(Actor);
-    check(!PlayerState->IsABot());
-    
-    Players.Add(PlayerState);
-    PlayerState->OnDestroyed.AddDynamic(this, &ThisClass::OnRemovePlayer);
-    PlayerState->OnHeroClassesSetDelegate.AddUObject(this, &ThisClass::OnHeroClassesChanged);
+    check(IsValid(InPlayerState));
+    check(!InPlayerState->IsABot());
 
-    MTDS_LOG("Player State [%s] has been added to players list.", *PlayerState->GetName());
+    // Add to players list
+    Players.Add(InPlayerState);
+
+    // Listen for destroy event and for class change
+    InPlayerState->OnDestroyed.AddDynamic(this, &ThisClass::OnRemovePlayer);
+    InPlayerState->OnHeroClassesSetDelegate.AddUObject(this, &ThisClass::OnHeroClassesChanged);
+
+    MTDS_LOG("Player State [%s] has been added to players list.", *InPlayerState->GetName());
 }
 
 void AMTD_GameModeBase::OnRemovePlayer(AActor *Actor)
 {
-    auto Ps = Cast<AMTD_PlayerState>(Actor);
-    Players.Remove(Ps);
+    auto PlayerState = CastChecked<AMTD_PlayerState>(Actor);
+
+    // Remove from players list
+    Players.Remove(PlayerState);
     
-    MTDS_LOG("Player State [%s] has been removed from players list.", *Ps->GetName());
+    MTDS_LOG("Player [%s] has been removed from players list.", *GetNameSafe(PlayerState));
 }
 
 void AMTD_GameModeBase::OnHeroClassesChanged(const FGameplayTagContainer &HeroClasses)
 {
     UMTD_ItemDropManager *ItemDropManager = UMTD_ItemDropManager::Get();
 
-    // May be invalid prior to play-time, in BPs viewport for intance
+    // May be invalid prior to play-time, for instance, in BPs viewport
     if (IsValid(ItemDropManager))
     {
         ItemDropManager->AddHeroClasses(HeroClasses);
@@ -176,14 +185,14 @@ AMTD_PlayerState *AMTD_GameModeBase::GetPlayerState(int32 PlayerIndex)
     const int32 Num = Players.Num();
     if (!((PlayerIndex >= 0) && (PlayerIndex < Num)))
     {
-        MTDS_WARN("Player Index [%d] is invalid.", PlayerIndex);
+        MTDS_WARN("Player index [%d] is invalid.", PlayerIndex);
         return nullptr;
     }
     
     AMTD_PlayerState *PlayerState = Players[PlayerIndex];
     if (!IsValid(PlayerState))
     {
-        MTDS_WARN("MTD Player State on index [%d] is invalid.", PlayerIndex);
+        MTDS_WARN("Player (%d) is invalid.", PlayerIndex);
         return nullptr;
     }
 

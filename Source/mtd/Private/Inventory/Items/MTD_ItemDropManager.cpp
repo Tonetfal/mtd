@@ -1,7 +1,7 @@
 ﻿#include "Inventory/Items/MTD_ItemDropManager.h"
 
 #include "AbilitySystem/MTD_GameplayTags.h"
-#include "Character/MTD_BaseEnemyCharacter.h"
+#include "Character/MTD_BaseFoeCharacter.h"
 
 UMTD_ItemDropManager::UMTD_ItemDropManager()
 {
@@ -34,21 +34,20 @@ void UMTD_ItemDropManager::Init()
     }
 
     // Dispatch broadcast lists
-    for (const TSubclassOf<AMTD_BaseEnemyCharacter> Class : BroadcastListeners)
+    for (const TSubclassOf<AMTD_BaseFoeCharacter> Class : BroadcastListeners)
     {
         AddItemDropLists(BroadcastItemDropListPool, Class);
     }
 
     // Add gathered lists to the global one
-    AddListsInGlobalPool(ClassifiedUnsortedSet);
-    MTDS_LOG("Item Drop Manager has been initialized.");
+    AddListsInActivePool(ClassifiedUnsortedSet);
+    MTDS_LOG("Item drop manager has been initialized.");
 }
 
 UMTD_ItemDropManager *UMTD_ItemDropManager::Construct()
 {
-    if (IsValid(ItemDropManager))
+    if (!ensureMsgf(!IsValid(ItemDropManager), TEXT("Item drop manager is already instantiated.")))
     {
-        MTD_WARN("Item Drop Manager is already instantiated.");
         return nullptr;
     }
     
@@ -60,7 +59,7 @@ UMTD_ItemDropManager *UMTD_ItemDropManager::Construct()
     const UClass *DefaultClass = LoadClass<UMTD_ItemDropManager>(nullptr, *ClassName);
     if (!DefaultClass)
     {
-        MTD_WARN("Default Item Drop Manager Class is NULL.");
+        MTD_WARN("Default item drop manager class is NULL.");
         return nullptr;
     }
     
@@ -71,11 +70,11 @@ UMTD_ItemDropManager *UMTD_ItemDropManager::Construct()
 
     if (!IsValid(ItemDropManager))
     {
-        MTD_WARN("Failed to create Item Drop Manager.");
+        MTD_WARN("Failed to create item drop manager.");
         return nullptr;
     }
 
-    MTD_LOG("Item Drop Manager has been constructed.");
+    MTD_LOG("Item drop manager has been successfully created.");
     return ItemDropManager;
 }
 
@@ -87,7 +86,7 @@ void UMTD_ItemDropManager::Destroy()
         ItemDropManager->MarkAsGarbage();
         ItemDropManager = nullptr;
         
-        MTD_LOG("Item Drop Manager has been destroyed.");
+        MTD_LOG("Item drop manager has been destroyed.");
     }
 }
 
@@ -96,25 +95,115 @@ UMTD_ItemDropManager *UMTD_ItemDropManager::Get()
     return ItemDropManager;
 }
 
+bool UMTD_ItemDropManager::GetRandomItemDropList(TSubclassOf<AMTD_BaseFoeCharacter> Class,
+    const UMTD_ItemDropList **OutItemDropList) const
+{
+    if (!OutItemDropList)
+    {
+        MTDS_WARN("Pointer to pointer to item drop list is NULL.");
+        return false;
+    }
+    
+    *OutItemDropList = nullptr;
+    
+    if (!IsValid(Class))
+    {
+        MTDS_WARN("Class is invalid.");
+        return false;
+    }
+
+    const float RandChance = FMath::FRandRange(0.f, 100.f);
+    if (RandChance > DropChance)
+    {
+        // Randomized value is too low to give an item
+        return false;
+    }
+
+    const SortedItemDropListSet *Container = ActiveSortedItemDropList.Find(Class);
+    if (!Container)
+    {
+        MTDS_WARN("There are no items to drop for class [%s].", *Class->GetName());
+        return false;
+    }
+
+    // Randomize a weight value [0.0-1.0]
+    const float RandWeight = FMath::FRand();
+    
+    // Search for the highest possible weight. Note that container is sorted in ascending order
+    for (const auto &[Weight, List] : *Container)
+    {
+        if (Weight <= RandWeight)
+        {
+            // List weight is less or equal than the randomized weight, hence save it for now
+            *OutItemDropList = List;
+        }
+        else
+        {
+            // Current list weights more than the randomized weight, hence the last saved item drop list has the
+            // greatest possible value for the randomized weight
+            break;
+        }
+    }
+
+    if (OutItemDropList)
+    {
+        // An item drop list has been found
+        return true;
+    }
+
+    // No item drop list has been found. Should never happen
+    ensure(false);
+    return false;
+}
+
+bool UMTD_ItemDropManager::GetRandomItemID(TSubclassOf<AMTD_BaseFoeCharacter> Class, int32 &OutItemID) const
+{
+    if (!IsValid(Class))
+    {
+        MTDS_WARN("Class is invalid.");
+        return false;
+    }
+
+    const UMTD_ItemDropList *ItemDropList = nullptr;
+    if (!GetRandomItemDropList(Class, /* OutItemDropList */ &ItemDropList))
+    {
+        return false;
+    }
+    
+    if (!IsValid(ItemDropList))
+    {
+        MTDS_WARN("Item drop list is invalid.");
+        return false;
+    }
+
+    // Get a random element from the randomized list
+    const int32 Num = ItemDropList->ItemIDs.Num();
+    const int32 RandNum = FMath::RandRange(0, (Num - 1));
+    const int32 RandID = ItemDropList->ItemIDs[RandNum];
+    
+    OutItemID = RandID;
+    return true;
+}
+
 void UMTD_ItemDropManager::AddListInPoolBroadcast(const UMTD_ItemDropList *ItemDropList, bool bSort)
 {
     if (!IsValid(ItemDropList))
     {
-        MTDS_WARN("Item Drops Data is invalid.");
+        MTDS_WARN("Item drops data is invalid.");
         return;
     }
 
     // Avoid adding already contained items
     if (BroadcastItemDropListPool.Contains(ItemDropList))
     {
-        MTDS_WARN("Item Drop Data [%s] is already contained in Broadcast Item Drop List Pool.", 
+        MTDS_WARN("Item drop data [%s] is already contained in broadcast item drop list Pool.", 
             *ItemDropList->GetName());
         return;
     }
 
     // Add item drop list to broadcast pool
     BroadcastItemDropListPool.Add(ItemDropList);
-    MTDS_LOG("Item Drop List [%s] has been added to list broadcast pool.", *ItemDropList->GetName());
+    MTDS_LOG("Item drop list [%s] has been added to list broadcast pool.", *ItemDropList->GetName());
 
     // Add new list to global list only if there is at least one hero class that satisfies the given list
     if (ItemDropList->HeroClasses.HasAny(ActiveHeroClasses))
@@ -122,18 +211,18 @@ void UMTD_ItemDropManager::AddListInPoolBroadcast(const UMTD_ItemDropList *ItemD
         ClassifiedUnsortedItemDropListSet ClassifiedUnsortedSet;
         
         // Gather all listeners into a single container
-        for (const TSubclassOf<AMTD_BaseEnemyCharacter> &Class : BroadcastListeners)
+        for (const TSubclassOf<AMTD_BaseFoeCharacter> &Class : BroadcastListeners)
         {
-            UnsortedItemDropListSet &GlobalUnsortedSet = ClassifiedUnsortedSet.Add(Class);
-            GlobalUnsortedSet.Add(ItemDropList);
+            UnsortedItemDropListSet &ActiveUnsortedSet = ClassifiedUnsortedSet.Add(Class);
+            ActiveUnsortedSet.Add(ItemDropList);
         }
 
         // Make a single call
-        AddListsInGlobalPool(ClassifiedUnsortedSet, bSort);
+        AddListsInActivePool(ClassifiedUnsortedSet, bSort);
     }
 }
 
-void UMTD_ItemDropManager::AddListInPool(TSubclassOf<AMTD_BaseEnemyCharacter> Class,
+void UMTD_ItemDropManager::AddListInPool(TSubclassOf<AMTD_BaseFoeCharacter> Class,
     const UMTD_ItemDropList *ItemDropList, bool bSort)
 {
     if (!IsValid(Class))
@@ -144,7 +233,7 @@ void UMTD_ItemDropManager::AddListInPool(TSubclassOf<AMTD_BaseEnemyCharacter> Cl
     
     if (!IsValid(ItemDropList))
     {
-        MTDS_WARN("Item Drops Data is invalid.");
+        MTDS_WARN("Item drops data is invalid.");
         return;
     }
 
@@ -154,20 +243,20 @@ void UMTD_ItemDropManager::AddListInPool(TSubclassOf<AMTD_BaseEnemyCharacter> Cl
     // Avoid adding already contained items
     if (ClassifiedUnsortedSet.ItemDropsData.Contains(ItemDropList))
     {
-        MTDS_WARN("Item Drop Data [%s] is already contained in Item Drop List Pool for Class [%s].", 
+        MTDS_WARN("Item drop data [%s] is already contained in Item drop list Pool for Class [%s].", 
             *ItemDropList->GetName(), *Class->GetName());
         return;
     }
 
     // Add item drop list to classified pool
     ClassifiedUnsortedSet.ItemDropsData.Add(ItemDropList);
-    MTDS_LOG("Item Drop List [%s] has been added to list pool for Class [%s].", *ItemDropList->GetName(), 
+    MTDS_LOG("Item drop list [%s] has been added to list pool for Class [%s].", *ItemDropList->GetName(), 
         *Class->GetName());
 
     // Add new list to global list only if there is at least one hero class that satisfies the given list
     if (ItemDropList->HeroClasses.HasAny(ActiveHeroClasses))
     {
-        AddListInGlobalPool(Class, ItemDropList, bSort);
+        AddListInActivePool(Class, ItemDropList, bSort);
     }
 }
 
@@ -191,11 +280,11 @@ void UMTD_ItemDropManager::AddClassifiedListsInPool(const ClassifiedUnsortedItem
     if (((bSort) && (bChanged)))
     {
         // Keep the lists sorted
-        SortGlobalItemDropLists();
+        SortActiveItemDropListsPool();
     }
 }
 
-void UMTD_ItemDropManager::RemoveListInPool(TSubclassOf<AMTD_BaseEnemyCharacter> Class,
+void UMTD_ItemDropManager::RemoveListInPool(TSubclassOf<AMTD_BaseFoeCharacter> Class,
     const UMTD_ItemDropList *ItemDropList, bool bSort)
 {
     if (!IsValid(Class))
@@ -206,7 +295,7 @@ void UMTD_ItemDropManager::RemoveListInPool(TSubclassOf<AMTD_BaseEnemyCharacter>
     
     if (!IsValid(ItemDropList))
     {
-        MTDS_WARN("Item Drops Data is invalid.");
+        MTDS_WARN("Item drops data is invalid.");
         return;
     }
 
@@ -214,7 +303,7 @@ void UMTD_ItemDropManager::RemoveListInPool(TSubclassOf<AMTD_BaseEnemyCharacter>
     FMTD_ItemDropListSet *ClassifiedUnsortedSet = ClassifiedItemDropListPool.Find(Class);
     if (!ClassifiedUnsortedSet)
     {
-        MTDS_WARN("Class [%s] is not present in Classified Item Drop List Pool.", *Class->GetName());
+        MTDS_WARN("Class [%s] is not present in classified item drop list pool.", *Class->GetName());
         return;
     }
     
@@ -222,12 +311,12 @@ void UMTD_ItemDropManager::RemoveListInPool(TSubclassOf<AMTD_BaseEnemyCharacter>
     const int32 NumRemovedItems = ClassifiedUnsortedSet->ItemDropsData.Remove(ItemDropList);
     if (NumRemovedItems == 0)
     {
-        MTDS_WARN("Item Drop List [%s] is not present in Classified Item Drop List Pool for Class [%s].",
+        MTDS_WARN("Item drop list [%s] is not present in classified item drop list pool for class [%s].",
             *ItemDropList->GetName(), *Class->GetName());
         return;
     }
 
-    RemoveListFromGlobalPool(Class, ItemDropList, bSort);
+    RemoveListFromActivePool(Class, ItemDropList, bSort);
 }
 
 void UMTD_ItemDropManager::RemoveClassifiedListsFromPool(const ClassifiedUnsortedItemDropListSet &InItemDropLists,
@@ -250,7 +339,7 @@ void UMTD_ItemDropManager::RemoveClassifiedListsFromPool(const ClassifiedUnsorte
     if (((bSort) && (bChanged)))
     {
         // Keep the lists sorted
-        SortGlobalItemDropLists();
+        SortActiveItemDropListsPool();
     }
 }
 
@@ -271,14 +360,14 @@ void UMTD_ItemDropManager::AddHeroClasses(const FGameplayTagContainer &HeroClass
             ActiveHeroClasses.AddTag(HeroClass);
             NewHeroClasses.AddTag(HeroClass);
             
-            MTDS_LOG("New Hero Class has been added: [%s].", *HeroClass.ToString());
+            MTDS_LOG("New hero class [%s] has been added.", *HeroClass.ToString());
         }
     }
 
     if (!NewHeroClasses.IsEmpty())
     {
         // Try to add new lists for new classes
-        AddListsToGlobalDropsForClasses(NewHeroClasses);
+        AddListsToActivePoolForClasses(NewHeroClasses);
     }
 }
 
@@ -302,34 +391,34 @@ void UMTD_ItemDropManager::RemoveHeroClasses(const FGameplayTagContainer &HeroCl
     if (!RemovedHeroClasses.IsEmpty())
     {
         // Try to remove lists for removed classes
-        RemoveListsFromGlobalDropsForClasses(RemovedHeroClasses);
+        RemoveListsFromActivePoolForClasses(RemovedHeroClasses);
     }
 }
 
-void UMTD_ItemDropManager::AddListInGlobalPool(TSubclassOf<AMTD_BaseEnemyCharacter> Class,
+void UMTD_ItemDropManager::AddListInActivePool(TSubclassOf<AMTD_BaseFoeCharacter> Class,
     const UMTD_ItemDropList *ItemDropList, bool bSort)
 {
     UnsortedItemDropListSet UnsortedListSet { ItemDropList };
     ClassifiedUnsortedItemDropListSet ClassifiedUnsortedListSet { { Class, UnsortedListSet } };
-    AddListsInGlobalPool(ClassifiedUnsortedListSet, bSort);
+    AddListsInActivePool(ClassifiedUnsortedListSet, bSort);
 }
 
-void UMTD_ItemDropManager::AddListsInGlobalPool(ClassifiedUnsortedItemDropListSet &ClassifiedUnsortedSet, bool bSort)
+void UMTD_ItemDropManager::AddListsInActivePool(ClassifiedUnsortedItemDropListSet &InDropItemLists, bool bSort)
 {
     bool bChanged = false;
     
     // Dispatch all item drop lists
-    for (const auto &[Class, ClassUnsortedSet] : ClassifiedUnsortedSet)
+    for (const auto &[Class, ClassUnsortedSet] : InDropItemLists)
     {
         // Get unsorted item drop list set for current class
-        UnsortedItemDropListSet &GlobalClassUnsortedSet = GlobalUnsortedItemDropList.FindOrAdd(Class);
+        UnsortedItemDropListSet &ActiveClassUnsortedSet = ActiveUnsortedItemDropList.FindOrAdd(Class);
 
         // Add each item from the given set for current class in global pool
         for (const UMTD_ItemDropList *ItemDropList : ClassUnsortedSet)
         {
-            if (!GlobalClassUnsortedSet.Contains(ItemDropList))
+            if (!ActiveClassUnsortedSet.Contains(ItemDropList))
             {
-                GlobalClassUnsortedSet.Add(ItemDropList);
+                ActiveClassUnsortedSet.Add(ItemDropList);
                 bChanged = true;
             }
         }
@@ -337,7 +426,7 @@ void UMTD_ItemDropManager::AddListsInGlobalPool(ClassifiedUnsortedItemDropListSe
         const int32 NumItems = ClassUnsortedSet.Num();
         if (NumItems > 0)
         {
-            MTDS_LOG("[%d] Item Drop Lists have added to Global Item Pool for Class [%s].",
+            MTDS_LOG("Item drop lists [%d] have added to global item pool for class [%s].",
                 NumItems, *Class->GetName());
         }
     }
@@ -346,28 +435,28 @@ void UMTD_ItemDropManager::AddListsInGlobalPool(ClassifiedUnsortedItemDropListSe
     if (((bSort) && (bChanged)))
     {
         // Keep the lists sorted
-        SortGlobalItemDropLists();
+        SortActiveItemDropListsPool();
     }
 }
 
-void UMTD_ItemDropManager::RemoveListFromGlobalPool(TSubclassOf<AMTD_BaseEnemyCharacter> Class,
+void UMTD_ItemDropManager::RemoveListFromActivePool(TSubclassOf<AMTD_BaseFoeCharacter> Class,
     const UMTD_ItemDropList *ItemDropList, bool bSort)
 {
     UnsortedItemDropListSet UnsortedListSet { ItemDropList };
     ClassifiedUnsortedItemDropListSet ClassifiedUnsortedListSet { { Class, UnsortedListSet } };
-    RemoveListsFromGlobalPool(ClassifiedUnsortedListSet, bSort);
+    RemoveListsFromActivePool(ClassifiedUnsortedListSet, bSort);
 }
 
-void UMTD_ItemDropManager::RemoveListsFromGlobalPool(ClassifiedUnsortedItemDropListSet &RemovedItems, bool bSort)
+void UMTD_ItemDropManager::RemoveListsFromActivePool(ClassifiedUnsortedItemDropListSet &InDropItemLists, bool bSort)
 {
     // Dispatch all item drop lists
-    for (const auto &[Class, ClassUnsortedSet] : RemovedItems)
+    for (const auto &[Class, ClassUnsortedSet] : InDropItemLists)
     {
         // Find classified set for this class in global pool
-        UnsortedItemDropListSet *GlobalUnsortedSet = GlobalUnsortedItemDropList.Find(Class);
-        if (!GlobalUnsortedSet)
+        UnsortedItemDropListSet *ActiveUnsortedSet = ActiveUnsortedItemDropList.Find(Class);
+        if (!ActiveUnsortedSet)
         {
-            MTDS_WARN("Class [%s] is not present in Global Unsorted Item Drop List Pool.", *Class->GetName());
+            MTDS_WARN("Class [%s] is not present in global unsorted item drop list pool.", *Class->GetName());
             continue;
         }
 
@@ -375,10 +464,10 @@ void UMTD_ItemDropManager::RemoveListsFromGlobalPool(ClassifiedUnsortedItemDropL
         for (const auto &ItemDropList : ClassUnsortedSet)
         {
             // Try to remove given list from global pool
-            const int32 NumRemovedItems = GlobalUnsortedSet->Remove(ItemDropList);
+            const int32 NumRemovedItems = ActiveUnsortedSet->Remove(ItemDropList);
             if (NumRemovedItems == 0)
             {
-                MTDS_WARN("Item Drop List [%s] is not present in Global Unsorted Item Drop List Pool for Class [%s].",
+                MTDS_WARN("Item drop list [%s] is not present in global unsorted item drop list pool for class [%s].",
                     *ItemDropList->GetName(), *Class->GetName());
             }
         }
@@ -386,7 +475,7 @@ void UMTD_ItemDropManager::RemoveListsFromGlobalPool(ClassifiedUnsortedItemDropL
         const int32 NumItems = ClassUnsortedSet.Num();
         if (NumItems > 0)
         {
-            MTDS_LOG("[%d] Item Drop Lists have removed from Global Item Pool for Class [%s].",
+            MTDS_LOG("[%d] Item drop lists have removed from global item pool for class [%s].",
                 NumItems, *Class->GetName());
         }
     }
@@ -394,11 +483,11 @@ void UMTD_ItemDropManager::RemoveListsFromGlobalPool(ClassifiedUnsortedItemDropL
     if (bSort)
     {
         // Keep the lists sorted
-        SortGlobalItemDropLists();
+        SortActiveItemDropListsPool();
     }
 }
 
-void UMTD_ItemDropManager::AddListsToGlobalDropsForClasses(const FGameplayTagContainer &AddedHeroClasses)
+void UMTD_ItemDropManager::AddListsToActivePoolForClasses(const FGameplayTagContainer &AddedHeroClasses)
 {
     ClassifiedUnsortedItemDropListSet ClassifiedSet;
     
@@ -408,7 +497,7 @@ void UMTD_ItemDropManager::AddListsToGlobalDropsForClasses(const FGameplayTagCon
             UnsortedItemDropListSet &ClassLocalUnsortedSet = ClassifiedSet.Add(Class);
         
             // Get item drop lists for current class to avoid adding the same ones
-            const UnsortedItemDropListSet *FoundGlobalClassUnsortedSet = GlobalUnsortedItemDropList.Find(Class);
+            const UnsortedItemDropListSet *FoundActiveClassUnsortedSet = ActiveUnsortedItemDropList.Find(Class);
         
             for (const ItemPtr &ItemDropsList : ItemDropListsPool)
             {
@@ -416,7 +505,7 @@ void UMTD_ItemDropManager::AddListsToGlobalDropsForClasses(const FGameplayTagCon
                 if (ItemDropsList->HeroClasses.HasAny(AddedHeroClasses))
                 {
                     // Check whether the set is already added. A set may be have several hero classes
-                    if (((!FoundGlobalClassUnsortedSet) || (!FoundGlobalClassUnsortedSet->Contains(ItemDropsList))))
+                    if (((!FoundActiveClassUnsortedSet) || (!FoundActiveClassUnsortedSet->Contains(ItemDropsList))))
                     {
                         ClassLocalUnsortedSet.Add(ItemDropsList);
                     }
@@ -431,7 +520,7 @@ void UMTD_ItemDropManager::AddListsToGlobalDropsForClasses(const FGameplayTagCon
     }
 
     // Dispatch broadcast lists
-    for (const TSubclassOf<AMTD_BaseEnemyCharacter> Class : BroadcastListeners)
+    for (const TSubclassOf<AMTD_BaseFoeCharacter> Class : BroadcastListeners)
     {
         AddItemDropLists(BroadcastItemDropListPool, Class);
     }
@@ -439,12 +528,12 @@ void UMTD_ItemDropManager::AddListsToGlobalDropsForClasses(const FGameplayTagCon
     AddClassifiedListsInPool(ClassifiedSet);
 }
 
-void UMTD_ItemDropManager::RemoveListsFromGlobalDropsForClasses(const FGameplayTagContainer &RemovedHeroClasses)
+void UMTD_ItemDropManager::RemoveListsFromActivePoolForClasses(const FGameplayTagContainer &RemovedHeroClasses)
 {
     ClassifiedUnsortedItemDropListSet ClassifiedSet;
 
     // Iterate through all added item drop lists
-    for (const auto &[Class, ItemDropsListSet] : GlobalUnsortedItemDropList)
+    for (const auto &[Class, ItemDropsListSet] : ActiveUnsortedItemDropList)
     {
         // Get reference to current class item drop lists
         for (const UMTD_ItemDropList *ItemDropsList : ItemDropsListSet)
@@ -467,10 +556,10 @@ void UMTD_ItemDropManager::RemoveListsFromGlobalDropsForClasses(const FGameplayT
     RemoveClassifiedListsFromPool(ClassifiedSet);
 }
 
-void UMTD_ItemDropManager::SortGlobalItemDropLists()
+void UMTD_ItemDropManager::SortActiveItemDropListsPool()
 {
     // Sort gathered data
-    for (const auto &[Class, ClassItemDropLists] : GlobalUnsortedItemDropList)
+    for (const auto &[Class, ClassItemDropLists] : ActiveUnsortedItemDropList)
     {
         // Find max weight
         float MaxWeight = 0.f;
@@ -493,90 +582,14 @@ void UMTD_ItemDropManager::SortGlobalItemDropLists()
             const float NormalizedWeight = (ItemDropList->Weight / MaxWeight);
             ClassSortedItemDropLists.Add(NormalizedWeight, ItemDropList);
 
-            MTDS_VERBOSE("Class [%s] has received an Item Drop List [%s] with Normalized Weight [%f].",
+            MTDS_VERBOSE("Class [%s] has received an item drop list [%s] with normalized weight [%f].",
                 *Class->GetName(), *ItemDropList->GetName(), NormalizedWeight);
         }
 
         // Delete old values
-        GlobalSortedItemDropList.Remove(Class);
+        ActiveSortedItemDropList.Remove(Class);
 
         // Bind the computed data with character class
-        GlobalSortedItemDropList.Add(Class, ClassSortedItemDropLists);
+        ActiveSortedItemDropList.Add(Class, ClassSortedItemDropLists);
     }
-}
-
-bool UMTD_ItemDropManager::GetRandomItemDropList(TSubclassOf<AMTD_BaseEnemyCharacter> Class,
-    const UMTD_ItemDropList **OutItemDropList) const
-{
-    if (!OutItemDropList)
-    {
-        MTDS_WARN("Pointer to pointer to Item Drop List is NULL.");
-        return false;
-    }
-    
-    *OutItemDropList = nullptr;
-    
-    if (!IsValid(Class))
-    {
-        MTDS_WARN("Class is invalid.");
-        return false;
-    }
-
-    const float RandChance = FMath::FRandRange(0.f, 100.f);
-    if (RandChance > DropChance)
-    {
-        // Randomized value is too low to give an item
-        return false;
-    }
-
-    const SortedItemDropListSet *Container = GlobalSortedItemDropList.Find(Class);
-    if (!Container)
-    {
-        // There are no items to drop for that character
-        return false;
-    }
-
-    // Search for the lowest possible weight
-    const float RandWeight = FMath::FRand();
-    for (const auto &[Weight, List] : *Container)
-    {
-        if (Weight >= RandWeight)
-        {
-            *OutItemDropList = List;
-            return true;
-        }
-    }
-
-    // Should never happen
-    ensureAlways(false);
-    return false;
-}
-
-bool UMTD_ItemDropManager::GetRandomItemID(TSubclassOf<AMTD_BaseEnemyCharacter> Class, int32 &OutItemID) const
-{
-    if (!IsValid(Class))
-    {
-        MTDS_WARN("Class is invalid.");
-        return false;
-    }
-
-    const UMTD_ItemDropList *ItemDropList = nullptr;
-    if (!GetRandomItemDropList(Class, /* OutItemDropList */ &ItemDropList))
-    {
-        return false;
-    }
-    
-    if (!IsValid(ItemDropList))
-    {
-        MTDS_WARN("Item Drop List is invalid.");
-        return false;
-    }
-
-    // Get a random element from the randomized list
-    const int32 Num = ItemDropList->ItemIDs.Num();
-    const int32 RandNum = FMath::RandRange(0, (Num - 1));
-    const int32 RandID = ItemDropList->ItemIDs[RandNum];
-    
-    OutItemID = RandID;
-    return true;
 }

@@ -6,10 +6,11 @@
 #include "MTD_BalanceSet.generated.h"
 
 /**
- * Attribute set that defines all the balance related required data for a Character.
+ * Attribute set containing all the owner's balance related data.
  */
 UCLASS()
-class MTD_API UMTD_BalanceSet : public UMTD_AttributeSet
+class MTD_API UMTD_BalanceSet
+    : public UMTD_AttributeSet
 {
     GENERATED_BODY()
 
@@ -28,6 +29,12 @@ protected:
     virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData &Data) override;
 
 public:
+    /**
+     * Delegate to fire when owner's balance is down, which happens when last applied balance damage >= threshold.
+     * 
+     * The delegate must be mutable because it's used from outside, and non-ASC code only can have const pointers to
+     * an attribute set.
+     */
     mutable FAttributeEventSignature OnBalanceDownDelegate;
 
 protected:

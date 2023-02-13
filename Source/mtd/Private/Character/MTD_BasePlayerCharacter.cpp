@@ -8,10 +8,9 @@
 #include "Camera/CameraComponent.h"
 #include "Character/MTD_CharacterCoreTypes.h"
 #include "Character/MTD_LevelComponent.h"
-#include "Character/MTD_PlayerExtensionComponent.h"
+#include "CombatSystem/MTD_CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/MTD_CombatComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/DataTableFunctionLibrary.h"
@@ -20,8 +19,9 @@
 
 AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
 {
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bStartWithTickEnabled = true;
+    // Nothing to tick for
+    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bStartWithTickEnabled = false;
 
     UCapsuleComponent *CollisionComponent = GetCapsuleComponent();
     CollisionComponent->SetCollisionProfileName(PlayerCollisionProfileName);
@@ -34,26 +34,24 @@ AMTD_BasePlayerCharacter::AMTD_BasePlayerCharacter()
 
     CameraComponent = CreateDefaultSubobject<UCameraComponent>("Camera Component");
     CameraComponent->SetupAttachment(SpringArmComponent, SpringArmComponent->SocketName);
+
+    // Rotate character towards camera rotation
+    UCharacterMovementComponent *CharacterMovementComponent = GetCharacterMovement();
+    CharacterMovementComponent->bIgnoreBaseRotation = true;
+    CharacterMovementComponent->bOrientRotationToMovement = false;
+
     CameraComponent->bUsePawnControlRotation = false;
-
-    PlayerExtensionComponent = CreateDefaultSubobject<UMTD_PlayerExtensionComponent>("MTD Player Extension Component");
-
-    UCharacterMovementComponent *Cmc = GetCharacterMovement();
-    Cmc->bIgnoreBaseRotation = true;
-    Cmc->bOrientRotationToMovement = false;
-
     bUseControllerRotationPitch = false;
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = false;
     
-    CombatComponent->AddObjectTypeToHit(EnemyQuery);
+    CombatComponent->AddObjectTypeToHit(FoeQuery);
 
-    Tags.Add(FMTD_Tags::Character);
+    Tags.Add(FMTD_Tags::Player);
 }
 
 FGameplayTagContainer AMTD_BasePlayerCharacter::GetHeroClasses() const
 {
-    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     return ((IsValid(PlayerData) ? (PlayerData->HeroClasses) : (FGameplayTagContainer::EmptyContainer)));
 }
 
@@ -61,35 +59,9 @@ void AMTD_BasePlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    ListenForLevelUp();
     InitializeInput();
     InitializeAttributes();
-
-    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
-    if (!IsValid(PlayerData))
-    {
-        MTDS_WARN("Player Data is invalid.");
-    }
-    else
-    {
-        AMTD_PlayerState *MtdPlayerState = GetMtdPlayerState();
-        if (!IsValid(MtdPlayerState))
-        {
-            MTDS_WARN("MTD Player State is invalid.");
-        }
-        else
-        {
-            MtdPlayerState->SetHeroClasses(PlayerData->HeroClasses);
-            UMTD_LevelComponent *LevelComponent = MtdPlayerState->GetLevelComponent();
-            if (!IsValid(LevelComponent))
-            {
-                MTDS_WARN("Level Component on Player State [%s] is invalid.", *MtdPlayerState->GetName());
-            }
-            else
-            {
-                LevelComponent->OnLevelChangedDelegate.AddDynamic(this, &ThisClass::OnLevelUp);
-            }
-        }
-    }
 }
 
 void AMTD_BasePlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -112,82 +84,50 @@ void AMTD_BasePlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AMTD_BasePlayerCharacter::InitializeAttributes()
 {
-    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
     if (!IsValid(PlayerData))
     {
-        MTDS_WARN("Player Data is invalid.");
+        MTDS_WARN("Player data is invalid.");
         return;
     }
 
     if (!IsValid(PlayerData->AttributeTable))
     {
-        MTDS_WARN("Attribute Table is invalid.");
+        MTDS_WARN("Attribute table is invalid.");
         return;
     }
 
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
     {
-        MTDS_WARN("Ability System Component is invalid.");
+        MTDS_WARN("Ability system component is invalid.");
         return;
     }
 
     float Value;
-
-    // @todo Get from an actual source
-    const float Level = 1.f;
-    Asc->ApplyModToAttribute(UMTD_PlayerSet::GetLevelStatAttribute(), EGameplayModOp::Type::Override, Level);
 
     // @todo Load from save file
+    
+    const float Level = 1.f;
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_PlayerSet::GetLevelAttribute(), Level);
+
     const float Experience = 0.f;
-    Asc->ApplyModToAttribute(UMTD_PlayerSet::GetExperienceStatAttribute(), EGameplayModOp::Type::Override, Experience);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_PlayerSet::GetLevelExperienceAttribute(), Experience);
 
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, Level, Value);
-    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
-    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetHealthAttribute(), Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_HealthSet::GetHealthAttribute(), Value);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaAttributeName, Level, Value);
-    Asc->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
-    Asc->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Type::Override, 0.f);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
+    AbilitySystemComponent->ApplyModToAttribute(UMTD_ManaSet::GetManaAttribute(), EGameplayModOp::Type::Override, 0.f);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceDamageAttributeName, Level, Value);
-    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetDamageAttribute(), Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_BalanceSet::GetDamageAttribute(), Value);
     
     EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, BalanceResistAttributeName, Level, Value);
-    Asc->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_BalanceSet::GetResistAttribute(), Value);
 
     MTDS_VERBOSE("Attributes have been initialized.");
-}
-
-void AMTD_BasePlayerCharacter::OnLevelUp(UMTD_LevelComponent *LevelComponent, float OldValue, float NewValue,
-    AActor *InInstigator)
-{
-    const auto PlayerData = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
-    if (!IsValid(PlayerData))
-    {
-        MTDS_WARN("Player Data is invalid.");
-        return;
-    }
-
-    if (!IsValid(PlayerData->AttributeTable))
-    {
-        MTDS_WARN("Attribute Table is invalid.");
-        return;
-    }
-
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
-    {
-        MTDS_WARN("Ability System Component is invalid.");
-        return;
-    }
-
-    float Value;
-    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, NewValue, Value);
-    Asc->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
-    
-    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaAttributeName, NewValue, Value);
-    Asc->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
 }
 
 void AMTD_BasePlayerCharacter::OnDeathStarted_Implementation(AActor *OwningActor)
@@ -199,37 +139,103 @@ void AMTD_BasePlayerCharacter::OnDeathStarted_Implementation(AActor *OwningActor
     DisableCollision();
 }
 
+void AMTD_BasePlayerCharacter::OnLevelUp(UMTD_LevelComponent *LevelComponent, float OldValue, float NewValue,
+    AActor *InInstigator)
+{
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player data is invalid.");
+        return;
+    }
+
+    if (!IsValid(PlayerData->AttributeTable))
+    {
+        MTDS_WARN("Attribute table is invalid.");
+        return;
+    }
+
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
+    {
+        MTDS_WARN("Ability system component is invalid.");
+        return;
+    }
+
+    float Value;
+    
+    // Set new max health value based on new level
+    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, HealthAttributeName, NewValue, Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_HealthSet::GetMaxHealthAttribute(), Value);
+    
+    // Set new max mana value based on new level
+    EVALUTE_ATTRIBUTE(PlayerData->AttributeTable, ManaAttributeName, NewValue, Value);
+    AbilitySystemComponent->SetNumericAttributeBase(UMTD_ManaSet::GetMaxManaAttribute(), Value);
+}
+
 void AMTD_BasePlayerCharacter::OnGameTerminated_Implementation(EMTD_GameResult GameResult)
 {
     Super::OnGameTerminated_Implementation(GameResult);
 }
 
+void AMTD_BasePlayerCharacter::ListenForLevelUp()
+{
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player data is invalid.");
+        return;
+    }
+    
+    AMTD_PlayerState *MtdPlayerState = GetMtdPlayerState();
+    if (!IsValid(MtdPlayerState))
+    {
+        MTDS_WARN("MTD player state is invalid.");
+        return;
+    }
+    
+    // Set our hero classes on player state, so that is accessible even if this character is dead
+    MtdPlayerState->SetHeroClasses(PlayerData->HeroClasses);
+        
+    UMTD_LevelComponent *LevelComponent = MtdPlayerState->GetLevelComponent();
+    if (!IsValid(LevelComponent))
+    {
+        MTDS_WARN("Level component on player state [%s] is invalid.", *MtdPlayerState->GetName());
+        return;
+    }
+    
+    // Listen for level up event
+    LevelComponent->OnPrimaryLevelAttributeChangedDelegate.BindUObject(this, &ThisClass::OnLevelUp);
+}
+
 void AMTD_BasePlayerCharacter::InitializeInput()
 {
-    auto Pc = GetController<APlayerController>();
-    check(Pc);
+    auto PlayerController = GetController<APlayerController>();
+    check(IsValid(PlayerController));
 
-    auto EiSubsystem = Pc->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    auto EiSubsystem = PlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    check(IsValid(EiSubsystem));
+
+    if (!IsValid(PlayerData))
+    {
+        MTDS_WARN("Player data is invalid.");
+        return;
+    }
 
     FModifyContextOptions ContextOptions;
     ContextOptions.bIgnoreAllPressedKeysUntilRelease = false;
 
-    const auto Data = PlayerExtensionComponent->GetPlayerData<UMTD_PlayerData>();
-    if (!IsValid(Data))
-    {
-        MTDS_WARN("Player Data is invalid.");
-        return;
-    }
-
-    for (TObjectPtr<const UInputMappingContext> Context : Data->InputContexts)
+    // Add all mapping contexts
+    int32 Index = 0;
+    for (TObjectPtr<const UInputMappingContext> Context : PlayerData->InputContexts)
     {
         if (!Context)
         {
-            MTDS_WARN("A Mapping Input Context is invalid.");
+            MTDS_WARN("Mapping input context (%d) is invalid.", Index);
+            Index++;
             continue;
         }
         
         EiSubsystem->AddMappingContext(Context, 0, ContextOptions);
+        Index++;
     }
 }
 
@@ -241,23 +247,23 @@ void AMTD_BasePlayerCharacter::DisableControllerInput()
     }
 
     auto PlayerController = GetController<APlayerController>();
-    check(PlayerController);
+    check(IsValid(PlayerController));
 
     DisableInput(PlayerController);
 }
 
 void AMTD_BasePlayerCharacter::DisableMovement()
 {
-    UCharacterMovementComponent *MoveComp = GetCharacterMovement();
-    check(MoveComp);
+    UCharacterMovementComponent *CharacterMovementComponent = GetCharacterMovement();
+    check(IsValid(CharacterMovementComponent));
 
-    MoveComp->StopMovementImmediately();
+    CharacterMovementComponent->DisableMovement();
 }
 
 void AMTD_BasePlayerCharacter::DisableCollision()
 {
     UCapsuleComponent *CapsuleComp = GetCapsuleComponent();
-    check(CapsuleComp);
+    check(IsValid(CapsuleComp));
 
     CapsuleComp->SetCollisionResponseToAllChannels(ECR_Ignore);
     CapsuleComp->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);

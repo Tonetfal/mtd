@@ -32,7 +32,9 @@ void UMTD_AssetManager::StartInitialLoading()
 
 void UMTD_AssetManager::InitializeAbilitySystem()
 {
+    // Initialize native tags before ability system is
     FMTD_GameplayTags::InitializeNativeTags();
 
+    // Initialize ability system
     UAbilitySystemGlobals::Get().InitGlobalData();
 }

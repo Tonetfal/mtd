@@ -1,11 +1,14 @@
 ﻿#pragma once
 
 #include "GameFramework/Actor.h"
+#include "Interaction/MTD_Interactable.h"
 #include "mtd.h"
-#include "MTD_Interactable.h"
 
 #include "MTD_InteractActor.generated.h"
 
+/**
+ * Simple interaction actor that overrides TryInteract method.
+ */
 UCLASS()
 class MTD_API AMTD_InteractActor
     : public AActor

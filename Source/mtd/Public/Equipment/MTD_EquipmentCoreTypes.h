@@ -3,15 +3,20 @@
 #include "Inventory/Items/MTD_InventoryItemsCoreTypes.h"
 #include "mtd.h"
 
+/**
+ * Enum to identify all equippable types.
+ *
+ * Player character must be able to equip all of the at once.
+ */
 UENUM(BlueprintType)
 enum class EMTD_EquipmentType : uint8
 {
     Invalid,
     
-    Helmet      = EMTD_InventoryArmorType::Helmet,
-    Chestplate  = EMTD_InventoryArmorType::Chestplate,
-    Gauntlets   = EMTD_InventoryArmorType::Gauntlets,
-    Boots       = EMTD_InventoryArmorType::Boots,
+    Helmet      = EMTD_ArmorType::Helmet,
+    Chestplate  = EMTD_ArmorType::Chestplate,
+    Gauntlets   = EMTD_ArmorType::Gauntlets,
+    Boots       = EMTD_ArmorType::Boots,
 
     Weapon,
     

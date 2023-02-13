@@ -10,33 +10,46 @@ class AMTD_BaseCharacter;
 class UMTD_AbilitiesUiData;
 
 /**
- * A set of Abilities UI Data with its respective Hero Player.
+ * Container of ability UI data with its associated characters.
  */
 UCLASS(BlueprintType)
-class MTD_API UMTD_HeroesAbilityUiData : public UDataAsset
+class MTD_API UMTD_HeroesAbilityUiData
+    : public UDataAsset
 {
     GENERATED_BODY()
 
 public:
+    /** Container of ability UI data associated with characters. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
     TMap<TSubclassOf<AMTD_BaseCharacter>, TObjectPtr<UMTD_AbilitiesUiData>> Data;
 };
 
+/**
+ * 
+ */
 UCLASS()
-class MTD_API UMTD_AbilityBarWidget : public UUserWidget
+class MTD_API UMTD_AbilityBarWidget
+    : public UUserWidget
 {
     GENERATED_BODY()
 
 public:
+    //~UUserWidget Interface
     virtual bool Initialize() override;
+    //~End of UUserWidget Interface
 
 private:
-    void PickHeroUiData();
+    /**
+     * Select heroes ability UI data for owner character.
+     */
+    void SelectHeroUiData();
 
 private:
+    /** Container of ability UI data with its associated character. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="MTD|Ability Bar Widget", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_HeroesAbilityUiData> HeroesAbilityUiData = nullptr;
 
+    /** Hero UI data used for owner character. */
     UPROPERTY(BlueprintReadOnly, Category="MTD|Ability Bar Widget", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UMTD_AbilitiesUiData> ActiveHeroUiData = nullptr;
 };

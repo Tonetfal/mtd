@@ -8,7 +8,7 @@ class AMTD_Projectile;
 class UMTD_GameplayEffect;
 
 /**
- * Data asset used to define a Projectile.
+ * Data asset used to define a projectile.
  */
 UCLASS(BlueprintType, Const)
 class MTD_API UMTD_ProjectileData
@@ -17,7 +17,7 @@ class MTD_API UMTD_ProjectileData
     GENERATED_BODY()
 
 public:
-    /** Projectile class the tower will be spawning on fire. */
+    /** Projectile class to spawn on fire. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TSubclassOf<AMTD_Projectile> ProjectileClass = nullptr;
 

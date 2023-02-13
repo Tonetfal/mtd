@@ -3,10 +3,6 @@
 #include "Character/MTD_BaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-UMTD_GameplayAbility_Jump::UMTD_GameplayAbility_Jump()
-{
-}
-
 bool UMTD_GameplayAbility_Jump::CanActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo *ActorInfo,
@@ -16,6 +12,7 @@ bool UMTD_GameplayAbility_Jump::CanActivateAbility(
 {
     check(ActorInfo);
 
+    // Avoid jumping if character isn't allowed to do so
     const auto Character = CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor);
     if (!Character->GetCharacterMovement()->CanAttemptJump())
     {
@@ -33,11 +30,13 @@ void UMTD_GameplayAbility_Jump::ActivateAbility(
 {
     check(ActorInfo);
 
+    // Get the character
     const auto Character = CastChecked<AMTD_BaseCharacter>(ActorInfo->AvatarActor);
 
-    // Start jumping; End ability on landed
+    // Start jumping
     Character->Jump();
 
+    // Listen for landed delegate to end the ability
     auto &Delegate = Character->LandedDelegate;
     if (!Delegate.IsAlreadyBound(this, &ThisClass::OnAnimMontageEnded))
     {
@@ -59,5 +58,6 @@ void UMTD_GameplayAbility_Jump::EndAbility(
 
 void UMTD_GameplayAbility_Jump::OnAnimMontageEnded(const FHitResult &Hit)
 {
+    // End the ability when character lands
     K2_EndAbility();
 }

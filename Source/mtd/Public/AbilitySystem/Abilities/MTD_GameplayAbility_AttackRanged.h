@@ -19,10 +19,10 @@ class UMTD_WeaponInstance;
 class UMTD_WeaponItemData;
 
 /**
- * Gameplay Ability to setup a projectile that will perform the final logic.
+ * Gameplay ability to setup a projectile that will perform the final logic.
  *
- * Note: This is an abstract class because it lacks gameplay event listening. It should be done inside BPs. Without it
- * we don't know when to fire a projectile.
+ * Note: This is an abstract class because it lacks gameplay event listening, it should be done inside blueprints.
+ * Without it we don't know when to fire a projectile.
  */
 UCLASS(Abstract)
 class MTD_API UMTD_GameplayAbility_AttackRanged
@@ -31,6 +31,9 @@ class MTD_API UMTD_GameplayAbility_AttackRanged
     GENERATED_BODY()
 
 private:
+    /**
+     * Simple structure containing all cached and validated data used to create and setup a projectile.
+     */
     struct FMTD_Parameters
     {
         UWorld *World = nullptr;
@@ -64,21 +67,89 @@ private:
     };
 
 protected:
+    /**
+     * Create and setup a projectile.
+     */
     UFUNCTION(BlueprintCallable, Category="MTD|Attack Ranged Gameplay Ability")
     void FireProjectile();
 
 private:
+    /**
+     * Cache and validate parameters struct.
+     * @param   OutParameters: output parameters struct.
+     * @return  If true, everything is cached and validated successfully, false otherwise.
+     */
     bool FormParameters(FMTD_Parameters &OutParameters) const;
-    FName SelectCollisionProfileName(const EMTD_TeamId InstigatorTeamId) const;
+
+    /**
+     * Select a collision profile name to use for a given team ID.
+     * @param   InstigatorTeamId: character's who has fired a projectile team ID.
+     * @return  Collision profile name to use for a given team ID.
+     */
+    virtual FName SelectCollisionProfileName(const EMTD_TeamId InstigatorTeamId) const;
+
+    /**
+     * Tells whether given actor should be used to aim assist or not.
+     * @param   HitActor: actor to check.
+     * @return  If true, the actor should be aim assisted at, false otherwise.
+     */
+    virtual bool ShouldTraceIgnore(const AActor *HitActor) const;
+
+    /**
+     * Spawn a projectile.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     * @return  If true, the projectile has been successfully created, and its data has been cached and validated,
+     * false otherwise.
+     */
     bool SpawnProjectile(FMTD_Parameters &Parameters) const;
-    bool ShouldTraceIgnore(const AActor *HitActor) const;
+    
+    /**
+     * Get direction the projectile should move towards.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     * @return  Direction the projectile should move towards.
+     */
     FVector GetProjectileDirection(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Compute point the projectile has to be fired from.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void ComputeFirePoint(FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Setup projectile movement component's parameters.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void SetupProjectileMovementParameters(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Setup projectile's damage related parameters.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void SetupProjectileDamage(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Setup projectile's gameplay effects to grant on hit.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void SetupProjectileEffectsToGrantOnHit(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Setup projectile's gameplay ability system to use.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void SetupProjectileAsc(const FMTD_Parameters &Parameters) const;
-    void SetupProjectileCollisionProfile(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Setup projectile's collision.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
+    void SetupProjectileCollision(const FMTD_Parameters &Parameters) const;
+    
+    /**
+     * Perform the whole projectile setup process.
+     * @param   Parameters: struct holding all cached and validated data to create and setup a projectile.
+     */
     void SetupProjectile(const FMTD_Parameters &Parameters) const;
 
 protected:

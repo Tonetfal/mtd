@@ -6,8 +6,8 @@ const UCurveFloat *UMTD_LevelDifficultyDefinition::GetIntensivityCurve(int32 Wav
     return ((Found) ? (*Found) : (DefaultIntensivityCurve));
 }
 
-const UMTD_CharacterRateDefinition *UMTD_LevelDifficultyDefinition::GetCharacterRateDefinition(int32 Wave) const
+const UMTD_FoeRateDefinition *UMTD_LevelDifficultyDefinition::GetCharacterRateDefinition(int32 Wave) const
 {
-    const auto Found = SpecificEnemyRateData.Find(Wave);
-    return ((Found) ? (*Found) : (DefaultEnemyRateData));
+    const auto Found = SpecificFoeRateData.Find(Wave);
+    return ((Found) ? (*Found) : (DefaultFoeRateData));
 }

@@ -11,13 +11,9 @@
 #include "Inventory/Items/MTD_WeaponItemData.h"
 #include "Player/MTD_PlayerState.h"
 
-UMTD_EquipmentInstance::UMTD_EquipmentInstance()
-{
-}
-
 UWorld *UMTD_EquipmentInstance::GetWorld() const
 {
-    APawn *OwningPawn = GetPawn();
+    const APawn *OwningPawn = GetPawn();
     return (IsValid(OwningPawn)) ? (OwningPawn->GetWorld()) : (nullptr);
 }
 
@@ -29,17 +25,17 @@ APawn *UMTD_EquipmentInstance::GetPawn() const
         return nullptr;
     }
     
-    const auto Ps = Cast<APlayerState>(Owner);
-    if (!IsValid(Ps))
+    const auto PlayerState = Cast<APlayerState>(Owner);
+    if (!IsValid(PlayerState))
     {
-        MTDS_WARN("Owner [%s] is not a Player State.", *Owner->GetName());
+        MTDS_WARN("Owner [%s] is not a player state.", *Owner->GetName());
         return nullptr;
     }
     
-    const AController *Controller = Ps->GetOwningController();
+    const AController *Controller = PlayerState->GetOwningController();
     if (!IsValid(Controller))
     {
-        MTDS_WARN("Player Controller is invalid.");
+        MTDS_WARN("Player controller is invalid.");
         return nullptr;
     }
 
@@ -71,20 +67,31 @@ EMTD_EquipmentType UMTD_EquipmentInstance::GetEquipmentType() const
 
 void UMTD_EquipmentInstance::SpawnEquipmentActor(const FMTD_EquipmentActorDefinition &ActorToSpawn)
 {
+    if (IsValid(SpawnedActor))
+    {
+        MTDS_WARN("Equipment actor is already spawned.");
+        return;
+    }
+    
     if (!ActorToSpawn.ActorClass)
     {
-        MTDS_WARN("ActorClass is NULL.");
+        MTDS_WARN("Actor class is NULL.");
         return;
     }
 
-    auto Character = GetPawn<ACharacter>();
+    const auto Character = GetPawn<ACharacter>();
     if (!IsValid(Character))
     {
         MTDS_WARN("Character is invalid.");
         return;
     }
-    
-    auto NewActor = GetWorld()->SpawnActorDeferred<AActor>(ActorToSpawn.ActorClass, FTransform::Identity, Character);
+
+    FActorSpawnParameters SpawnParameters;
+    SpawnParameters.Owner = Character;
+    SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    // Spawn actor
+    auto NewActor = GetWorld()->SpawnActor(ActorToSpawn.ActorClass, nullptr, nullptr, SpawnParameters);
     if (!IsValid(NewActor))
     {
         MTDS_WARN("Failed to spawn an equipment actor.");
@@ -92,11 +99,14 @@ void UMTD_EquipmentInstance::SpawnEquipmentActor(const FMTD_EquipmentActorDefini
     }
 
     USceneComponent *AttachTarget = Character->GetMesh();
-    NewActor->FinishSpawning(FTransform::Identity, true);
+    check(IsValid(AttachTarget));
+    
+    // Attach actor as defined
     NewActor->SetActorRelativeTransform(ActorToSpawn.AttachTransform);
     NewActor->AttachToComponent(
         AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, ActorToSpawn.AttachToSocket);
 
+    // Save spawned actor
     SpawnedActor = NewActor;
 }
 
@@ -124,14 +134,16 @@ void UMTD_EquipmentInstance::OnEquipped(bool bModStats)
 void UMTD_EquipmentInstance::OnUnequipped(bool bModStats)
 {
     K2_OnUnequipped();
+
+    // Retrieve all granted effects and ability if unequipped
+    UMTD_AbilitySystemComponent *MtdAbilitySystemComponent = GetMtdAbilitySystemComponent();
+    GrantedHandles.TakeFromAbilitySystem(MtdAbilitySystemComponent);
     
-    UMTD_AbilitySystemComponent *MtdAsc = GetMtdAbilitySystemComponent();
-    GrantedHandles.TakeFromAbilitySystem(MtdAsc);
     DestroyEquipmentActor();
 
     if (bModStats)
     {
-        TakeBackStats();
+        RetrieveStats();
     }
 }
 
@@ -142,41 +154,41 @@ void UMTD_EquipmentInstance::ModStats(float Multiplier)
         return;
     }
 
-    UAbilitySystemComponent *Asc = GetAbilitySystemComponent();
-    if (!IsValid(Asc))
+    UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
+    if (!IsValid(AbilitySystemComponent))
     {
-        MTDS_WARN("Cannot modify stats to owner [%s] with a NULL ability system.", *GetNameSafe(GetOuter()));
+        MTDS_WARN("Cannot modify stats to owner [%s] with an invalid ability system.", *GetNameSafe(GetOuter()));
         return;
     }
 
     if (!IsValid(ItemData))
     {
-        MTDS_WARN("Item Data is invalid.");
+        MTDS_WARN("Item data is invalid.");
         return;
     }
     
-    ModStats_Internal(Multiplier, Asc);
+    ModStats_Internal(Multiplier, AbilitySystemComponent);
 
     MTDS_LOG("Hero [%s] has %s stats.", *GetNameSafe(GetOwner()),
         ((Multiplier > 0.f) ? (TEXT("received")) : (TEXT("lost"))));
 }
 
-void UMTD_EquipmentInstance::ModStats_Internal(float Multiplier, UAbilitySystemComponent *Asc)
+void UMTD_EquipmentInstance::ModStats_Internal(float Multiplier, UAbilitySystemComponent *AbilitySystemComponent)
 {
-    check(Asc->GetAttributeSet(UMTD_PlayerSet::StaticClass()));
-    check(Asc->GetAttributeSet(UMTD_BuilderSet::StaticClass()));
-    
-    const auto EquippableData = Cast<UMTD_EquippableItemData>(ItemData);
-    check(EquippableData);
+    check(IsValid(AbilitySystemComponent));
+    check(AbilitySystemComponent->GetAttributeSet(UMTD_PlayerSet::StaticClass()));
+    check(AbilitySystemComponent->GetAttributeSet(UMTD_BuilderSet::StaticClass()));
 
-    MOD_ATTRIBUTE_BASE(Player, HealthStat, EquippableData->PlayerHealth);
-    MOD_ATTRIBUTE_BASE(Player, DamageStat, EquippableData->PlayerDamage);
-    MOD_ATTRIBUTE_BASE(Player, SpeedStat, EquippableData->PlayerDamage);
+    // Modify owner's player and builder stats
+    const auto EquippableData = CastChecked<UMTD_EquipItemData>(ItemData);
+    MOD_ATTRIBUTE_BASE(Player, HealthStat, EquippableData->EquippableItemParameters.PlayerHealth);
+    MOD_ATTRIBUTE_BASE(Player, DamageStat, EquippableData->EquippableItemParameters.PlayerDamage);
+    MOD_ATTRIBUTE_BASE(Player, SpeedStat, EquippableData->EquippableItemParameters.PlayerDamage);
     
-    MOD_ATTRIBUTE_BASE(Builder, HealthStat, EquippableData->TowerHealth);
-    MOD_ATTRIBUTE_BASE(Builder, DamageStat, EquippableData->TowerDamage);
-    MOD_ATTRIBUTE_BASE(Builder, RangeStat, EquippableData->TowerRange);
-    MOD_ATTRIBUTE_BASE(Builder, SpeedStat, EquippableData->TowerSpeed);
+    MOD_ATTRIBUTE_BASE(Builder, HealthStat, EquippableData->EquippableItemParameters.TowerHealth);
+    MOD_ATTRIBUTE_BASE(Builder, DamageStat, EquippableData->EquippableItemParameters.TowerDamage);
+    MOD_ATTRIBUTE_BASE(Builder, RangeStat, EquippableData->EquippableItemParameters.TowerRange);
+    MOD_ATTRIBUTE_BASE(Builder, SpeedStat, EquippableData->EquippableItemParameters.TowerSpeed);
 }
 
 bool UMTD_EquipmentInstance::IsPlayer() const
@@ -187,15 +199,15 @@ bool UMTD_EquipmentInstance::IsPlayer() const
         return false;
     }
 
-    const auto Ps = Cast<APlayerState>(Owner);
-    if (!IsValid(Ps))
+    const auto PlayerState = Cast<APlayerState>(Owner);
+    if (!IsValid(PlayerState))
     {
-        MTDS_WARN("Owner is not a Player State.");
+        MTDS_WARN("Owner is not a player state.");
         return false;
     }
 
     // Bots' equip must not have any stats, so there's nothing to modify
-    const bool bBot = Ps->IsABot();
+    const bool bBot = PlayerState->IsABot();
     return (!bBot);
 }
 
@@ -204,7 +216,7 @@ void UMTD_EquipmentInstance::GrantStats()
     ModStats(+1.f);
 }
 
-void UMTD_EquipmentInstance::TakeBackStats()
+void UMTD_EquipmentInstance::RetrieveStats()
 {
     ModStats(-1.f);
 }

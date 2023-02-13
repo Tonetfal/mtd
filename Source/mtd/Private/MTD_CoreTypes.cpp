@@ -8,7 +8,7 @@ ETeamAttitude::Type AllyAttitude(FGenericTeamId, FGenericTeamId Other)
     case EMTD_TeamId::Player:
     case EMTD_TeamId::Tower:
         return ETeamAttitude::Type::Friendly;
-    case EMTD_TeamId::Enemy:
+    case EMTD_TeamId::Foe:
         return ETeamAttitude::Type::Hostile;
     case EMTD_TeamId::Neutral:
         return ETeamAttitude::Type::Neutral;
@@ -26,7 +26,7 @@ ETeamAttitude::Type TowerAttitude(FGenericTeamId, FGenericTeamId Other)
     case EMTD_TeamId::Player:
     case EMTD_TeamId::Tower:
         return ETeamAttitude::Type::Friendly;
-    case EMTD_TeamId::Enemy:
+    case EMTD_TeamId::Foe:
         return ETeamAttitude::Type::Hostile;
     case EMTD_TeamId::Neutral:
         return ETeamAttitude::Type::Neutral;
@@ -44,7 +44,7 @@ ETeamAttitude::Type CoreAttitude(FGenericTeamId, FGenericTeamId Other)
     case EMTD_TeamId::Player:
     case EMTD_TeamId::Tower:
         return ETeamAttitude::Type::Friendly;
-    case EMTD_TeamId::Enemy:
+    case EMTD_TeamId::Foe:
         return ETeamAttitude::Type::Hostile;
     case EMTD_TeamId::Neutral:
         return ETeamAttitude::Type::Neutral;
@@ -54,7 +54,7 @@ ETeamAttitude::Type CoreAttitude(FGenericTeamId, FGenericTeamId Other)
     return ETeamAttitude::Neutral;
 }
 
-ETeamAttitude::Type EnemyAttitude(FGenericTeamId, FGenericTeamId Other)
+ETeamAttitude::Type FoeAttitude(FGenericTeamId, FGenericTeamId Other)
 {
     const auto Id = static_cast<EMTD_TeamId>(Other.GetId());
     switch (Id)
@@ -62,7 +62,7 @@ ETeamAttitude::Type EnemyAttitude(FGenericTeamId, FGenericTeamId Other)
     case EMTD_TeamId::Player:
     case EMTD_TeamId::Tower:
         return ETeamAttitude::Type::Hostile;
-    case EMTD_TeamId::Enemy:
+    case EMTD_TeamId::Foe:
         return ETeamAttitude::Type::Friendly;
     case EMTD_TeamId::Neutral:
         return ETeamAttitude::Type::Neutral;
@@ -93,8 +93,8 @@ ETeamAttitude::Type SolveTeamAttitude(FGenericTeamId Lhs, FGenericTeamId Rhs)
         return TowerAttitude(Lhs, Rhs);
     case EMTD_TeamId::Core:
         return CoreAttitude(Lhs, Rhs);
-    case EMTD_TeamId::Enemy:
-        return EnemyAttitude(Lhs, Rhs);
+    case EMTD_TeamId::Foe:
+        return FoeAttitude(Lhs, Rhs);
     case EMTD_TeamId::Neutral:
         return NeutralAttitude(Lhs, Rhs);
     default:

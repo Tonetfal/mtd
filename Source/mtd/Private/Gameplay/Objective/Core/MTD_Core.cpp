@@ -4,13 +4,13 @@
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "Character/MTD_HealthComponent.h"
 #include "Components/SphereComponent.h"
-#include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
 #include "System/MTD_Tags.h"
 
 AMTD_Core::AMTD_Core()
 {
+    // Nothing to tick for
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
@@ -37,12 +37,28 @@ UAbilitySystemComponent *AMTD_Core::GetAbilitySystemComponent() const
     return MtdAbilitySystemComponent;
 }
 
+void AMTD_Core::OnCoreHealthChanged_Implementation(UMTD_HealthComponent *InHealthComponent, float OldValue,
+    float NewValue, AActor *InInstigator)
+{
+    if (OldValue > NewValue)
+    {
+        OnCoreHealthChangedDelegate.Broadcast(OldValue, NewValue);
+    }
+}
+
+void AMTD_Core::OnCoreDestroyed_Implementation(AActor *CoreActor)
+{
+    auto Core = CastChecked<AMTD_Core>(CoreActor);
+    OnCoreDestroyedDelegate.Broadcast(Core);
+}
+
 void AMTD_Core::BeginPlay()
 {
     Super::BeginPlay();
 
     check(IsValid(HealthComponent));
 
+    // Listen for health change and death events
     HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &ThisClass::OnCoreHealthChanged);
     HealthComponent->OnDeathStarted.AddDynamic(this, &ThisClass::OnCoreDestroyed);
     
@@ -51,6 +67,8 @@ void AMTD_Core::BeginPlay()
     if (IsValid(GameMode))
     {
         auto MtdGameMode = CastChecked<AMTD_GameModeBase>(GameMode);
+
+        // Listen for game termination events
         MtdGameMode->OnGameTerminatedDelegate.AddDynamic(this, &ThisClass::OnGameTerminated);
     }
 }

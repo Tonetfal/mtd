@@ -6,11 +6,13 @@
 #include "MTD_DamageExecution.generated.h"
 
 /**
- * Gameplay effect damage execution to compute the amount damage to deal to target, and store it inside
- * LastReceivedDamage meta attribute.
+ * Gameplay effect damage execution to deal damage to a target.
+ *
+ * Makes use of health, combat, and player sets. The player attribute set can be absent without breaking the execution.
  */
 UCLASS()
-class MTD_API UMTD_DamageExecution : public UGameplayEffectExecutionCalculation
+class MTD_API UMTD_DamageExecution
+    : public UGameplayEffectExecutionCalculation
 {
     GENERATED_BODY()
 

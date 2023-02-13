@@ -3,7 +3,7 @@
 #include "AbilitySystem/MTD_AbilitySet.h"
 #include "GameModes/MTD_TowerDefenseMode.h"
 #include "Gameplay/Levels/MTD_LevelDefinition.h"
-#include "Gameplay/Spawner/MTD_SpawnerManager.h"
+#include "Gameplay/Spawner/MTD_FoeSpawnerManager.h"
 #include "Kismet/GameplayStatics.h"
 
 void UMTD_WaveManager::Initialize()
@@ -22,10 +22,10 @@ void UMTD_WaveManager::Initialize()
         return;
     }
 
-    TimeToForceStart_FirstWave = LevelDefinition->FirstWaveForceStartSeconds;
-    TimeToForceStart_Regular = LevelDefinition->RegularWaveForceStartSeconds;
+    TimeToForceStart_FirstWave = LevelDefinition->FirstWaveForceStartTime;
+    TimeToForceStart_Regular = LevelDefinition->RegularWaveForceStartTime;
 
-    UMTD_SpawnerManager *SpawnerManager = Tdm->GetSpawnerManager();
+    UMTD_FoeSpawnerManager *SpawnerManager = Tdm->GetSpawnerManager();
     if (!IsValid(SpawnerManager))
     {
         MTDS_WARN("Spawner Manager is invalid.");
@@ -36,7 +36,7 @@ void UMTD_WaveManager::Initialize()
     SetupForceWaveStartTimer(TimeToForceStart_Regular);
 
     // End a wave when all the spawned mobs have died
-    SpawnerManager->OnAllCharactersKilledDelegate.AddDynamic(this, &ThisClass::OnAllSpawnedCharactersKilled);
+    SpawnerManager->OnAllFoesKilledDelegate.AddDynamic(this, &ThisClass::OnAllSpawnedCharactersKilled);
 }
 
 void UMTD_WaveManager::StartWave()

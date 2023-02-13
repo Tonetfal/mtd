@@ -1,6 +1,5 @@
 #include "AbilitySystem/Executions/MTD_DamageExecution.h"
 
-#include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_PlayerSet.h"
@@ -31,6 +30,7 @@ static FDamageStatics &DamageStatics()
 
 UMTD_DamageExecution::UMTD_DamageExecution()
 {
+    // List capture attributes
     RelevantAttributesToCapture.Add(DamageStatics().HealthDef);
     RelevantAttributesToCapture.Add(DamageStatics().BaseDamage_MetaDef);
     RelevantAttributesToCapture.Add(DamageStatics().DamageAdditiveDef);
@@ -42,7 +42,6 @@ void UMTD_DamageExecution::Execute_Implementation(
     const FGameplayEffectCustomExecutionParameters &ExecParams,
     FGameplayEffectCustomExecutionOutput &ExecOutput) const
 {
-    const FMTD_GameplayTags Tags = FMTD_GameplayTags::Get();
     const FGameplayEffectSpec &Spec = ExecParams.GetOwningSpec();
 
     const FGameplayTagContainer *TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
@@ -52,17 +51,26 @@ void UMTD_DamageExecution::Execute_Implementation(
     EvaluationParams.TargetTags = TargetTags;
     EvaluationParams.SourceTags = SourceTags;
 
+    // Get source's damage base
     float DamageBase = 0.f;
     ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         DamageStatics().BaseDamage_MetaDef, EvaluationParams, DamageBase);
 
-    const float DamageAdditive = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Additive);
-    const float DamageMultiplier = Spec.GetSetByCallerMagnitude(Tags.SetByCaller_Damage_Multiplier);
+    // Get additive damage set on the ability
+    float DamageAdditive = 0.f;
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        DamageStatics().DamageAdditiveDef, EvaluationParams, DamageAdditive);
+    
+    // Get damage multiplier set on the ability
+    float DamageMultiplier = 0.f;
+    ExecParams.AttemptCalculateCapturedAttributeMagnitude(
+        DamageStatics().DamageMultiplierDef, EvaluationParams, DamageMultiplier);
 
+    // Get source's damage stat
     float DamageStat = 0.f;
     ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         DamageStatics().DamageStatDef, EvaluationParams, DamageStat);
-        
+
     auto Formula = [] (float T)
         {
             T = FMath::Max(T, 0.f); // Avoid negative values
@@ -74,16 +82,21 @@ void UMTD_DamageExecution::Execute_Implementation(
             return (1.f + (T / 100.f));
         };
 
+    // Evaluate how much scale should be applied on base damage using the damage stat
     const float Scale = Formula(DamageStat);
-    const float DamageDone = (((DamageBase * DamageMultiplier) * Scale) + DamageAdditive);
 
-    ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-        UMTD_HealthSet::GetLastLostHealth_MetaAttribute(),
-        EGameplayModOp::Override,
-        DamageDone));
-    
+    // Scale up the damage
+    const float DamageDone = ((DamageBase * DamageMultiplier * Scale) + DamageAdditive);
+
+    // Decrease health by damage
     ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
         UMTD_HealthSet::GetHealthAttribute(),
         EGameplayModOp::Additive,
         -DamageDone));
+    
+    // Set LastLostHealth to damage amount
+    ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+        UMTD_HealthSet::GetLastLostHealth_MetaAttribute(),
+        EGameplayModOp::Override,
+        DamageDone));
 }

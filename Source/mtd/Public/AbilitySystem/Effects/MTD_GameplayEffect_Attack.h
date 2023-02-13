@@ -6,7 +6,7 @@
 #include "MTD_GameplayEffect_Attack.generated.h"
 
 /**
- * Gameplay Effect that persists on a character while it attacks, and some time after in order to be able to combo
+ * Attack gameplay effect that persists on an actor while it attacks, and some time after in order to be able to combo
  * attacks.
  *
  * If some ability makes use of this GE, then it has to create a new one. Whenever that ability will be triggered, it
@@ -14,7 +14,8 @@
  * isn't.
  */
 UCLASS()
-class MTD_API UMTD_GameplayEffect_Attack : public UGameplayEffect
+class MTD_API UMTD_GameplayEffect_Attack
+    : public UGameplayEffect
 {
     GENERATED_BODY()
 

@@ -6,50 +6,73 @@
 
 UMTD_PawnExtensionComponent::UMTD_PawnExtensionComponent()
 {
+    // Nothing to tick for
     PrimaryComponentTick.bStartWithTickEnabled = false;
     PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UMTD_PawnExtensionComponent::SetPawnData(const UMTD_PawnData *InPawnData)
+void UMTD_PawnExtensionComponent::OnRegister()
 {
-    check(InPawnData);
+    Super::OnRegister();
 
+    const auto Pawn = GetPawn<APawn>();
+    if (!IsValid(Pawn))
+    {
+        MTDS_ERROR("Pawn extension component on [%s] can only be added to Pawn actors.", *GetNameSafe(GetOwner()));
+        return;
+    }
+
+    TArray<UActorComponent *> PawnExtensionComponents;
+    Pawn->GetComponents(StaticClass(), PawnExtensionComponents);
+    const int32 Num = PawnExtensionComponents.Num();
+    if (Num != 1)
+    {
+        MTDS_ERROR("Only one pawn extension component should exist on [%s].", *GetNameSafe(GetOwner()));
+    }
+}
+
+void UMTD_PawnExtensionComponent::InitializePawnData(const UMTD_PawnData *InPawnData)
+{
+    if (!IsValid(InPawnData))
+    {
+        MTDS_WARN("Trying to initialize pawn data with an invalid pawn data.");
+        return;
+    }
+    
     if (IsValid(PawnData))
     {
-        MTDS_ERROR("Trying to set PawnData [%s] that already has valid PawnData [%s].",
-            *GetNameSafe(InPawnData), *GetNameSafe(PawnData));
+        MTDS_ERROR("Trying to initialize an already initialized pawn data [%s] with pawn data [%s].",
+            *PawnData->GetName(), *InPawnData->GetName());
         return;
     }
 
     PawnData = InPawnData;
-
     CheckPawnReadyToInitialize();
 }
 
-void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComponent *InAsc, AActor *InOwnerActor)
+void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComponent *InAbilitySystemComponent,
+    AActor *InOwnerActor)
 {
-    check(InAsc);
-    check(InOwnerActor);
+    check(IsValid(InAbilitySystemComponent));
+    check(IsValid(InOwnerActor));
 
-    if (AbilitySystemComponent == InAsc)
+    if (AbilitySystemComponent == InAbilitySystemComponent)
     {
-        // The ability system compont hasn't changed
+        // ASC hasn't changed
         return;
     }
 
     if (AbilitySystemComponent)
     {
-        // Clean up the old ability system component
+        // Clean up the old ASC
         UninitializeAbilitySystem();
     }
 
-    auto Pawn = GetPawnChecked<APawn>();
-    const AActor *ExistingAvatar = InAsc->GetAvatarActor();
+    auto PawnOwner = GetPawnChecked<APawn>();
+    const AActor *ExistingAvatar = InAbilitySystemComponent->GetAvatarActor();
 
-    MTDS_VERBOSE("Settings up ASC [%s] on pawn [%s] owner [%s], existing [%s].",
-        *GetNameSafe(InAsc), *GetNameSafe(Pawn), *GetNameSafe(InOwnerActor), *GetNameSafe(ExistingAvatar));
-
-    if ((IsValid(ExistingAvatar)) && (ExistingAvatar != Pawn))
+    // ASC can only have one avatar, hence if there is one, uninitialize his ASC
+    if (((IsValid(ExistingAvatar)) && (ExistingAvatar != PawnOwner)))
     {
         UMTD_PawnExtensionComponent *OtherExtComp = FindPawnExtensionComponent(ExistingAvatar);
         if (IsValid(OtherExtComp))
@@ -58,27 +81,40 @@ void UMTD_PawnExtensionComponent::InitializeAbilitySystem(UMTD_AbilitySystemComp
         }
     }
 
-    AbilitySystemComponent = InAsc;
-    AbilitySystemComponent->InitAbilityActorInfo(InOwnerActor, Pawn);
+    // Save the ASC
+    AbilitySystemComponent = InAbilitySystemComponent;
 
+    // Use passed actor as the ASC owner, and use our owner as the ASC actor
+    AbilitySystemComponent->InitAbilityActorInfo(InOwnerActor, PawnOwner);
+
+    // Notify about ASC initialization
     OnAbilitySystemInitialized.Broadcast();
+
+    MTDS_VERBOSE("Ability system component [%s] on pawn [%s] owner [%s] has been initialized.",
+        *GetNameSafe(InAbilitySystemComponent), *GetNameSafe(PawnOwner), *GetNameSafe(InOwnerActor));
 }
 
 void UMTD_PawnExtensionComponent::UninitializeAbilitySystem()
 {
+    // Avoid running the logic if ASC is nullptr
     if (!AbilitySystemComponent)
     {
         return;
     }
 
-    if (AbilitySystemComponent->GetAvatarActor() == GetOwner())
+    // Uninitialize ASC only if we still are holding the ownership
+    const AActor *Avatar = AbilitySystemComponent->GetAvatarActor();
+    const AActor *Owner = GetOwner();
+    if (Avatar == Owner)
     {
+        // Clear main ASC data
         AbilitySystemComponent->CancelAbilities(nullptr, nullptr);
-        // TODO:
-        // AbilitySystemComponent->ClearAbilityInput();
+        AbilitySystemComponent->ClearAbilityInput();
         AbilitySystemComponent->RemoveAllGameplayCues();
 
-        if (AbilitySystemComponent->GetOwnerActor())
+        // Clear ASC actor info
+        const AActor *AscOwner = AbilitySystemComponent->GetOwnerActor();
+        if (AscOwner)
         {
             AbilitySystemComponent->SetAvatarActor(nullptr);
         }
@@ -87,24 +123,33 @@ void UMTD_PawnExtensionComponent::UninitializeAbilitySystem()
             AbilitySystemComponent->ClearActorInfo();
         }
 
+        // Notify about ASC uninitialization
         OnAbilitySystemUninitialized.Broadcast();
     }
 
+    // Nullify stored ASC
     AbilitySystemComponent = nullptr;
 }
 
 void UMTD_PawnExtensionComponent::HandleControllerChanged()
 {
-    if ((IsValid(AbilitySystemComponent)) && (AbilitySystemComponent->GetAvatarActor() == GetPawnChecked<APawn>()))
+    if (IsValid(AbilitySystemComponent))
     {
-        ensure(AbilitySystemComponent->AbilityActorInfo->OwnerActor == AbilitySystemComponent->GetOwnerActor());
-        if (!AbilitySystemComponent->GetOwnerActor())
+        const AActor *Avatar = AbilitySystemComponent->GetAvatarActor();
+        const AActor *Owner = GetPawnChecked<APawn>();
+        if (Avatar == Owner)
         {
-            UninitializeAbilitySystem();
-        }
-        else
-        {
-            AbilitySystemComponent->RefreshAbilityActorInfo();
+            const AActor *AscOwner = AbilitySystemComponent->GetOwnerActor();
+            ensure(AbilitySystemComponent->AbilityActorInfo->OwnerActor == AscOwner);
+            
+            if (!IsValid(AscOwner))
+            {
+                UninitializeAbilitySystem();
+            }
+            else
+            {
+                AbilitySystemComponent->RefreshAbilityActorInfo();
+            }
         }
     }
 
@@ -123,21 +168,8 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
         return true;
     }
 
+    // Check whether all components are ready to initialize
     const auto Pawn = GetPawnChecked<APawn>();
-
-    const bool bHasAuthority = Pawn->HasAuthority();
-    const bool bIsLocallyControlled = Pawn->IsLocallyControlled();
-
-    if ((bHasAuthority) || (bIsLocallyControlled))
-    {
-        // Check for being possessed by a controller
-        if (!IsValid(Pawn->GetController()))
-        {
-            return false;
-        }
-    }
-
-    // Allow pawn components to have requirements
     TArray<UActorComponent *> InteractableComponents = Pawn->GetComponentsByInterface(
         UMTD_ReadyInterface::StaticClass());
     for (UActorComponent *InteractableComponent : InteractableComponents)
@@ -145,6 +177,7 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
         const auto Ready = CastChecked<IMTD_ReadyInterface>(InteractableComponent);
         if (!Ready->IsPawnComponentReadyToInitialize())
         {
+            // A component is not ready to initialize, hence we're not ready yet
             return false;
         }
     }
@@ -159,13 +192,16 @@ bool UMTD_PawnExtensionComponent::CheckPawnReadyToInitialize()
 
 void UMTD_PawnExtensionComponent::OnPawnReadyToInitialize_RegisterAndCall(FSimpleMulticastDelegate::FDelegate Delegate)
 {
+    // Avoid registering if already did
     if (!OnPawnReadyToInitialize.IsBoundToObject(Delegate.GetUObject()))
     {
+        // Register the delegate
         OnPawnReadyToInitialize.Add(Delegate);
     }
 
     if (bPawnReadyToInitialize)
     {
+        // Call the delegate if pawn is already ready to initialize
         Delegate.Execute();
     }
 }
@@ -173,60 +209,60 @@ void UMTD_PawnExtensionComponent::OnPawnReadyToInitialize_RegisterAndCall(FSimpl
 void UMTD_PawnExtensionComponent::OnAbilitySystemInitialized_RegisterAndCall(
     FSimpleMulticastDelegate::FDelegate Delegate)
 {
+    // Avoid registering if already did
     if (!OnAbilitySystemInitialized.IsBoundToObject(Delegate.GetUObject()))
     {
+        // Register the delegate
         OnAbilitySystemInitialized.Add(Delegate);
     }
 
     if (AbilitySystemComponent)
     {
+        // Call the delegate if ability system component is already ready to initialize
         Delegate.Execute();
     }
 }
 
 void UMTD_PawnExtensionComponent::OnAbilitySystemUninitialized_Register(FSimpleMulticastDelegate::FDelegate Delegate)
 {
+    // Avoid registering if already did
     if (!OnAbilitySystemUninitialized.IsBoundToObject(Delegate.GetUObject()))
     {
+        // Register the delegate
         OnAbilitySystemUninitialized.Add(Delegate);
     }
 }
 
-FMTD_AbilityAnimations UMTD_PawnExtensionComponent::GetAbilityAnimMontages(FGameplayTag AbilityTag) const
+void UMTD_PawnExtensionComponent::GetAbilityAnimMontages(const FGameplayTag &AbilityTag,
+    FMTD_AbilityAnimations &OutAbilityAnimations) const
 {
-    return (IsValid(AnimationSet)) ? (AnimationSet->GetAbilityAnimMontages(AbilityTag)) : (FMTD_AbilityAnimations());
+    if (!IsValid(AnimationSet))
+    {
+        MTDS_WARN("Animation set is invalid.");
+        return;
+    }
+    
+    AnimationSet->GetAbilityAnimMontages(AbilityTag, OutAbilityAnimations);
 }
 
-UAnimMontage *UMTD_PawnExtensionComponent::GetRandomAnimMontage(FGameplayTag AbilityTag) const
+const UAnimMontage *UMTD_PawnExtensionComponent::GetRandomAnimMontage(const FGameplayTag &AbilityTag) const
 {
-    const TArray<TObjectPtr<UAnimMontage>> Anims = GetAbilityAnimMontages(AbilityTag).Animations;
-    const int32 Size = Anims.Num();
-    if (Size == 0)
+    // Get the animations
+    FMTD_AbilityAnimations AbilityAnimations;
+    GetAbilityAnimMontages(AbilityTag, AbilityAnimations);
+    TArray<TObjectPtr<UAnimMontage>> Animations = AbilityAnimations.Animations;
+
+    // Check if number is positive
+    const int32 Num = Animations.Num();
+    if (Num == 0)
     {
         return nullptr;
     }
 
-    const int32 Index = FMath::RandRange(0, Size - 1);
-    UAnimMontage *Anim = Anims[Index];
+    // Randomize the index
+    const int32 Index = FMath::RandRange(0, (Num - 1));
 
-    return Anim;
-}
-
-void UMTD_PawnExtensionComponent::OnRegister()
-{
-    Super::OnRegister();
-
-    const auto Pawn = GetPawn<APawn>();
-    if (!IsValid(Pawn))
-    {
-        MTDS_ERROR("MTD_PawnExtensionComponent on [%s] can only be added to Pawn actors.", *GetNameSafe(GetOwner()));
-        return;
-    }
-
-    TArray<UActorComponent *> PawnExtensionComponents;
-    Pawn->GetComponents(StaticClass(), PawnExtensionComponents);
-    if (PawnExtensionComponents.Num() != 1)
-    {
-        MTDS_ERROR("Only one MTD_PawnExtensionComponent should exist on [%s].", *GetNameSafe(GetOwner()));
-    }
+    // Get the randomized animation montage
+    const UAnimMontage *Animation = Animations[Index];
+    return Animation;
 }

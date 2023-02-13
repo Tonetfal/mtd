@@ -6,59 +6,54 @@
 
 UMTD_ManaComponent::UMTD_ManaComponent()
 {
+    // There is nothing to tick for
     PrimaryComponentTick.bCanEverTick = false;
     PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UMTD_ManaComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *Asc)
+void UMTD_ManaComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *InAbilitySystemComponent)
 {
-    const AActor *Owner = GetOwner();
-    check(Owner);
-
-    if (AbilitySystemComponent)
-    {
-        MTDS_ERROR("Mana Component for Owner [%s] has already been initilized with an ability system.",
-            *Owner->GetName());
-        return;
-    }
-
-    AbilitySystemComponent = Asc;
+    Super::InitializeWithAbilitySystem(InAbilitySystemComponent);
     if (!AbilitySystemComponent)
     {
-        MTDS_ERROR("Cannot initilize Mana Component for Owner [%s] with a NULL ability system.", *Owner->GetName());
         return;
     }
 
+    // Cache the mana set to avoid searching for it in ability system component every time it's needed
     ManaSet = AbilitySystemComponent->GetSet<UMTD_ManaSet>();
     if (!ManaSet)
     {
-        MTDS_ERROR("Cannot initialize Mana Component with NULL mana set on the ability system.");
+        MTDS_ERROR("Cannot initialize mana component with NULL mana set on the ability system.");
         return;
     }
 
+    // Listen for mana and max mana attribute changes
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_ManaSet::GetManaAttribute()).AddUObject(this, &ThisClass::OnManaChanged);
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_ManaSet::GetMaxManaAttribute()).AddUObject(this, &ThisClass::OnMaxManaChanged);
 
+    // Notify about initial values
     OnManaChangedDelegate.Broadcast(this, ManaSet->GetMana(), ManaSet->GetMana(), nullptr);
     OnMaxManaChangedDelegate.Broadcast(this, ManaSet->GetMaxMana(), ManaSet->GetMaxMana(), nullptr);
 }
 
 void UMTD_ManaComponent::UninitializeFromAbilitySystem()
 {
+    // Nullify ability system related data
     ManaSet = nullptr;
-    AbilitySystemComponent = nullptr;
+
+    Super::UninitializeFromAbilitySystem();
 }
 
 float UMTD_ManaComponent::GetMana() const
 {
-    return (IsValid(ManaSet)) ? (ManaSet->GetMana()) : (0.f);
+    return ((IsValid(ManaSet)) ? (ManaSet->GetMana()) : (0.f));
 }
 
 float UMTD_ManaComponent::GetMaxMana() const
 {
-    return (IsValid(ManaSet)) ? (ManaSet->GetMaxMana()) : (0.f);
+    return ((IsValid(ManaSet)) ? (ManaSet->GetMaxMana()) : (0.f));
 }
 
 float UMTD_ManaComponent::GetManaNormilized() const
@@ -68,21 +63,14 @@ float UMTD_ManaComponent::GetManaNormilized() const
         const float Mana = ManaSet->GetMana();
         const float MaxMana = ManaSet->GetMaxMana();
 
-        return (MaxMana > 0.f) ? (Mana / MaxMana) : (0.f);
+        return ((MaxMana > 0.f) ? (Mana / MaxMana) : (0.f));
     }
     return 0.f;
 }
 
 bool UMTD_ManaComponent::IsManaFull() const
 {
-    return (IsValid(ManaSet)) ? (ManaSet->GetMana() == ManaSet->GetMaxMana()) : (false);
-}
-
-void UMTD_ManaComponent::OnUnregister()
-{
-    UninitializeFromAbilitySystem();
-
-    Super::OnUnregister();
+    return ((IsValid(ManaSet)) ? (ManaSet->GetMana() == ManaSet->GetMaxMana()) : (false));
 }
 
 void UMTD_ManaComponent::OnManaChanged(const FOnAttributeChangeData &ChangeData)

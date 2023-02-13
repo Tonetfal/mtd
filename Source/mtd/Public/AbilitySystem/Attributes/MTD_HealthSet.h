@@ -6,11 +6,11 @@
 #include "MTD_HealthSet.generated.h"
 
 /**
- * Attribute set that defines all the life related required data for a Pawn that makes use of the Ability System
- * Component.
+ * Attribute set containing all the owner's health related data.
  */
 UCLASS()
-class MTD_API UMTD_HealthSet : public UMTD_AttributeSet
+class MTD_API UMTD_HealthSet
+    : public UMTD_AttributeSet
 {
     GENERATED_BODY()
 
@@ -20,7 +20,6 @@ public:
     ATTRIBUTE_ACCESSORS(UMTD_HealthSet, LastLostHealth_Meta);
 
 protected:
-    virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData &Data) override;
     virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData &Data) override;
 
     virtual void PreAttributeBaseChange(const FGameplayAttribute &Attribute, float &NewValue) const override;
@@ -31,12 +30,20 @@ protected:
     void ClampAttribute(const FGameplayAttribute &Attribute, float &NewValue) const;
 
 public:
+    /**
+     * Delegate to fire when owner's health 0.
+     * 
+     * The delegate must be mutable because it's used from outside, and non-ASC code only can have const pointers to
+     * an attribute set.
+     */
     mutable FAttributeEventSignature OnOutOfHealthDelegate;
 
 protected:
+    /** Current health value. Is always in range of [0, MaxHealth]. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData Health;
 
+    /** Max health value. Defines the highest bound for health value. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData MaxHealth;
 
@@ -44,5 +51,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayAttributeData LastLostHealth_Meta;
 
+    /** If true, owner should die, false otherwise. Is used to avoid triggering death multiple times. */
     bool bOutOfHealth = false;
 };

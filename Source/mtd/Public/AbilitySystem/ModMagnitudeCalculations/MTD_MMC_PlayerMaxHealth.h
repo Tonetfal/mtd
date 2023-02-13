@@ -6,7 +6,9 @@
 #include "MTD_MMC_PlayerMaxHealth.generated.h"
 
 /**
- * Gameplay Modification Magnitude Calculation class to calculate Player Max Health.
+ * Gameplay modification magnitude calculation class to calculate player max health.
+ *
+ * Makes use of health and player sets.
  */
 UCLASS()
 class MTD_API UMTD_MMC_PlayerMaxHealth

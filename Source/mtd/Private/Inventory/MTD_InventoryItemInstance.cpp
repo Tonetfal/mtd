@@ -5,7 +5,7 @@
 #include "Equipment/MTD_EquipmentInstance.h"
 #include "Equipment/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/PlayerState.h"
-#include "Inventory/Items/MTD_EquippableItemData.h"
+#include "Inventory/Items/MTD_EquipItemData.h"
 #include "Inventory/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 #include "Inventory/MTD_InventoryManagerComponent.h"
 #include "System/MTD_Tags.h"
@@ -32,9 +32,15 @@ void AMTD_InventoryItemInstance::BeginPlay()
 {
     Super::BeginPlay();
     
+}
+
+void AMTD_InventoryItemInstance::OnConstruction(const FTransform &Transform)
+{
+    Super::OnConstruction(Transform);
+    
     if (!IsValid(ItemData))
     {
-        MTDS_WARN("Item Data is invalid.");
+        MTDS_WARN("Item data is invalid.");
         return;
     }
 
@@ -45,11 +51,8 @@ void AMTD_InventoryItemInstance::BeginPlay()
     }
     else
     {
-        MTDS_WARN("Item Data Static Mesh is invalid.");
+        MTDS_WARN("Item data static mesh is invalid.");
     }
-
-    // There should be no non-positive IDs
-    ensure(ItemData->ItemID > 0);
 }
 
 bool AMTD_InventoryItemInstance::CanInteract_Implementation(AMTD_BaseCharacter *Character, const FName InteractionID)
@@ -71,13 +74,13 @@ bool AMTD_InventoryItemInstance::CanInteract_Implementation(AMTD_BaseCharacter *
         return false;
     }
     
-    const APlayerState *Ps = Character->GetPlayerState();
-    if (!IsValid(Ps))
+    const APlayerState *PlayerState = Character->GetPlayerState();
+    if (!IsValid(PlayerState))
     {
         return false;
     }
     
-    const auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(Ps);
+    const auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(PlayerState);
     if (!IsValid(InventoryManagerComponent))
     {
         return false;
@@ -90,13 +93,13 @@ bool AMTD_InventoryItemInstance::CanInteract_Implementation(AMTD_BaseCharacter *
 
     // -- End of Regular Interaction, the rest is Equip Interaction
     
-    const auto EquipItemData = Cast<UMTD_EquippableItemData>(ItemData);
+    const auto EquipItemData = Cast<UMTD_EquipItemData>(ItemData);
     if (!IsValid(EquipItemData))
     {
         return false;
     }
     
-    const auto EquipmentManagerComponent = UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(Ps);
+    const auto EquipmentManagerComponent = UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(PlayerState);
     if (!IsValid(EquipmentManagerComponent))
     {
         return false;
@@ -121,30 +124,32 @@ bool AMTD_InventoryItemInstance::Interact_Implementation(AMTD_BaseCharacter *Cha
     check(IsValid(Character));
     check(IsValid(ItemData));
 
-    APlayerState *Ps = Character->GetPlayerState();
-    check(IsValid(Ps));
+    APlayerState *PlayerState = Character->GetPlayerState();
+    check(IsValid(PlayerState));
     
     bool bShouldDestroy;
     
     // Loot interaction
     if (bIsLootInteraction)
     {
-        auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(Ps);
+        auto InventoryManagerComponent = UMTD_InventoryManagerComponent::FindInventoryManagerComponent(PlayerState);
         check(IsValid(InventoryManagerComponent));
 
-        const bool bAdded = InventoryManagerComponent->AddItem(ItemData);
-        bShouldDestroy = bAdded;
-        ensureAlways(bAdded);
+        const EMTD_InventoryResult AddResult = InventoryManagerComponent->AddItem(ItemData);
+        const bool bSuccess = (AddResult != EMTD_InventoryResult::Failed);;
+        
+        bShouldDestroy = bSuccess;
+        ensureAlways(bSuccess);
     }
     
     // Equip interaction
     else
     {
-        auto EquipmentManagerComponent = UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(Ps);
+        auto EquipmentManagerComponent = UMTD_EquipmentManagerComponent::FindEquipmentManagerComponent(PlayerState);
         check(IsValid(EquipmentManagerComponent));
 
         // Equip item
-        const UMTD_EquipmentInstance *EquipmentInstance = EquipmentManagerComponent->EquipItem(ItemData);
+        const UMTD_EquipmentInstance *EquipmentInstance = EquipmentManagerComponent->K2_EquipItem(ItemData);
         const bool bEquipped = IsValid(EquipmentInstance);
         
         bShouldDestroy = bEquipped;

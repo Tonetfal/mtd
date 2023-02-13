@@ -21,20 +21,37 @@ public:
     virtual void NativeDestruct() override;
 
 protected:
+    /**
+     * Create a widget. Previously opened one will be closed.
+     * @param   UserWidgetClass: widget class to spawn.
+     */
     UFUNCTION(BlueprintCallable, Category="MTD|Generic Menu")
     void CreateWidget(TSubclassOf<UUserWidget> UserWidgetClass);
     
+    /**
+     * Delete current widget.
+     */
     UFUNCTION(BlueprintCallable, Category="MTD|Generic Menu")
     void DeleteWidget();
 
+    /**
+     * Event to fire when a menu button is pressed.
+     * @param   Button: button that is pressed.
+     * @param   bSelected: if true, button will be selected, false otherwise.
+     */
     UFUNCTION(BlueprintCallable, Category="MTD|Generic Menu")
     void MenuButtonPress(UCommonButtonBase *Button, bool bSelected);
     
+    /**
+     * Fill buttons information.
+     *
+     * @see ButtonsMapping
+     */
     UFUNCTION(BlueprintImplementableEvent, DisplayName="MapButtons", Category="MTD|Generic Menu")
     void K2_MapButtons();
 
     /**
-     * Compute OurPadding + SizeWidget's Padding.
+     * Compute OurPadding + SizeWidget's padding.
      * @return  Padding the spawned widget should have.
      */
     FMargin ComputePadding() const;

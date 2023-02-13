@@ -7,21 +7,24 @@
 
 AMTD_DummyTarget::AMTD_DummyTarget()
 {
+    // Nothing to tick for
     PrimaryActorTick.bCanEverTick = false;
     PrimaryActorTick.bStartWithTickEnabled = false;
 
     AbilitySystemComponent = CreateDefaultSubobject<UMTD_AbilitySystemComponent>("MTD Ability System Component");
-    
+
+    // Target has to have health to receive damage
     UMTD_HealthSet *HealthSet = CreateDefaultSubobject<UMTD_HealthSet>("Health Set");
     AbilitySystemComponent->AddSpawnedAttribute(HealthSet);
 
-    Tags.Add(FMTD_Tags::Enemy);
+    Tags.Add(FMTD_Tags::Foe);
 }
 
 void AMTD_DummyTarget::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
+    // Listen for LostHealth meta attribute changes
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UMTD_HealthSet::GetLastLostHealth_MetaAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
 }
@@ -33,7 +36,7 @@ UAbilitySystemComponent *AMTD_DummyTarget::GetAbilitySystemComponent() const
 
 FGenericTeamId AMTD_DummyTarget::GetGenericTeamId() const
 {
-    return FGenericTeamId(static_cast<uint8>(EMTD_TeamId::Enemy));
+    return FGenericTeamId(static_cast<uint8>(EMTD_TeamId::Foe));
 }
 
 void AMTD_DummyTarget::K2_OnHealthDecrease_Implementation(float LostHealth)
@@ -41,7 +44,8 @@ void AMTD_DummyTarget::K2_OnHealthDecrease_Implementation(float LostHealth)
     // Empty
 }
 
-void AMTD_DummyTarget::OnHealthChanged(const FOnAttributeChangeData &Attribute)
+void AMTD_DummyTarget::OnHealthChanged(const FOnAttributeChangeData &ChangeData)
 {
-    K2_OnHealthDecrease(Attribute.NewValue);
+    // Notify blueprints about the delta
+    K2_OnHealthDecrease(ChangeData.NewValue);
 }

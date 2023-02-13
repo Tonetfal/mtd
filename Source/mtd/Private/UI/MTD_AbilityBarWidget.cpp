@@ -5,25 +5,24 @@
 
 bool UMTD_AbilityBarWidget::Initialize()
 {
-    PickHeroUiData();
+    SelectHeroUiData();
     return Super::Initialize();
 }
 
-void UMTD_AbilityBarWidget::PickHeroUiData()
+void UMTD_AbilityBarWidget::SelectHeroUiData()
 {
     if (!IsValid(HeroesAbilityUiData))
     {
-        MTDS_WARN("Heroes Ability UI Data is invalid");
+        MTDS_WARN("Heroes ability UI data is invalid");
         return;
     }
 
-    APawn *Player = GetOwningPlayerPawn();
+    const APawn *Player = GetOwningPlayerPawn();
     if (!IsValid(Player))
     {
         return;
     }
 
-    const TSubclassOf<UClass> PlayerClass = Player->GetClass();
     for (auto &Pair :HeroesAbilityUiData->Data)
     {
         if (!Player->IsA(Pair.Key))
@@ -37,6 +36,6 @@ void UMTD_AbilityBarWidget::PickHeroUiData()
 
     if (!IsValid(ActiveHeroUiData))
     {
-        MTDS_WARN("There is no entry for player [%s] inside Heroes Ability UI Data", *GetNameSafe(Player));
+        MTDS_WARN("There is no entry for player [%s] inside heroes ability UI data", *Player->GetName());
     }
 }

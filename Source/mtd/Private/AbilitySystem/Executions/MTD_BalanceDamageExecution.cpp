@@ -1,6 +1,5 @@
 #include "AbilitySystem/Executions/MTD_BalanceDamageExecution.h"
 
-#include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystem/Attributes/MTD_BalanceSet.h"
 
 struct FBalanceStatics
@@ -25,6 +24,7 @@ static FBalanceStatics &BalanceStatics()
 
 UMTD_BalanceDamageExecution::UMTD_BalanceDamageExecution()
 {
+    // List capture attributes
     RelevantAttributesToCapture.Add(BalanceStatics().TargetLastReceivedDamage_MetaDef);
     RelevantAttributesToCapture.Add(BalanceStatics().TargetResistDef);
     RelevantAttributesToCapture.Add(BalanceStatics().SourceBalanceDamageDef);
@@ -34,9 +34,7 @@ void UMTD_BalanceDamageExecution::Execute_Implementation(
     const FGameplayEffectCustomExecutionParameters &ExecParams,
     FGameplayEffectCustomExecutionOutput &ExecOutput) const
 {
-    const FMTD_GameplayTags Tags = FMTD_GameplayTags::Get();
     const FGameplayEffectSpec &Spec = ExecParams.GetOwningSpec();
-
     const FGameplayTagContainer *TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
     const FGameplayTagContainer *SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
 
@@ -44,17 +42,21 @@ void UMTD_BalanceDamageExecution::Execute_Implementation(
     EvaluationParams.TargetTags = TargetTags;
     EvaluationParams.SourceTags = SourceTags;
 
+    // Get source's balance damage
     float Damage = 0.f;
     ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         BalanceStatics().SourceBalanceDamageDef, EvaluationParams, Damage);
 
+    // Get target's balance resist
     float Resist = 0.f;
     ExecParams.AttemptCalculateCapturedAttributeMagnitude(
         BalanceStatics().TargetResistDef, EvaluationParams, Resist);
 
+    // Compute how much balance damage target has to receive
     const float IgnoredDamage = (Damage / 100.f) * Resist;
     Damage -= IgnoredDamage;
-    
+
+    // Output the balance damage in LastReceivedBalanceDamage_Meta
     ExecOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
          UMTD_BalanceSet::GetLastReceivedBalanceDamage_MetaAttribute(),
          EGameplayModOp::Override,

@@ -4,8 +4,11 @@
 
 void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool bGamePaused)
 {
-    // TODO: Clear ability input if paused
-    // ...
+    // Clear all the inputs if the game has been paused
+    if (bGamePaused)
+    {
+        ClearAbilityInput();
+    }
 
     static TArray<FGameplayAbilitySpecHandle> AbilitiesToActivate;
     AbilitiesToActivate.Reset();
@@ -14,14 +17,15 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
     for (const FGameplayAbilitySpecHandle &SpecHandle : InputHeldSpecHandles)
     {
         const FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
-        if ((!Spec) || (!Spec->Ability) || (Spec->IsActive()))
+        if (((!Spec) || (!Spec->Ability) || (Spec->IsActive())))
         {
             continue;
         }
 
+        // Add the ability to the activation list if it has to be activated as long as the input is triggered
         const auto Ability = CastChecked<UMTD_GameplayAbility>(Spec->Ability);
-
-        if (Ability->GetActivationPolicy() == EMTD_AbilityActivationPolicy::WhileInputActive)
+        const EMTD_AbilityActivationPolicy ActivationPolicy = Ability->GetActivationPolicy();
+        if (ActivationPolicy == EMTD_AbilityActivationPolicy::WhileInputActive)
         {
             AbilitiesToActivate.AddUnique(Spec->Handle);
         }
@@ -31,50 +35,52 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
     for (const FGameplayAbilitySpecHandle &SpecHandle : InputPressedSpecHandles)
     {
         FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
-        if ((!Spec) || (!Spec->Ability))
+        if (((!Spec) || (!IsValid(Spec->Ability))))
         {
             continue;
         }
 
+        // Update the input state for the ability
         Spec->InputPressed = true;
+
         if (Spec->IsActive())
         {
-            // Ability is active so pass along the input event
+            // Ability is active, so pass along the input event
             AbilitySpecInputPressed(*Spec);
         }
         else
         {
+            // Add the ability to the activation list if it has to be activated when the input has been just pressed
             const auto Ability = CastChecked<UMTD_GameplayAbility>(Spec->Ability);
-            check(Ability);
-
-            if (Ability->GetActivationPolicy() == EMTD_AbilityActivationPolicy::OnInputTriggered)
+            const EMTD_AbilityActivationPolicy ActivationPolicy = Ability->GetActivationPolicy();
+            if (ActivationPolicy == EMTD_AbilityActivationPolicy::OnInputTriggered)
             {
                 AbilitiesToActivate.AddUnique(Spec->Handle);
             }
         }
-
-        const auto Ability = CastChecked<UMTD_GameplayAbility>(Spec->Ability);
-        check(Ability);
     }
 
+    // Try to activate all the abilities that have been gather so far
     for (const FGameplayAbilitySpecHandle &SpecHandle : AbilitiesToActivate)
     {
         TryActivateAbility(SpecHandle);
     }
 
+    // Process released input
     for (const FGameplayAbilitySpecHandle &SpecHandle : InputReleasedSpecHandles)
     {
         FGameplayAbilitySpec *Spec = FindAbilitySpecFromHandle(SpecHandle);
-        if ((!Spec) || (!Spec->Ability))
+        if (((!Spec) || (!IsValid(Spec->Ability))))
         {
             continue;
         }
 
+        // Update the input state for the ability
         Spec->InputPressed = false;
 
         if (Spec->IsActive())
         {
-            // Ability is active so pass along the input event
+            // Ability is active, so pass along the input event
             AbilitySpecInputReleased(*Spec);
         }
     }
@@ -82,6 +88,13 @@ void UMTD_AbilitySystemComponent::ProcessAbilityInput(float DeltaSeconds, bool b
     // Clear cached ability handles
     InputPressedSpecHandles.Reset();
     InputReleasedSpecHandles.Reset();
+}
+
+void UMTD_AbilitySystemComponent::ClearAbilityInput()
+{
+    InputPressedSpecHandles.Empty();
+    InputHeldSpecHandles.Empty();
+    InputReleasedSpecHandles.Empty();
 }
 
 bool UMTD_AbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGameplayEffectHandle Handle, float NewDuration)
@@ -119,8 +132,8 @@ bool UMTD_AbilitySystemComponent::SetGameplayEffectDurationHandle(FActiveGamepla
     return true;
 }
 
-bool UMTD_AbilitySystemComponent::IncreaseGameplayEffectLevelHandle(
-    FActiveGameplayEffectHandle Handle, float IncreaseBy) const
+bool UMTD_AbilitySystemComponent::ChangeGameplayEffectLevelHandle(FActiveGameplayEffectHandle Handle,
+    int32 DeltaLevel) const
 {
     if (!Handle.IsValid())
     {
@@ -133,11 +146,12 @@ bool UMTD_AbilitySystemComponent::IncreaseGameplayEffectLevelHandle(
         return false;
     }
 
+    // Get the active gameplay effect
     FActiveGameplayEffect *ActiveGe = const_cast<FActiveGameplayEffect *>(ConstActiveGe);
 
-    const float OldLevel = ActiveGe->Spec.GetLevel();
-    const float NewLevel = OldLevel + IncreaseBy;
-
+    // Add the delta level to the original level, and set the result to the spec
+    const float CurrentLevel = ActiveGe->Spec.GetLevel();
+    const float NewLevel = (CurrentLevel + DeltaLevel);
     ActiveGe->Spec.SetLevel(NewLevel);
 
     return true;
@@ -150,9 +164,10 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagPressed(const FGameplayTag &I
         return;
     }
 
+    // Iterate through all activatable abilities, and check whether it's assosiated with the pressed input tag
     for (const FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
     {
-        if ((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag)))
+        if (((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))))
         {
             InputPressedSpecHandles.AddUnique(AbilitySpec.Handle);
             InputHeldSpecHandles.AddUnique(AbilitySpec.Handle);
@@ -167,9 +182,10 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagReleased(const FGameplayTag &
         return;
     }
 
+    // Iterate through all activatable abilities, and check whether it's assosiated with the pressed input tag
     for (const FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
     {
-        if ((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag)))
+        if (((IsValid(AbilitySpec.Ability)) && (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))))
         {
             InputReleasedSpecHandles.AddUnique(AbilitySpec.Handle);
             InputHeldSpecHandles.Remove(AbilitySpec.Handle);
@@ -177,17 +193,18 @@ void UMTD_AbilitySystemComponent::OnAbilityInputTagReleased(const FGameplayTag &
     }
 }
 
-void UMTD_AbilitySystemComponent::GiveTagToAbility(const FGameplayTag &Tag, UMTD_GameplayAbility *Ability)
+void UMTD_AbilitySystemComponent::GiveTagToAbility(const FGameplayTag &InputTag, UMTD_GameplayAbility *Ability)
 {
-    check(Ability);
+    check(IsValid(Ability));
 
+    // Iterate through all activatable abilities, and check whether it's assosiated with the pressed input tag
     for (FGameplayAbilitySpec &AbilitySpec : ActivatableAbilities.Items)
     {
         const auto OtherAbility = Cast<UMTD_GameplayAbility>(AbilitySpec.Ability);
         
-        if ((IsValid(OtherAbility)) && (OtherAbility->GetMainAbilityTag() == Ability->GetMainAbilityTag()))
+        if (((IsValid(OtherAbility)) && (OtherAbility->GetMainAbilityTag() == Ability->GetMainAbilityTag())))
         {
-            AbilitySpec.DynamicAbilityTags.AddTag(Tag);
+            AbilitySpec.DynamicAbilityTags.AddTag(InputTag);
             break;
         }
     }

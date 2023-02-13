@@ -28,22 +28,25 @@ void UMTD_GameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo *ActorI
 {
     Super::OnGiveAbility(ActorInfo, Spec);
 
+    // Handle OnSpawn activation policy
     TryActivateAbilityOnSpawn(ActorInfo, Spec);
 }
 
-UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
+const UAnimMontage *UMTD_GameplayAbility::GetRandomAbilityAnimMontage() const
 {
     if (!MainAbilityTag.IsValid())
     {
         MTDS_WARN("Main Ability Tag is invalid.");
         return nullptr;
     }
-    
+
+    // Pawn extension component contains the animations a pawn can play for a certain ability tag
     const AActor *AvatarActor = GetActorInfo().AvatarActor.Get();
     const auto PawnExtComponent = UMTD_PawnExtensionComponent::FindPawnExtensionComponent(AvatarActor);
-    check(PawnExtComponent);
+    check(IsValid(PawnExtComponent));
 
-    UAnimMontage *AnimMontage = PawnExtComponent->GetRandomAnimMontage(MainAbilityTag);
+    // Get the animation montage and check for validness
+    const UAnimMontage *AnimMontage = PawnExtComponent->GetRandomAnimMontage(MainAbilityTag);
     if (!IsValid(AnimMontage))
     {
         MTDS_WARN("Owner [%s] has no Anim Montage to play with Gameplay Tag [%s].", *MainAbilityTag.ToString());
@@ -61,7 +64,9 @@ void UMTD_GameplayAbility::GetOwnedGameplayTags(FGameplayTagContainer &TagContai
 float UMTD_GameplayAbility::GetCooldownNormilized() const
 {
     const float Remaining = GetCooldownTimeRemaining();
-    return (CooldownDuration.Value != 0.f) ? (Remaining / CooldownDuration.Value) : (0.f);
+
+    // Avoid dividing by 0
+    return ((CooldownDuration.Value != 0.f) ? (Remaining / CooldownDuration.Value) : (0.f));
 }
 
 void UMTD_GameplayAbility::ActivateAbility(
@@ -70,19 +75,21 @@ void UMTD_GameplayAbility::ActivateAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     const FGameplayEventData *TriggerEventData)
 {
-    // Always save given event data
-    GameplayEventData = (TriggerEventData) ? (*TriggerEventData) : (FGameplayEventData());
+    // Always save passed event data
+    GameplayEventData = ((TriggerEventData) ? (*TriggerEventData) : (FGameplayEventData()));
     
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+    // Notify about ability activation
     OnAbilityActivatedDelegate.Broadcast(this);
 }
 
 const FGameplayTagContainer *UMTD_GameplayAbility::GetCooldownTags() const
 {
-    FGameplayTagContainer *MutableTags = const_cast<FGameplayTagContainer *>(&TempCooldownTags);
+    auto MutableTags = const_cast<FGameplayTagContainer *>(&TempCooldownTags);
     MutableTags->Reset();
 
+    // Add our cooldown tags to tags that are currently on cooldown
     const FGameplayTagContainer *ParentTags = Super::GetCooldownTags();
     if (ParentTags)
     {
@@ -98,25 +105,36 @@ void UMTD_GameplayAbility::ApplyCooldown(
     const FGameplayAbilityActorInfo *ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-    if (!CooldownTags.IsValid() || CooldownDuration.GetValue() <= 0.f)
+    // Avoid applying cooldown time if cooldown is a non-positive value
+    if (CooldownDuration.GetValue() <= 0.f)
     {
         return;
     }
 
+    if (!CooldownTags.IsValid())
+    {
+        // Notify about invalid cooldown tags only if cooldown duration is a positive value
+        MTDS_WARN("Cooldown tags are invalid.");
+        return;
+    }
+    
+    // Get GE class used to define a cooldown
     const UGameplayEffect *CooldownGe = GetCooldownGameplayEffect();
     if (!IsValid(CooldownGe))
     {
         return;
     }
 
+    // Create GE to apply the cooldown
     const float AbilityLevel = GetAbilityLevel();
     FGameplayEffectSpecHandle GeSpecHandle = MakeOutgoingGameplayEffectSpec(CooldownGe->GetClass(), AbilityLevel);
-
     GeSpecHandle.Data->DynamicGrantedTags.AppendTags(CooldownTags);
 
+    // Apply cooldown
     // ReSharper disable once CppExpressionWithoutSideEffects
     ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, GeSpecHandle);
 
+    // Notify about ability cooldown application
     OnApplyCooldownDelegate.Broadcast(this, CooldownDuration.GetValueAtLevel(AbilityLevel));
 }
 
@@ -129,6 +147,7 @@ void UMTD_GameplayAbility::EndAbility(
 {
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
+    // Notify about ability end
     OnAbilityEndedDelegate.Broadcast(this);
 }
 
@@ -137,6 +156,7 @@ void UMTD_GameplayAbility::InputPressed(
     const FGameplayAbilityActorInfo *ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo)
 {
+    // Notify about ability input press
     OnInputPressedDelegate.Broadcast(this);
 }
 
@@ -144,14 +164,16 @@ void UMTD_GameplayAbility::TryActivateAbilityOnSpawn(
     const FGameplayAbilityActorInfo *ActorInfo,
     const FGameplayAbilitySpec &Spec) const
 {
-    check(ActorInfo);
-
-    UAbilitySystemComponent *Asc = ActorInfo->AbilitySystemComponent.Get();
-
-    if ((Spec.IsActive()) || (ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn) || (!IsValid(Asc)))
+    // Check if activation policy supposes to activate the ability right now, and check if it is already active or not
+    if (((ActivationPolicy != EMTD_AbilityActivationPolicy::OnSpawn) || (Spec.IsActive())))
     {
         return;
     }
 
+    check(ActorInfo);
+    UAbilitySystemComponent *Asc = ActorInfo->AbilitySystemComponent.Get();
+    check(IsValid(Asc));
+
+    // Activate ability on spawn
     Asc->TryActivateAbility(Spec.Handle);
 }
