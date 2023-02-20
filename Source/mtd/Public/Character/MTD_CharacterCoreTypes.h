@@ -1,8 +1,8 @@
 ﻿#pragma once
 
+#include "Gameplay/Projectile/MTD_ProjectileCoreTypes.h"
 #include "GameplayTagContainer.h"
 #include "mtd.h"
-#include "Projectile/MTD_ProjectileCoreTypes.h"
 
 #include "MTD_CharacterCoreTypes.generated.h"
 
@@ -24,7 +24,7 @@ class UMTD_ProjectileData;
         \
         if (Result != EEvaluateCurveTableResult::RowFound) \
         { \
-            MTDS_WARN("Attribute [%s] on Owner's [%s] Attribute Table could not be found.", \
+            MTDS_WARN("Attribute [%s] on owner's [%s] attribute table could not be found.", \
                 *ROW_NAME.ToString(), *GetName()); \
             return; \
         } \

@@ -16,11 +16,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
+#include "Gameplay/Projectile/MTD_Projectile.h"
+#include "Gameplay/Projectile/MTD_ProjectileMovementComponent.h"
 #include "Kismet/DataTableFunctionLibrary.h"
 #include "Player/MTD_PlayerState.h"
 #include "Player/MTD_TowerController.h"
-#include "Projectile/MTD_Projectile.h"
-#include "Projectile/MTD_ProjectileMovementComponent.h"
 #include "System/MTD_Tags.h"
 
 AMTD_Tower::AMTD_Tower()

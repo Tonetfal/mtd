@@ -10,16 +10,16 @@
 #include "Character/MTD_TeamComponent.h"
 #include "Character/MTD_Tower.h"
 #include "Components/CapsuleComponent.h"
-#include "Equipment/MTD_EquipmentInstance.h"
-#include "Equipment/MTD_EquipmentManagerComponent.h"
-#include "Equipment/MTD_WeaponInstance.h"
-#include "Inventory/Items/MTD_WeaponItemData.h"
-#include "Inventory/MTD_InventoryItemInstance.h"
+#include "EquipmentSystem/MTD_EquipmentInstance.h"
+#include "EquipmentSystem/MTD_EquipmentManagerComponent.h"
+#include "EquipmentSystem/MTD_WeaponInstance.h"
+#include "Gameplay/Projectile/MTD_Projectile.h"
+#include "Gameplay/Projectile/MTD_ProjectileCoreTypes.h"
+#include "Gameplay/Projectile/MTD_ProjectileMovementComponent.h"
+#include "InventorySystem/Items/MTD_WeaponItemData.h"
+#include "InventorySystem/MTD_InventoryItemInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Player/MTD_PlayerState.h"
-#include "Projectile/MTD_Projectile.h"
-#include "Projectile/MTD_ProjectileCoreTypes.h"
-#include "Projectile/MTD_ProjectileMovementComponent.h"
 
 void UMTD_GameplayAbility_AttackRanged::FireProjectile()
 {
@@ -209,7 +209,7 @@ bool UMTD_GameplayAbility_AttackRanged::SpawnProjectile(FMTD_Parameters &Paramet
         Parameters.ProjectileMovementComponent = Projectile->GetMovementComponent();
         if (!IsValid(Parameters.ProjectileMovementComponent))
         {
-            MTDS_WARN("Projectile Movement Component on Projectile [%s] is invalid.", *Projectile->GetName());
+            MTDS_WARN("Projectile movement component on projectile [%s] is invalid.", *Projectile->GetName());
             return false;
         }
     }
@@ -305,7 +305,7 @@ void UMTD_GameplayAbility_AttackRanged::SetupProjectileCollision(const FMTD_Para
     auto CollisionComponent = Parameters.SpawnedProjectile->GetCollisionComponent();
     if (!IsValid(CollisionComponent))
     {
-        MTDS_WARN("Collision component on Projectile [%s] is invalid.", *Parameters.SpawnedProjectile->GetName());
+        MTDS_WARN("Collision component on projectile [%s] is invalid.", *Parameters.SpawnedProjectile->GetName());
         return;
     }
 

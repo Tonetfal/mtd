@@ -7,7 +7,7 @@
 #include "Character/MTD_CharacterCoreTypes.h"
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "GameFramework/Character.h"
-#include "Input/MTD_InputComponent.h"
+#include "InputSystem/MTD_InputComponent.h"
 #include "Player/MTD_PlayerController.h"
 #include "Player/MTD_PlayerState.h"
 
@@ -233,7 +233,7 @@ void UMTD_HeroComponent::InitializePlayerInput(UInputComponent *InputComponent)
         return;
     }
 
-    const FMTD_GameplayTags GameplayTags = FMTD_GameplayTags::Get();
+    const FMTD_GameplayTags &GameplayTags = FMTD_GameplayTags::Get();
     auto MtdInputComponent = CastChecked<UMTD_InputComponent>(InputComponent);
 
     // Dispatch input config

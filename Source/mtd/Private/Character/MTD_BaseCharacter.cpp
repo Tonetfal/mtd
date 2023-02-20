@@ -8,7 +8,7 @@
 #include "Character/MTD_PawnExtensionComponent.h"
 #include "CombatSystem/MTD_CombatComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Equipment/MTD_EquipmentManagerComponent.h"
+#include "EquipmentSystem/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"
