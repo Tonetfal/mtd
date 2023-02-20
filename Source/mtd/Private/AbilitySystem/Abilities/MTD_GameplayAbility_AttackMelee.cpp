@@ -10,31 +10,31 @@ void UMTD_GameplayAbility_AttackMelee::OnHit(const FGameplayEventData &Payload)
     const UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
     if (!IsValid(AbilitySystemComponent))
     {
-        MTDS_WARN("Ability System Component is invalid.");
+        MTDS_WARN("Ability system component is invalid.");
         return;
     }
 
     const int32 Num = Payload.TargetData.Num();
     if (Num == 0)
     {
-        MTDS_WARN("Target Data is empty.");
+        MTDS_WARN("Target data is empty.");
         return;
     }
 
     FGameplayAbilityTargetData *TargetData = Payload.TargetData.Data[0].Get();
     if (!TargetData)
     {
-        MTDS_WARN("Target Data is NULL.");
+        MTDS_WARN("Target data is NULL.");
         return;
     }
-    
+
     const FHitResult *HitResult = TargetData->GetHitResult();
     if (!HitResult)
     {
-        MTDS_WARN("Hit Result is NULL.");
+        MTDS_WARN("Hit result is NULL.");
         return;
     }
-    
+
     const AActor *TargetActor = Payload.Target;
     if (!IsValid(TargetActor))
     {
@@ -81,7 +81,7 @@ FGameplayEffectSpecHandle UMTD_GameplayAbility_AttackMelee::GetBalanceDamageSpec
     // Prepare some data
     const FMTD_GameplayTags &Tags = FMTD_GameplayTags::Get();
     const float BalanceDamage = AbilitySystemComponent->GetNumericAttribute(UMTD_BalanceSet::GetDamageAttribute());
-    
+
     // Setup the GE
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_KnockbackDirection_X, KnockbackDirection.X);
     SpecHandle.Data->SetSetByCallerMagnitude(Tags.SetByCaller_KnockbackDirection_Y, KnockbackDirection.Y);
@@ -120,7 +120,7 @@ FGameplayEffectSpecHandle UMTD_GameplayAbility_AttackMelee::GetDamageSpecHandle(
 FVector UMTD_GameplayAbility_AttackMelee::ComputeKnockbackDirection(const AActor *TargetActor) const
 {
     check(IsValid(TargetActor));
-    
+
     const AActor *AvatarActor = GetAvatarActorFromActorInfo();
     check(IsValid(AvatarActor));
 

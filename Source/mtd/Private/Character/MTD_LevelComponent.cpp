@@ -14,6 +14,9 @@ UMTD_LevelComponent::UMTD_LevelComponent()
 
     // Build the map as soon as possible
     MapUpgradeAttributes();
+
+    TMap<int32, int32> Map;
+    Map.CreateConstIterator();
 }
 
 void UMTD_LevelComponent::InitializeWithAbilitySystem(UMTD_AbilitySystemComponent *InAbilitySystemComponent)

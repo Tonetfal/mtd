@@ -4,7 +4,7 @@
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
 #include "AbilitySystemComponent.h"
 #include "Character/MTD_LevelComponent.h"
-#include "Inventory/Items/MTD_ItemDropManager.h"
+#include "InventorySystem/Items/MTD_ItemDropManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/MTD_PlayerState.h"
 

@@ -8,8 +8,8 @@
 #include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_LevelComponent.h"
 #include "Character/MTD_PawnExtensionComponent.h"
-#include "Equipment/MTD_EquipmentManagerComponent.h"
-#include "Inventory/MTD_InventoryManagerComponent.h"
+#include "EquipmentSystem/MTD_EquipmentManagerComponent.h"
+#include "InventorySystem/MTD_InventoryManagerComponent.h"
 #include "Player/MTD_PlayerController.h"
 
 AMTD_PlayerState::AMTD_PlayerState()

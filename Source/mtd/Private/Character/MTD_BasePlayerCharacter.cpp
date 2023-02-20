@@ -70,14 +70,14 @@ void AMTD_BasePlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
     
     if (EndPlayReason == EEndPlayReason::Destroyed)
     {
-        AMTD_PlayerState *MtdPs = GetMtdPlayerState();
-        if (!IsValid(MtdPs))
+        AMTD_PlayerState *MtdPlayerState = GetMtdPlayerState();
+        if (!IsValid(MtdPlayerState))
         {
-            MTDS_WARN("MTD Player State is invalid.");
+            MTDS_WARN("MTD player state is invalid.");
         }
         else
         {
-            MtdPs->ClearHeroClasses();
+            MtdPlayerState->ClearHeroClasses();
         }
     }
 }

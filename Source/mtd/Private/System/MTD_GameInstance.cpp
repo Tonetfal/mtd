@@ -2,8 +2,8 @@
 
 #include "Character/MTD_LevelComponent.h"
 #include "Engine/CurveTable.h"
-#include "Inventory/Items/MTD_ItemDataManager.h"
-#include "Inventory/Items/MTD_ItemDropManager.h"
+#include "InventorySystem/Items/MTD_ItemDataManager.h"
+#include "InventorySystem/Items/MTD_ItemDropManager.h"
 #include "MTD_CoreTypes.h"
 
 void UMTD_GameInstance::Init()

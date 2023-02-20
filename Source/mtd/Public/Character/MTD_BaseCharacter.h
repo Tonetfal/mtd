@@ -27,10 +27,10 @@ class UMTD_PawnExtensionComponent;
  * - Melee combat
  */
 UCLASS()
-class MTD_API AMTD_BaseCharacter :
-    public ACharacter, 
-    public IAbilitySystemInterface,
-    public IMTD_GameResultInterface
+class MTD_API AMTD_BaseCharacter
+    : public ACharacter
+    , public IAbilitySystemInterface
+    , public IMTD_GameResultInterface
 {
     GENERATED_BODY()
 
