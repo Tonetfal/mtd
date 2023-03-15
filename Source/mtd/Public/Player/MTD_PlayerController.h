@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Character/MTD_TeamComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
 #include "mtd.h"

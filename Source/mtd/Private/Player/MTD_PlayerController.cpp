@@ -1,8 +1,8 @@
 #include "Player/MTD_PlayerController.h"
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 #include "Character/MTD_BasePlayerCharacter.h"
-#include "Character/MTD_TeamComponent.h"
 #include "Player/MTD_PlayerState.h"
 
 AMTD_PlayerController::AMTD_PlayerController()

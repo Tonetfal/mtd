@@ -7,7 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Character/MTD_BaseCharacter.h"
 #include "Character/MTD_BasePlayerCharacter.h"
-#include "Character/MTD_TeamComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 #include "Character/MTD_Tower.h"
 #include "Components/CapsuleComponent.h"
 #include "EquipmentSystem/MTD_EquipmentInstance.h"

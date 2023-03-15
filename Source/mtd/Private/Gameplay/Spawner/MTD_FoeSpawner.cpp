@@ -2,12 +2,12 @@
 
 #include "Character/MTD_BaseFoeCharacter.h"
 #include "Engine/DataTable.h"
-#include "GameModes/MTD_TowerDefenseMode.h"
-#include "Gameplay/MTD_WaveManager.h"
+#include "Gameplay/Difficulty/MTD_GameDifficultySubsystem.h"
 #include "Gameplay/Levels/MTD_LevelDifficultyDefinition.h"
 #include "Gameplay/Spawner/MTD_SpawnerCoreTypes.h"
+#include "Gameplay/Wave/MTD_GameWavesSubsystem.h"
 #include "Kismet/GameplayStatics.h"
-#include "System/MTD_GameInstance.h"
+#include "Settings/MTD_GameDifficultySettings.h"
 
 AMTD_FoeSpawner::AMTD_FoeSpawner()
 {
@@ -115,17 +115,12 @@ void AMTD_FoeSpawner::Tick(float DeltaSeconds)
     }
 }
 
-void AMTD_FoeSpawner::Initialize()
+void AMTD_FoeSpawner::Initialize(const UMTD_LevelDefinition *SelectedLevelDefinition,
+	const UMTD_LevelDifficultyDefinition *SelectedLevelDifficultyDefinition)
 {
-    // Cache tower defense mode because it will be used often
-    const UWorld *World = GetWorld();
-    CachedTowerDefenseMode = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(World));
-    if (!IsValid(CachedTowerDefenseMode))
-    {
-        MTDS_WARN("Tower defense mode is invalid.");
-        return;
-    }
-
+    check(IsValid(SelectedLevelDifficultyDefinition));
+	LevelDiffDefinition = SelectedLevelDifficultyDefinition;
+    
     ListenForWaveEnd();
     CacheLevelData();
     BuildCacheMap();
@@ -184,57 +179,35 @@ void AMTD_FoeSpawner::SpawnFoe(TSubclassOf<AMTD_BaseFoeCharacter> FoeClass)
 
 void AMTD_FoeSpawner::ListenForWaveEnd()
 {
-    if (!IsValid(CachedTowerDefenseMode))
-    {
-        MTDS_WARN("Tower defense mode is invalid.");
-        return;
-    }
-    
-    UMTD_WaveManager *WaveManager = CachedTowerDefenseMode->GetWaveManager();
-    check(IsValid(WaveManager));
+    const auto GameWavesSubsystem = UMTD_GameWavesSubsystem::Get(this);
+    check(IsValid(GameWavesSubsystem));
     
     // Listen for wave end events
-    WaveManager->OnWaveEndDelegate.AddDynamic(this, &ThisClass::OnWaveEnd);
+    GameWavesSubsystem->OnWaveEndDelegate.AddDynamic(this, &ThisClass::OnWaveEnd);
 }
 
 void AMTD_FoeSpawner::CacheLevelData()
 {
-    if (!IsValid(CachedTowerDefenseMode))
-    {
-        MTDS_WARN("Tower defense mode is invalid.");
-        return;
-    }
-    
-    const auto GameInstance = Cast<UMTD_GameInstance>(CachedTowerDefenseMode->GetGameInstance());
-    check(IsValid(GameInstance));
-
     // Cache foe quantity data asset
-    CachedFoeQuantityAsset = GameInstance->GetFoeQuantityAsset();
-    if (!IsValid(CachedFoeQuantityAsset))
+    const auto GameDifficultySettings = UMTD_GameDifficultySettings::Get();
+    FoeQuantityAsset = GameDifficultySettings->FoeQuantityAsset.LoadSynchronous();
+    if (!IsValid(FoeQuantityAsset))
     {
         MTDS_WARN("Foe quantity data asset is invalid.");
-        return;
-    }
-    
-    // Cache selected level difficulty definition
-    CachedLevelDiffDefinition = CachedTowerDefenseMode->GetSelectedLevelDifficultyDefinition();
-    if (!IsValid(CachedLevelDiffDefinition))
-    {
-        MTDS_WARN("Selected level difficulty definition is invalid.");
         return;
     }
 }
 
 void AMTD_FoeSpawner::BuildCacheMap()
 {
-    if (!IsValid(CachedFoeQuantityAsset))
+    if (!IsValid(FoeQuantityAsset))
     {
         MTDS_WARN("Foe quantity data asset is invalid.");
         return;
     }
     
     // Build cache map with spawnable foe classes
-    for (const auto &[FoeClass, _] : CachedFoeQuantityAsset->QuantityMap)
+    for (const auto &[FoeClass, _] : FoeQuantityAsset->QuantityMap)
     {
         CachedFoesToSpawn.Add(FoeClass);
     }
@@ -242,16 +215,16 @@ void AMTD_FoeSpawner::BuildCacheMap()
 
 void AMTD_FoeSpawner::PrepareForNextWave()
 {
-    if (!IsValid(CachedTowerDefenseMode))
-    {
-        MTDS_WARN("Tower defense mode is invalid.");
-        return;
-    }
+    const auto GameWavesSubsystem = UMTD_GameWavesSubsystem::Get(this);
+    check(IsValid(GameWavesSubsystem));
+    
+    const auto GameDifficultySubsystem = UMTD_GameDifficultySubsystem::Get(this);
+    check(IsValid(GameDifficultySubsystem));
 
     // Get main information about current wave
-    const float TotalWaveTime = CachedTowerDefenseMode->GetTotalCurrentWaveTime();
-    const int32 CurrentWave = CachedTowerDefenseMode->GetCurrentWave();
-    GlobalQuantityRate = CachedTowerDefenseMode->GetScaledQuantity();
+    const float TotalWaveTime = GameDifficultySubsystem->GetTotalCurrentWaveTime();
+    const int32 CurrentWave = GameWavesSubsystem->GetCurrentWave();
+    GlobalQuantityRate = GameDifficultySubsystem->GetScaledQuantity();
     
     // Cache foe spawns that have to take place along the whole wave
     CacheFoeSpawns(TotalWaveTime, CurrentWave);
@@ -269,23 +242,29 @@ void AMTD_FoeSpawner::PrepareForNextWave()
 
 void AMTD_FoeSpawner::CacheFoeSpawns(float WaveTotalTime, int32 Wave)
 {
-    if (!IsValid(CachedLevelDiffDefinition))
+    if (!IsValid(FoeQuantityAsset))
+    {
+        MTDS_WARN("Foe quantity asset is invalid.");
+        return;
+    }
+    
+    if (!IsValid(LevelDiffDefinition))
     {
         MTDS_WARN("Level difficulty definition is invalid.");
         return;
     }
 
     // Get foe quantity rate that has to be used for this wave
-    const UMTD_FoeRateDefinition *RateDef = CachedLevelDiffDefinition->GetCharacterRateDefinition(Wave);
+    const UMTD_FoeRateDefinition *RateDef = LevelDiffDefinition->GetCharacterRateDefinition(Wave);
     if (!IsValid(RateDef))
     {
         MTDS_WARN("Foe rate definition for wave [%d] on difficulty [%s] is invalid.", Wave,
-            *CachedLevelDiffDefinition->GetName());
+            *LevelDiffDefinition->GetName());
         return;
     }
 
     // Get intensivity curve that has to be used for this wave
-    const UCurveFloat *IntensivityCurve = CachedLevelDiffDefinition->GetIntensivityCurve(Wave);
+    const UCurveFloat *IntensivityCurve = LevelDiffDefinition->GetIntensivityCurve(Wave);
     if (!IsValid(IntensivityCurve))
     {
         MTDS_WARN("Intensivity float curve for wave [%d] on difficulty [%s] is invalid.", Wave, 
@@ -342,7 +321,7 @@ void AMTD_FoeSpawner::CacheFoeSpawns(float WaveTotalTime, int32 Wave)
             Quantity += AdditionalQuantity;
 
             // Get how much quantity is required to spawn a single entity of given foe class
-            const float QuantityThreshold = *CachedFoeQuantityAsset->QuantityMap.Find(FoeClass);
+            const float QuantityThreshold = *FoeQuantityAsset->QuantityMap.Find(FoeClass);
 
             // Add a new entry
             CachedSpawnValues.Add(0);

@@ -1,15 +1,15 @@
 ﻿#include "InventorySystem/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 
 #include "Character/MTD_BaseFoeCharacter.h"
-#include "GameModes/MTD_TowerDefenseMode.h"
+#include "Gameplay/Difficulty/MTD_GameDifficultySubsystem.h"
 #include "InventorySystem/Items/MTD_ArmorItemData.h"
 #include "InventorySystem/Items/MTD_BaseInventoryItemData.h"
-#include "InventorySystem/Items/MTD_ItemDataManager.h"
-#include "InventorySystem/Items/MTD_ItemDropManager.h"
 #include "InventorySystem/Items/MTD_MaterialItemData.h"
 #include "InventorySystem/Items/MTD_WeaponItemData.h"
 #include "InventorySystem/MTD_InventoryItemInstance.h"
+#include "InventorySystem/MTD_ItemDropSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Settings/MTD_InventorySystemSettings.h"
 
 /**
  * Generation parameters to pass around.
@@ -85,13 +85,14 @@ static void GenerateArmorItemData(FMTD_GenerationParameters &Params, bool bRando
 {
     auto ArmorItemData = CastChecked<UMTD_ArmorItemData>(Params.BaseItemData);
 
-    const UDataTable *ArmorDataTable = UMTD_ItemDataManager::GetArmorDataTable();
+    const auto InventorySystemSettings = UMTD_InventorySystemSettings::Get();
+    const UDataTable *ArmorDataTable = InventorySystemSettings->ArmorDataTable.LoadSynchronous();
     if (!IsValid(ArmorDataTable))
     {
         MTD_WARN("Armor data table is invalid.");
         return;
     }
-
+    
     // Find template item data
     const auto Row = ArmorDataTable->FindRow<FMTD_ArmorItemDataRow>(Params.RowID, nullptr, false);
     if (!Row)
@@ -99,10 +100,10 @@ static void GenerateArmorItemData(FMTD_GenerationParameters &Params, bool bRando
         MTD_WARN("Item ID [%s] could not be found in armor item data table.", *Params.RowID.GetPlainNameString());
         return;
     }
-
+    
     // Dispatch templated data
     DispatchArmorItemData(Params, *ArmorItemData, *Row);
-
+    
     if (bRandomizeStats)
     {
         // Generate randomizable stats
@@ -175,13 +176,14 @@ static void GenerateWeaponItemData(FMTD_GenerationParameters &Params, bool bRand
 {
     auto WeaponItemData = CastChecked<UMTD_WeaponItemData>(Params.BaseItemData);
 
-    const UDataTable *WeaponDataTable = UMTD_ItemDataManager::GetWeaponDataTable();
+    const auto InventorySystemSettings = UMTD_InventorySystemSettings::Get();
+    const UDataTable *WeaponDataTable = InventorySystemSettings->WeaponDataTable.LoadSynchronous();
     if (!IsValid(WeaponDataTable))
     {
         MTD_WARN("Weapon data table is invalid.");
         return;
     }
-
+    
     // Find template item data
     const auto Row = WeaponDataTable->FindRow<FMTD_WeaponItemDataRow>(Params.RowID, nullptr, false);
     if (!Row)
@@ -189,10 +191,10 @@ static void GenerateWeaponItemData(FMTD_GenerationParameters &Params, bool bRand
         MTD_WARN("Item ID [%s] could not be found in weapon item data table.", *Params.RowID.GetPlainNameString());
         return;
     }
-
+    
     // Dispatch templated data
     DispatchWeaponItemData(Params, *WeaponItemData, *Row);
-
+    
     if (bRandomizeStats)
     {
         // Generate randomizable stats
@@ -231,13 +233,14 @@ static void GenerateMaterialItemData(FMTD_GenerationParameters &Params, bool bRa
 {
     auto MaterialItemData = CastChecked<UMTD_MaterialItemData>(Params.BaseItemData);
 
-    const UDataTable *MaterialDataTable = UMTD_ItemDataManager::GetMaterialDataTable();
+    const auto InventorySystemSettings = UMTD_InventorySystemSettings::Get();
+    const UDataTable *MaterialDataTable = InventorySystemSettings->MaterialDataTable.LoadSynchronous();
     if (!IsValid(MaterialDataTable))
     {
         MTD_WARN("Material data table is invalid.");
         return;
     }
-
+    
     // Find template item data
     const auto Row = MaterialDataTable->FindRow<FMTD_MaterialItemDataRow>(Params.RowID, nullptr, false);
     if (!Row)
@@ -245,10 +248,10 @@ static void GenerateMaterialItemData(FMTD_GenerationParameters &Params, bool bRa
         MTD_WARN("Item ID [%s] could not be found in material item data table.", *Params.RowID.GetPlainNameString());
         return;
     }
-
+    
     // Dispatch templated data
     DispatchMaterialItemData(Params, *MaterialItemData, *Row);
-
+    
     if (bRandomizeStats)
     {
         // Generate randomizable stats
@@ -342,13 +345,14 @@ static bool CreateGenerationParameters(FMTD_GenerationParameters &OutParams, UOb
         return false;
     }
 
-    const UDataTable *BaseItemDataTable = UMTD_ItemDataManager::GetBaseItemDataTable();
+    const auto InventorySystemSettings = UMTD_InventorySystemSettings::Get();
+    const UDataTable *BaseItemDataTable = InventorySystemSettings->BaseItemDataTable.LoadSynchronous();
     if (!IsValid(BaseItemDataTable))
     {
         MTD_WARN("Base item data table is invalid.");
         return false;
     }
-
+    
     const FName RowID = *FString::FormatAsNumber(ItemID);
     const auto Row = BaseItemDataTable->FindRow<FMTD_BaseInventoryItemDataRow>(RowID, nullptr, false);
     if (!Row)
@@ -356,21 +360,21 @@ static bool CreateGenerationParameters(FMTD_GenerationParameters &OutParams, UOb
         MTD_WARN("Item ID [%s] could not be found in base item data table.", *RowID.GetPlainNameString());
         return false;
     }
-
+    
     const TSubclassOf<UMTD_BaseInventoryItemData> &ItemDataType = GetItemDataType(Row->ItemType);
     if (!ItemDataType)
     {
         MTD_WARN("Item data type is invalid.");
         return false;
     }
-
+    
     auto ItemData = NewObject<UMTD_BaseInventoryItemData>(WorldContextObject, ItemDataType);
     if (!IsValid(ItemData))
     {
         MTD_WARN("Failed to create a item data.");
         return false;
     }
-
+    
     OutParams = { WorldContextObject, ItemID, RowID, 0.f, ItemData, Row };
     return true;
 }
@@ -406,37 +410,22 @@ UMTD_BaseInventoryItemData *UMTD_InventoryBlueprintFunctionLibrary::GenerateDrop
         return nullptr;
     }
 
-    const UWorld *World = WorldContextObject->GetWorld();
-    if (!IsValid(World))
-    {
-        MTD_WARN("World is invalid.");
-        return nullptr;
-    }
-
-    const auto TowerDefenseMode = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(World));
-    if (!IsValid(TowerDefenseMode))
-    {
-        MTD_WARN("Tower defense mode is invalid.");
-        return nullptr;
-    }
-    
-    const UMTD_ItemDropManager *ItemDrops = UMTD_ItemDropManager::Get();
-    if (!IsValid(ItemDrops))
-    {
-        MTD_WARN("Item drops is invalid.");
-        return nullptr;
-    }
+    const auto ItemDropSubsystem = UMTD_ItemDropSubsystem::Get(WorldContextObject);
+    check(IsValid(ItemDropSubsystem));
 
     // Randomize item ID for this class
     int32 ItemID = 0;
-    const TSubclassOf<AMTD_BaseFoeCharacter> &CharacterClass = WorldContextObject->GetClass();
-    if (!ItemDrops->GetRandomItemID(CharacterClass, ItemID))
+    const TSoftClassPtr<AMTD_BaseFoeCharacter> &CharacterClass = WorldContextObject->GetClass();
+    if (!ItemDropSubsystem->GetRandomItemID(CharacterClass, ItemID))
     {
         return nullptr;
     }
 
+    const auto GameDifficultySubsystem = UMTD_GameDifficultySubsystem::Get(WorldContextObject);
+    check(IsValid(GameDifficultySubsystem));
+    
     // Get scale value
-    const float Difficulty = TowerDefenseMode->GetScaledDifficulty();
+    const float Difficulty = GameDifficultySubsystem->GetScaledDifficulty();
 
     // Randomize item
     UMTD_BaseInventoryItemData *ItemData = UMTD_InventoryBlueprintFunctionLibrary::GenerateInventoryItemData(

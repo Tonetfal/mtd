@@ -11,6 +11,7 @@ public class mtd : ModuleRules
 			"AIModule",
 			"Core", 
 			"CoreUObject", 
+			"DeveloperSettings",
 			"Engine", 
 			"InputCore",
 			"NavigationSystem",

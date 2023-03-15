@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Character/MTD_PawnComponent.h"
+#include "Character/Components/MTD_PawnComponent.h"
 #include "CombatSystem/MTD_MeleeEventsInterface.h"
 #include "CombatSystem/MTD_HitboxData.h"
 #include "mtd.h"

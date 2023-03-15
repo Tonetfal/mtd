@@ -3,7 +3,7 @@
 #include "AIController.h"
 #include "NavigationSystem.h"
 #include "AI/NavigationSystemBase.h"
-#include "Character/MTD_TeamComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 
 FGenericTeamId FMTD_Utility::GetMtdGenericTeamId(const AActor *InActor)
 {

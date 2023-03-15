@@ -5,7 +5,7 @@
 /**
  * Simple struct holding all MTD tags.
  *
- * Note they're not gameplay tags.
+ * Note these are not gameplay tags.
  */
 struct FMTD_Tags
 {

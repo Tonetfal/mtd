@@ -4,9 +4,9 @@
 #include "AbilitySystem/Attributes/MTD_CombatSet.h"
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystemComponent.h"
+#include "Character/Components/MTD_HealthComponent.h"
 #include "Character/MTD_BasePlayerCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
-#include "Character/MTD_HealthComponent.h"
 #include "CombatSystem/MTD_CombatComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,6 +16,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "GameModes/MTD_TowerDefenseMode.h"
+#include "Gameplay/Difficulty/MTD_GameDifficultySubsystem.h"
 #include "InventorySystem/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 #include "InventorySystem/MTD_InventoryItemInstance.h"
 #include "Kismet/DataTableFunctionLibrary.h"
@@ -74,15 +75,7 @@ void AMTD_BaseFoeCharacter::InitializeAttributes()
         MTDS_WARN("Foe data is invalid.");
         return;
     }
-
-    UWorld *World = GetWorld();
-    const auto TowerDefenseMode = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(World));
-    if (!IsValid(TowerDefenseMode))
-    {
-        MTDS_WARN("Tower defense mode is invalid.");
-        return;
-    }
-
+    
     UAbilitySystemComponent *AbilitySystemComponent = GetAbilitySystemComponent();
     if (!IsValid(AbilitySystemComponent))
     {
@@ -90,11 +83,14 @@ void AMTD_BaseFoeCharacter::InitializeAttributes()
         return;
     }
 
+    const auto GameDifficultySubsystem = UMTD_GameDifficultySubsystem::Get(this);
+    check(IsValid(GameDifficultySubsystem));
+
     // Intermediate variable
     float Value;
 
     // @todo use an actual formula to compute scaling
-    const float Difficulty = TowerDefenseMode->GetScaledDifficulty();
+    const float Difficulty = GameDifficultySubsystem->GetScaledDifficulty();
     const auto ScaleValue = [Difficulty] (float Value) { return (Value * Difficulty); };
     
     Value = ScaleValue(FoeData->Health);
@@ -422,7 +418,9 @@ void AMTD_BaseFoeCharacter::DropExp()
         MTDS_WARN("Foe data is invalid.");
     }
         
-    UWorld *World = GetWorld();
+    const UWorld *World = GetWorld();
+    check(IsValid(World));
+    
     const auto TowerDefenseMode = Cast<AMTD_TowerDefenseMode>(UGameplayStatics::GetGameMode(World));
     if (!IsValid(TowerDefenseMode))
     {
@@ -430,12 +428,16 @@ void AMTD_BaseFoeCharacter::DropExp()
         return;
     }
     
+    const auto GameDifficultySubsystem = UMTD_GameDifficultySubsystem::Get(this);
+    check(IsValid(GameDifficultySubsystem));
+
     const float Experience = FoeData->Experience;
-    const float Difficulty = TowerDefenseMode->GetScaledDifficulty();
+    const float Difficulty = GameDifficultySubsystem->GetScaledDifficulty();
     
     // @todo use an actual formula to compute scaling
     const auto ScaleExp = [Difficulty] (float Exp) { return (Exp * Difficulty); };
 
+    // @todo create some other means to broadcast exp, maybe use some gameplay event or smth
     // Give experience to all present players
     TowerDefenseMode->BroadcastExp(ScaleExp(Experience));
 }

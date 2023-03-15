@@ -3,7 +3,7 @@
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
-#include "Character/MTD_ManaComponent.h"
+#include "Character/Components/MTD_ManaComponent.h"
 #include "Gameplay/Tokens/MTD_TokenMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 

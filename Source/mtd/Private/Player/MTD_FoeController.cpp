@@ -2,11 +2,11 @@
 
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Character/MTD_BalanceComponent.h"
+#include "Character/Components/MTD_BalanceComponent.h"
 #include "Character/MTD_BaseFoeCharacter.h"
 #include "Character/MTD_CharacterCoreTypes.h"
-#include "Character/MTD_HealthComponent.h"
-#include "Character/MTD_TeamComponent.h"
+#include "Character/Components/MTD_HealthComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Utility/MTD_Utility.h"
 
