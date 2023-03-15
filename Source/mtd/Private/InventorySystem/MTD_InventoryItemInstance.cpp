@@ -6,7 +6,6 @@
 #include "EquipmentSystem/MTD_EquipmentManagerComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "InventorySystem/Items/MTD_EquipItemData.h"
-#include "InventorySystem/Items/MTD_InventoryBlueprintFunctionLibrary.h"
 #include "InventorySystem/MTD_InventoryManagerComponent.h"
 #include "System/MTD_Tags.h"
 
@@ -26,12 +25,6 @@ AMTD_InventoryItemInstance::AMTD_InventoryItemInstance()
     StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     Tags.Add(FMTD_Tags::Interactable);
-}
-
-void AMTD_InventoryItemInstance::BeginPlay()
-{
-    Super::BeginPlay();
-    
 }
 
 void AMTD_InventoryItemInstance::OnConstruction(const FTransform &Transform)

@@ -1,61 +1,29 @@
 ﻿#include "GameModes/MTD_TowerDefenseMode.h"
 
 #include "Character/MTD_BaseCharacter.h"
-#include "Character/MTD_HealthComponent.h"
-#include "Gameplay/Levels/MTD_LevelDefinition.h"
-#include "Gameplay/Levels/MTD_LevelDifficultyDefinition.h"
-#include "Gameplay/MTD_WaveManager.h"
 #include "Gameplay/Objective/Core/MTD_Core.h"
-#include "Gameplay/Spawner/MTD_FoeSpawnerManager.h"
+#include "Gameplay/Wave/MTD_GameWavesSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/MTD_GameInstance.h"
 #include "Utility/MTD_Utility.h"
 
 AMTD_TowerDefenseMode::AMTD_TowerDefenseMode()
 {
-    // We have to dispatch spawner manager's dispatched data
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bStartWithTickEnabled = true;
-
-    WaveManager = CreateDefaultSubobject<UMTD_WaveManager>("MTD Wave Manager");
-    SpawnerManager = CreateDefaultSubobject<UMTD_FoeSpawnerManager>("MTD Spawner Manager");
-}
-
-void AMTD_TowerDefenseMode::Tick(float DeltaSeconds)
-{
-    Super::Tick(DeltaSeconds);
-
-    check(IsValid(SpawnerManager));
-    SpawnerManager->DispatchCachedData();
+    // Nothing to tick for
+    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bStartWithTickEnabled = false;
 }
 
 void AMTD_TowerDefenseMode::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
+    auto GameWavesSubsystem = UMTD_GameWavesSubsystem::Get(this);
+    check(IsValid(GameWavesSubsystem));
+
     // Listen for wave start and end events
-    WaveManager->OnWaveStartDelegate.AddDynamic(this, &ThisClass::OnWaveStarted);
-    WaveManager->OnWaveEndDelegate.AddDynamic(this, &ThisClass::OnWaveEnded);
-    
-    const auto GameInstance = Cast<UMTD_GameInstance>(GetGameInstance());
-    check(IsValid(GameInstance));
-
-    // @todo pick a level with a widget instead of hardcoding the first level be always be the case
-    
-    // This is test purpose code...
-    const TArray<TObjectPtr<UMTD_LevelDefinition>> GameLevels = GameInstance->GetGameLevels();
-    const UMTD_LevelDefinition *FirstGameLevel = GameLevels[0];
-    check(IsValid(FirstGameLevel))
-    
-    const UMTD_LevelDifficultyDefinition *EasyDifficulty = FirstGameLevel->Difficulties[EMTD_LevelDifficulty::Easy];
-    check(IsValid(EasyDifficulty));
-
-    SelectedLevelDefinition = FirstGameLevel;
-    SelectedLevelDifficultyDefinition = EasyDifficulty;
-
-    // Initialize wave and spawner manages AFTER the level information has been retrieved
-    WaveManager->Initialize();
-    SpawnerManager->Initialize();
+    GameWavesSubsystem->OnWaveStartDelegate.AddDynamic(this, &ThisClass::OnWaveStarted);
+    GameWavesSubsystem->OnWaveEndDelegate.AddDynamic(this, &ThisClass::OnWaveEnded);
 }
 
 void AMTD_TowerDefenseMode::BeginPlay()
@@ -71,23 +39,6 @@ void AMTD_TowerDefenseMode::BeginPlay()
     // Some elements will spawn after GM, and they may be interested in this event as well, hence delay it for a tick
     GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda(
         [this] () { OnPhaseChangedDelegate.Broadcast(EMTD_GamePhase::Build); }));
-}
-
-void AMTD_TowerDefenseMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-    Super::EndPlay(EndPlayReason);
-
-    // Manually delete wave manager
-    if (IsValid(WaveManager))
-    {
-        WaveManager->MarkAsGarbage();
-    }
-    
-    // Manually delete spawner manager
-    if (IsValid(SpawnerManager))
-    {
-        SpawnerManager->MarkAsGarbage();
-    }
 }
 
 void AMTD_TowerDefenseMode::OnWaveStarted(int32 WaveNumber, float RemainingTime)
@@ -181,45 +132,13 @@ AActor *AMTD_TowerDefenseMode::GetGameTarget(APawn *Client) const
     return Result;
 }
 
-float AMTD_TowerDefenseMode::GetScaledDifficulty() const
-{
-    if (!IsValid(SelectedLevelDifficultyDefinition))
-    {
-        MTDS_WARN("Selected level difficulty definition is invalid.");
-        return 0.f;
-    }
-
-    // @todo actually compute the difficulty by applying a formula and using current wave as the scalar
-    return SelectedLevelDifficultyDefinition->BaseDifficulty;
-}
-
-float AMTD_TowerDefenseMode::GetScaledQuantity() const
-{
-    if (!IsValid(SelectedLevelDifficultyDefinition))
-    {
-        MTDS_WARN("Selected level difficulty definition is invalid.");
-        return 0.f;
-    }
-
-    // @todo actually compute the quantity by applying a formula and using current wave as the scalar
-    return SelectedLevelDifficultyDefinition->BaseQuantity;
-}
-
-float AMTD_TowerDefenseMode::GetTotalCurrentWaveTime() const
-{
-    if (!IsValid(SelectedLevelDifficultyDefinition))
-    {
-        MTDS_WARN("Selected level difficulty definition is invalid.");
-        return 0.f;
-    }
-
-    // @todo actually compute the time by applying a formula and using current wave as the scalar
-    return SelectedLevelDifficultyDefinition->BaseTime;
-}
-
 int32 AMTD_TowerDefenseMode::GetCurrentWave() const
 {
-    return ((IsValid(WaveManager)) ? (WaveManager->GetCurrentWave()) : (-1));
+    const auto GameWavesSubsystem = UMTD_GameWavesSubsystem::Get(this);
+    check(IsValid(GameWavesSubsystem));
+
+    const int32 CurrentWave = GameWavesSubsystem->GetCurrentWave();
+    return CurrentWave;
 }
 
 void AMTD_TowerDefenseMode::CacheCores()

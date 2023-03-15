@@ -40,7 +40,6 @@ protected:
     
     //~End of AActor Interface
     virtual void OnConstruction(const FTransform &Transform) override;
-    virtual void BeginPlay() override;
     //~End of AActor Interface
 
 private:

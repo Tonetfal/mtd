@@ -8,11 +8,11 @@
 class AMTD_BaseFoeCharacter;
 class AMTD_TowerDefenseMode;
 class UMTD_FoeQuantityDefinition;
+class UMTD_LevelDefinition;
 class UMTD_LevelDifficultyDefinition;
 
 /**
- * @todo Cache the closest core, and assign it to the spawned foe instead of computing it every time they're 
- * spawned.
+ * @todo Cache the closest core, and assign it to the spawned foe instead of computing it every time they're spawned.
  */
 
 
@@ -39,10 +39,11 @@ public:
     
     /**
      * Initialize a spawner.
-     *
-     * Should be called only after level and level difficulty assets have been chosen on tower defense mode. 
+     * @param   SelectedLevelDefinition: level definition to initialize the spawner with.
+     * @param   SelectedLevelDifficultyDefinition: level difficulty definition to initialize the spawner with.
      */
-    void Initialize();
+    void Initialize(const UMTD_LevelDefinition *SelectedLevelDefinition,
+		const UMTD_LevelDifficultyDefinition *SelectedLevelDifficultyDefinition);
 
     /**
      * Start spawning foes.
@@ -160,8 +161,8 @@ private:
     int32 TicksPerSecond = 50;
 
     /** Maximum range a foe can spawn from the central point at. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Foe Spawner", meta=(AllowPrivateAccess="true",
-        ClampMin="0.1"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="MTD|Foe Spawner",
+        meta=(AllowPrivateAccess="true", ClampMin="0.1"))
     float MaxSpawnRange = 1000.f;
 
     /** Ticks counter for current wave. */
@@ -180,21 +181,17 @@ private:
     UPROPERTY(VisibleInstanceOnly, Category="MTD|Foe Spawner|Runtime")
     bool bIsSpawning = false;
 
-    /** Foe quantity rate cached from tower defense mode. */
+    /** Cached foe quantity rate from difficulty settings. */
     UPROPERTY(VisibleInstanceOnly, Category="MTD|Foe Spawner|Runtime")
     float GlobalQuantityRate = 0.f;
 
-    /** Cached from tower defense mode. */
-    UPROPERTY()
-    TObjectPtr<AMTD_TowerDefenseMode> CachedTowerDefenseMode = nullptr;
-
-    /** Level difficulty definition cached from tower defense mode. */
+    /** Cached level difficulty definition from difficulty settings. */
     UPROPERTY(VisibleInstanceOnly, Category="MTD|Foe Spawner|Runtime")
-    TObjectPtr<const UMTD_LevelDifficultyDefinition> CachedLevelDiffDefinition = nullptr;
+    TObjectPtr<const UMTD_LevelDifficultyDefinition> LevelDiffDefinition = nullptr;
 
-    /** Foe quantity definition cached from tower defense mode. */
+    /** Cached foe quantity definition from difficulty settings. */
     UPROPERTY(VisibleInstanceOnly, Category="MTD|Foe Spawner|Runtime")
-    TObjectPtr<const UMTD_FoeQuantityDefinition> CachedFoeQuantityAsset = nullptr;
+    TObjectPtr<const UMTD_FoeQuantityDefinition> FoeQuantityAsset = nullptr;
 
     /**  */
     TMap<TSubclassOf<AMTD_BaseFoeCharacter>, TArray<int32 /* amount to spawn on Nth tick */>> CachedFoesToSpawn;

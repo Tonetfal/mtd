@@ -2,7 +2,7 @@
 
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
-#include "Character/MTD_HealthComponent.h"
+#include "Character/Components/MTD_HealthComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameModes/MTD_GameModeBase.h"
 #include "Player/MTD_PlayerState.h"

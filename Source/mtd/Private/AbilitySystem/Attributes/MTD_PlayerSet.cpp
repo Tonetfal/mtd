@@ -1,7 +1,7 @@
 ﻿#include "AbilitySystem/Attributes/MTD_PlayerSet.h"
 
-#include "Character/MTD_LevelComponent.h"
-#include "System/MTD_GameInstance.h"
+#include "Character/Components/MTD_LevelComponent.h"
+#include "Settings/MTD_PlayerLevelSettings.h"
 
 UMTD_PlayerSet::UMTD_PlayerSet()
 {
@@ -121,16 +121,11 @@ bool UMTD_PlayerSet::CacheExpRows()
         return true;
     }
     
-    const AActor *Owner = GetOwningActor();
-    check(IsValid(Owner));
-
-    const auto GameInstance = Cast<UMTD_GameInstance>(Owner->GetGameInstance());
-    check(IsValid(GameInstance));
-
-    const UCurveTable *ExperienceLevelTable = GameInstance->GetLevelExpCurveTable();
+    const auto PlayerLevelSettings = UMTD_PlayerLevelSettings::Get();
+    const UCurveTable *ExperienceLevelTable = PlayerLevelSettings->LevelExperienceCurveTable.LoadSynchronous();
     if (!IsValid(ExperienceLevelTable))
     {
-        MTDS_WARN("Experience Level Curve Table is invalid.");
+        MTDS_WARN("Experience level curve table is invalid.");
         return false;
     }
 
@@ -138,7 +133,7 @@ bool UMTD_PlayerSet::CacheExpRows()
     const FRealCurve *ExpFoundRow = ExperienceLevelTable->FindCurve(ExpRowName, {});
     if (!ExpFoundRow)
     {
-        MTDS_WARN("Could not find Row [%s] in Experience Level Curve Table.", *ExpRowName.ToString());
+        MTDS_WARN("Could not find Row [%s] in experience level curve table.", *ExpRowName.ToString());
         return false;
     }
     
@@ -146,7 +141,7 @@ bool UMTD_PlayerSet::CacheExpRows()
     const FRealCurve *TotalExpFoundRow = ExperienceLevelTable->FindCurve(TotalExpRowName, {});
     if (!TotalExpFoundRow)
     {
-        MTDS_WARN("Could not find Row [%s] in Experience Level Curve Table.", *TotalExpRowName.ToString());
+        MTDS_WARN("Could not find Row [%s] in experience level curve table.", *TotalExpRowName.ToString());
         return false;
     }
 

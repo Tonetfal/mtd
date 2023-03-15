@@ -5,7 +5,7 @@
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "Character/MTD_BaseCharacter.h"
-#include "Character/MTD_PawnExtensionComponent.h"
+#include "Character/Components/MTD_PawnExtensionComponent.h"
 #include "GameplayTagsManager.h"
 
 UMTD_GameplayAbility_Attack::UMTD_GameplayAbility_Attack()

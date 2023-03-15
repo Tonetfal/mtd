@@ -2,7 +2,7 @@
 
 #include "AbilitySystem/MTD_AbilitySystemComponent.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
-#include "Character/MTD_HealthComponent.h"
+#include "Character/Components/MTD_HealthComponent.h"
 #include "GameplayTagsManager.h"
 
 UMTD_GameplayAbility_Death::UMTD_GameplayAbility_Death()

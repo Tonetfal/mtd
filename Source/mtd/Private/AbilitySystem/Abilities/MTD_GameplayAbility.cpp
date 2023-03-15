@@ -4,7 +4,7 @@
 #include "AbilitySystem/Effects/MTD_GameplayEffect_Cost.h"
 #include "AbilitySystem/MTD_GameplayTags.h"
 #include "AbilitySystemComponent.h"
-#include "Character/MTD_PawnExtensionComponent.h"
+#include "Character/Components/MTD_PawnExtensionComponent.h"
 #include "GameplayTagsManager.h"
 
 UMTD_GameplayAbility::UMTD_GameplayAbility()

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AIController.h"
-#include "Character/MTD_TeamComponent.h"
+#include "Character/Components/MTD_TeamComponent.h"
 #include "mtd.h"
 #include "Perception/AIPerceptionTypes.h"
 

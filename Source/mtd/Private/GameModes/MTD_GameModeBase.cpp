@@ -3,8 +3,8 @@
 #include "AbilitySystem/Attributes/MTD_HealthSet.h"
 #include "AbilitySystem/Attributes/MTD_ManaSet.h"
 #include "AbilitySystemComponent.h"
-#include "Character/MTD_LevelComponent.h"
-#include "InventorySystem/Items/MTD_ItemDropManager.h"
+#include "Character/Components/MTD_LevelComponent.h"
+#include "InventorySystem/MTD_ItemDropSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/MTD_PlayerState.h"
 
@@ -171,13 +171,11 @@ void AMTD_GameModeBase::OnRemovePlayer(AActor *Actor)
 
 void AMTD_GameModeBase::OnHeroClassesChanged(const FGameplayTagContainer &HeroClasses)
 {
-    UMTD_ItemDropManager *ItemDropManager = UMTD_ItemDropManager::Get();
-
     // May be invalid prior to play-time, for instance, in BPs viewport
-    if (IsValid(ItemDropManager))
-    {
-        ItemDropManager->AddHeroClasses(HeroClasses);
-    }
+    auto ItemDropSubsystem = UMTD_ItemDropSubsystem::Get(this);
+    check(IsValid(ItemDropSubsystem));
+    
+    ItemDropSubsystem->AddHeroClasses(HeroClasses);
 }
 
 AMTD_PlayerState *AMTD_GameModeBase::GetPlayerState(int32 PlayerIndex)
