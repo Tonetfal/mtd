@@ -1,0 +1,743 @@
+﻿{
+	"rules": [
+		{
+			"class": "BlueprintInterface",
+			"prefix": "I_",
+			"dep_prefixes": [
+               "BPI_",
+               "B_",
+               "BP_",
+               "I_"
+            ]
+		},
+		{
+			"class": "BlueprintFunctionLibrary",
+			"prefix": "BPFL_"
+		},
+		{
+			"class": "BlueprintMacroLibrary",
+			"prefix": "BML_"
+		},
+		{
+			"class": "ObjectLibrary",
+			"prefix": "OL_"
+		},
+		{
+			"class": "PaperSpriteSheet",
+			"prefix": "SS_"
+		},
+		{
+			"class": "PaperSprite",
+			"prefix": "SPR_"
+		},
+		{
+			"class": "PaperSpriteAtlas",
+			"prefix": "SPRA_"
+		},
+		{
+			"class": "PaperTileMap",
+			"prefix": "TM_"
+		},
+		{
+			"class": "PaperTileSet",
+			"prefix": "TS_"
+		},
+		{
+			"class": "VectorFieldStatic",
+			"prefix": "VF_"
+		},
+		{
+			"class": "SubstanceGraphInstance",
+			"prefix": "SGI_"
+		},
+		{
+			"class": "SubstanceInstanceFactory",
+			"prefix": "SIF_"
+		},
+		{
+			"class": "TouchInterface",
+			"prefix": "TI_"
+		},
+		{
+			"aka": "Enumeration",
+			"class": "UserDefinedEnum",
+			"prefix": "E_",
+			"dep_prefixes": [
+                "AnimEnum_",
+                "Enum_"
+            ]
+		},
+		{
+			"aka": "Structure",
+			"class": "UserDefinedStruct",
+			"prefix": "F_"
+		},
+		{
+			"class": "ActorComponent",
+			"prefix": "ACTC_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "SceneComponent",
+            "prefix": "ACTC_",
+            "dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "LyraCameraMode",
+            "prefix": "CM_",
+            "dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "LyraCameraMode_ThirdPerson",
+            "prefix": "CM_",
+            "dep_prefixes": [
+                   "BP_",
+                   "B_"
+               ]
+		},
+		{
+			"class": "Pawn",
+			"prefix": "PWN_",
+			"dep_prefixes": [
+                "B_",
+                "BP_"
+            ]
+		},
+		{
+			"class": "Character",
+			"prefix": "CH_",
+			"dep_prefixes": [
+                "B_",
+                "BP_"
+            ]
+		},
+		{
+			"class": "CurveBase",
+			"prefix": "C_",
+			"dep_prefixes": [
+               "BP_",
+               "B_",
+               "Curve_"
+            ]
+		},
+		{
+			"class": "CurveFloat",
+			"prefix": "C_",
+            "suffix": "_Float",
+            "dep_prefixes": [
+                 "BP_",
+                 "B_",
+                 "Curve_"
+              ]
+		},
+		{
+			"class": "CurveVector",
+			"prefix": "C_",
+            "suffix": "_Vector",
+            "dep_prefixes": [
+                  "BP_",
+                  "B_",
+                  "Curve_"
+               ]
+		},
+		{
+			"class": "CurveTable",
+			"prefix": "C_",
+            "suffix": "_Table",
+            "dep_prefixes": [
+                 "BP_",
+                 "B_",
+                 "Curve_",
+                 "CT_"
+              ]
+		},
+		{
+			"class": "CurveLinearColor",
+			"prefix": "C_",
+            "suffix": "_Color",
+            "dep_prefixes": [
+                 "BP_",
+                 "B_",
+                 "Curve_"
+              ]
+		},
+		{
+			"class": "CurveLinearColorAtlas",
+			"prefix": "C_",
+            "suffix": "_ColorAtlas",
+            "dep_prefixes": [
+                  "BP_",
+                  "B_",
+                  "Curve_"
+               ]
+		},
+		{
+			"class": "PlayerController",
+			"prefix": "PC_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "PlayerState",
+			"prefix": "PS_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameModeBase",
+			"prefix": "GM_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameStateBase",
+			"prefix": "GS_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameInstance",
+			"prefix": "GI_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "LevelSequence",
+			"prefix": "LS_"
+		},
+		{
+			"class": "AnimSequence",
+			"prefix": "AS_",
+			"dep_prefixes": [
+               "Anim_",
+               "MM_"
+            ]
+		},
+		{
+			"class": "AnimNotify",
+			"prefix": "AN_"
+		},
+		{
+			"class": "AnimNotifyState",
+			"prefix": "ANS_"
+		},
+		{
+			"class": "CameraAnimationSequence",
+			"prefix": "CA_"
+		},
+		{
+			"class": "AnimComposite",
+			"prefix": "AC_"
+		},
+		{
+			"class": "AnimMontage",
+			"prefix": "AM_"
+		},
+		{
+			"class": "AnimModifier",
+			"prefix": "AMO_"
+		},
+		{
+			"class": "LegacyCameraShake",
+			"prefix": "CS_"
+		},
+		{
+			"class": "AnimBlueprint",
+			"prefix": "ABP_"
+		},
+		{
+			"class": "AnimLayerInterface",
+			"prefix": "ALI_"
+		},
+		{
+			"class": "GameplayEffect",
+			"prefix": "GE_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameplayCue",
+			"prefix": "GC_",
+			"dep_prefixes": [
+               "BP_",
+               "B_",
+               "GameplayCue_"
+            ]
+		},
+		{
+			"class": "GameplayCueNotify",
+			"prefix": "GCN_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameplayCueNotify_Looping",
+			"prefix": "GCNL_",
+			"dep_prefixes": [
+               "BP_",
+               "B_"
+            ]
+		},
+		{
+			"class": "GameplayAbility",
+			"prefix": "GA_",
+			"dep_prefixes": [
+               "BP_",
+               "B_",
+               "GameplayAbility_"
+            ]
+		},
+		{
+			"class": "VectorFieldAnimated",
+			"prefix": "VFA_"
+		},
+		{
+			"class": "PaperFlipbook",
+			"prefix": "PFB_"
+		},
+		{
+			"class": "MorphTarget",
+			"prefix": "MT_"
+		},
+		{
+			"class": "AimOffsetBlendSpace1D",
+			"prefix": "AO1_",
+            "dep_prefixes": [
+               "BP_",
+               "B_",
+               "AO_"
+            ]
+		},
+		{
+			"class": "AimOffsetBlendSpace",
+			"prefix": "AO2_",
+			"dep_prefixes": [
+               "BP_",
+               "B_",
+               "AO_"
+            ]
+		},
+		{
+			"class": "BlendSpace1D",
+			"prefix": "BS1_",
+            "dep_prefixes": [
+               "BP_",
+               "B_",
+               "BS_"
+            ]
+		},
+		{
+			"class": "BlendSpace",
+			"prefix": "BS2_",
+            "dep_prefixes": [
+               "BP_",
+               "B_",
+               "BS_"
+            ]
+		},
+		{
+			"class": "Rig",
+			"prefix": "RIG_"
+		},
+		{
+			"class": "Skeleton",
+			"prefix": "SK_",
+			"dep_prefixes": [
+                "SKM_",
+                "SKEL_"
+            ]
+		},
+		{
+			"class": "SkeletalMesh",
+			"prefix": "SKM_",
+			"dep_prefixes": [
+                "SK_",
+                "SM"
+            ]
+		},
+		{
+			"class": "PoseAsset",
+			"prefix": "SKP_"
+		},
+		{
+			"class": "PhysicsAsset",
+			"prefix": "SKPH_",
+			"dep_prefixes": [
+                "SK_",
+                "SKM_",
+                "PHYS_"
+            ]
+		},
+		{
+			"class": "AIController",
+			"prefix": "AIC_"
+		},
+		{
+			"class": "BehaviorTree",
+			"prefix": "BT_"
+		},
+		{
+			"aka": "Blackboard",
+			"class": "BlackboardData",
+			"prefix": "BB_"
+		},
+		{
+			"class": "BTDecorator",
+			"prefix": "BTDecorator_"
+		},
+		{
+			"class": "BTService",
+			"prefix": "BTService_"
+		},
+		{
+			"class": "BTTaskNode",
+			"prefix": "BTT_",
+			"dep_prefixes": [
+				"BTTask"
+			]
+		},
+		{
+			"class": "EnvQuery",
+			"prefix": "EQS_"
+		},
+		{
+			"aka": "EnvQuery",
+			"class": "EnvQueryContext",
+			"prefix": "EQS_",
+			"suffix": "Context"
+		},
+		{
+			"class": "DialogueVoice",
+			"prefix": "DV_"
+		},
+		{
+			"class": "DialogueWave",
+			"prefix": "DW_"
+		},
+		{
+			"class": "ReverbEffect",
+			"prefix": "Reverb_"
+		},
+		{
+			"class": "Material",
+			"prefix": "M_",
+			"dep_prefixes": [
+               "MT_",
+               "MAT_",
+               "MS_"
+            ]
+		},
+		{
+			"class": "MaterialFunction",
+			"prefix": "MF_",
+            "dep_prefixes": [
+                  "M_",
+                  "MAT_",
+                  "Inst_",
+                  "ML_"
+               ]
+		},
+		{
+			"class": "MaterialInstance",
+			"prefix": "MI_",
+			"dep_prefixes": [
+               "M_",
+               "MAT_",
+               "Inst_",
+               "INST_"
+            ]
+		},
+		{
+			"aka": "MaterialInstance",
+			"class": "MaterialInstanceConstant",
+			"prefix": "MI_",
+			"suffix": "_C",
+			"dep_prefixes": [
+               "M_",
+               "MAT_",
+               "Inst_",
+               "INST_"
+            ]
+		},
+		{
+			"aka": "MaterialInstance",
+			"class": "MaterialInstanceDynamic",
+			"prefix": "MI_",
+			"suffix": "_D",
+			"dep_prefixes": [
+               "M_",
+               "MAT_",
+               "Inst_",
+               "INST_"
+            ]
+		},
+		{
+			"class": "MaterialParameterCollection",
+			"prefix": "MPC_",
+			"dep_prefixes": [
+                "COL_"
+            ]
+		},
+		{
+			"class": "Texture2D",
+			"prefix": "T_",
+			"dep_prefixes": [
+               "TEX_",
+               "LP_"
+            ]
+		},
+		{
+			"class": "TextureCube",
+			"prefix": "TC_"
+		},
+		{
+			"class": "MediaTexture",
+			"prefix": "MT_"
+		},
+		{
+			"class": "MediaPlayer",
+			"prefix": "MP_"
+		},
+		{
+			"class": "FileMediaSource",
+			"prefix": "FMS_"
+		},
+		{
+			"aka": "RenderTarget",
+			"class": "TextureRenderTarget2D",
+			"prefix": "RT_"
+		},
+		{
+			"aka": "CubeRenderTarget",
+			"class": "TextureRenderTargetCube",
+			"prefix": "CRT_"
+		},
+		{
+			"class": "TextureLightProfile",
+			"prefix": "TLP_"
+		},
+		{
+			"class": "SubsurfaceProfile",
+			"prefix": "SP_"
+		},
+		{
+			"class": "StaticMesh",
+			"prefix": "SM_"
+		},
+		{
+			"class": "FoliageType_InstancedStaticMesh",
+			"prefix": "FT_"
+		},
+		{
+			"class": "ForceFeedbackEffect",
+			"prefix": "FFE_"
+		},
+		{
+			"class": "LandscapeGrassType",
+			"prefix": "LG_"
+		},
+		{
+			"class": "LandscapeLayerInfoObject",
+			"prefix": "LL_"
+		},
+		{
+			"class": "FoliageType_Actor",
+			"prefix": "FT_"
+		},
+		{
+			"class": "ParticleSystem",
+			"prefix": "P_",
+			"dep_prefixes": [
+                "PAR_"
+            ]
+		},
+		{
+			"class": "NiagaraSystem",
+			"prefix": "NS_"
+		},
+		{
+			"class": "NiagaraActor",
+			"prefix": "NA_"
+		},
+		{
+			"class": "NiagaraLensEffectBase",
+			"prefix": "NLE_",
+			"dep_prefixes": [
+                "NCLE_"
+            ]
+		},
+		{
+			"class": "NiagaraScript",
+			"prefix": "NM_"
+		},
+		{
+			"class": "NiagaraEmitter",
+			"prefix": "NE_"
+		},
+		{
+			"class": "NiagaraEffectType",
+			"prefix": "NET_"
+		},
+		{
+			"aka": "NiagaraDynamicInputScript",
+			"class": "NiagaraScript",
+			"prefix": "NSC_"
+		},
+		{
+			"class": "NiagaraParameterCollection",
+			"prefix": "NPC_"
+		},
+		{
+			"class": "NiagaraParameterCollectionInstance",
+			"prefix": "NPCI_"
+		},
+		{
+			"class": "PhysicalMaterial",
+			"prefix": "PM_",
+			"dep_prefixes": [
+               "PhysMat_",
+               "B_"
+            ]
+		},
+		{
+			"class": "PhysicalMaterialMask",
+			"prefix": "PMM_"
+		},
+		{
+			"class": "GameplayAbilityBlueprint",
+			"prefix": "GA_"
+		},
+		{
+			"class": "GameplayAbility",
+			"prefix": "GA_",
+			"dep_prefixes": [
+				"BP_"
+			]
+		},
+		{
+			"class": "LyraGameplayAbility",
+			"prefix": "GA_"
+		},
+		{
+			"class": "GameplayEffect",
+			"prefix": "GE_"
+		},
+		{
+			"class": "CommonInputBaseControllerData",
+			"prefix": "CommonInput_"
+		},
+		{
+			"class": "CommonTextScrollStyle",
+			"prefix": "CTSS_",
+			"dep_prefixes": [
+                "CommonTextScrollStyle-",
+                "TextScrollStyle-",
+                "ScrollStyle-",
+                "TextStyle_"
+            ]
+		},
+		{
+			"class": "CommonTextStyle",
+			"prefix": "CTS_",
+			"dep_prefixes": [
+                "CommonTextStyle-",
+                "TextStyle-"
+            ]
+		},
+		{
+			"class": "CommonButtonStyle",
+			"prefix": "CBS_",
+			"dep_prefixes": [
+                "CommonButtonStyle-",
+                "ButtonStyle-",
+                "ButtonStyle_"
+            ]
+		},
+		{
+			"class": "SoundCue",
+			"prefix": "S_"
+		},
+		{
+			"class": "SoundWave",
+			"prefix": "SW_",
+			"dep_prefixes": [
+                "S_"
+            ]
+		},
+		{
+			"class": "SoundAttenuation",
+			"prefix": "SATT_",
+			"dep_prefixes": [
+                "ATT_"
+            ]
+		},
+		{
+			"class": "SoundMix",
+			"prefix": "SMIX_"
+		},
+		{
+			"class": "SoundClass",
+			"prefix": "SCL_"
+		},
+		{
+			"class": "SoundConcurrency",
+			"prefix": "SCON_"
+		},
+		{
+			"class": "WidgetBlueprint",
+			"prefix": "W_",
+			"dep_prefixes": [
+				"WBP_"
+			]
+		},
+		{
+			"class": "Font",
+			"prefix": "FONT_"
+		},
+		{
+			"aka": "SlateBrush",
+			"class": "SlateBrushAsset",
+			"prefix": "SBR_"
+		},
+		{
+			"aka": "SlateWidgetStyle",
+			"class": "SlateWidgetStyleAsset",
+			"prefix": "SWS_"
+		},
+		{
+			"class": "ScpInventoryItemDefinition",
+			"prefix": "ID_"
+		},
+		{
+			"class": "CraftRecipe",
+			"prefix": "CR_"
+		},
+		{
+			"class": "B_MeltEntry_C",
+			"prefix": "ME_"
+		}
+	]
+}
