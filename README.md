@@ -1,5 +1,7 @@
 # mtd
 
-WIP Action RPG TD game.
+Legacy code of my ARPG TD game.
+
+The project was moved to Perforce.
 
 [Miro documentation](https://miro.com/app/board/uXjVPPDEcfc=/)
